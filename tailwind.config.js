@@ -10,8 +10,18 @@ module.exports = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        primarycolor: "#460066",
+        secondarycolor: "#FC9AE7",
+        secondaryvariant: "#FFD6F6",
+        warningcolor: "#FF5449"
+
+      },
+      borderRadius:{
+        primaryradius: "18px"
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('tailwind-scrollbar-hide')
+  ],
 };
