@@ -1,6 +1,7 @@
 "use client"
 import { Menu, ShoppingCart, User, X } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 
@@ -25,7 +26,7 @@ export default function Header({ activeIcon, setActiveIcon }) {
   }, []);
 
   // Add this log to see how state is updated
-  console.log("Categories state:", categories);
+  // console.log("Categories state:", categories);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -45,15 +46,15 @@ export default function Header({ activeIcon, setActiveIcon }) {
       {/* Hamburger Menu Toggle */}
       <button onClick={() => setMenuOpen(!menuOpen)} className="text-center">
         {menuOpen ? (
-          <X className="h-6 w-6 text-black" />
+          <X className="h-6 w-6 text-warningcolor" />
         ) : (
-          <Menu className="h-6 w-6 text-black" />
+          <Menu className="h-6 w-6 text-primarycolor" />
         )}
       </button>
 
       {/* Logo */}
       <Link href="/">
-        <img src="/images/logo.png" alt="Better Days Closet" className="h-8" />
+        <Image src="/logo.png" alt="Better Days Closet" width={32} height={32} />
       </Link>
 
       {/* Icons */}

@@ -16,7 +16,7 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 min-h-screen">
       <input
         type="text"
         placeholder="Search products..."

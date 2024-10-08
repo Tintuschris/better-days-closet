@@ -20,12 +20,12 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-4">
       {/* Categories */}
       <CategoryListing categories={categories} />
 
       {/* Marketing Banner (can be static or fetched from DB) */}
-      <div className="w-full h-48 bg-gray-200">Marketing Banner Carousel</div>
+      <div className="w-full h-48 bg-secondaryvariant">Marketing Banner Carousel</div>
 
       {/* Top Deals */}
       <ProductCarousel title="TOP DEALS" products={products.filter(p => p.discount)} />

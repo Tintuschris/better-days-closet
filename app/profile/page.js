@@ -27,7 +27,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 min-h-screen">
       <h1 className="text-xl font-bold mb-4">My Profile</h1>
       <div className="flex space-x-4">
         <button onClick={() => setTab('orders')} className={`py-2 px-4 rounded ${tab === 'orders' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>Orders</button>

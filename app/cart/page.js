@@ -14,7 +14,7 @@ export default function CartPage() {
   const subtotal = cartItems.reduce((acc, item) => acc + parseFloat(item.total_amount), 0);
 
   return (
-    <div className="p-4">
+    <div className="p-4 min-h-screen">
       <h1 className="text-2xl font-bold mb-4">My Cart</h1>
       {cartItems.map(item => (
         <div key={item.id} className="flex justify-between mb-4">
