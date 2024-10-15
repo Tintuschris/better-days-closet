@@ -1,111 +1,109 @@
-// pages/index.js
-import Head from 'next/head';
-import Image from 'next/image';
+"use client"
+import { useEffect, useState } from 'react';
+import { useSupabase } from './hooks/useSupabase';
+import ProductCarousel from './components/ProductCarousel';
+import CategoryListing from './components/CategoryListing';
+import { Filter } from 'lucide-react';
+import FilterModal from './(modals)/filtermodal';
 
-export default function Home() {
+export default function HomePage() {
+  const { fetchProducts, fetchCategories } = useSupabase();
+  const [allProducts, setAllProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState(null);
+
+  useEffect(() => {
+    async function loadData() {
+      const fetchedProducts = await fetchProducts();
+      const fetchedCategories = await fetchCategories();
+      setAllProducts(fetchedProducts);
+      setFilteredProducts(fetchedProducts);
+      setCategories(fetchedCategories);
+    }
+    loadData();
+  }, []);
+
+  const toggleFilterModal = () => {
+    setIsFilterModalOpen((prevState) => !prevState);
+  };
+
+  const handleApplyFilters = (filters) => {
+    setAppliedFilters(filters);
+    const { priceRange, categories, tags } = filters;
+
+    const filtered = allProducts.filter(product => {
+      const inPriceRange = product.price >= priceRange[0] && product.price <= priceRange[1];
+      const inCategory = categories.length === 0 || categories.includes(product.category_name);
+      const hasTags = tags.length === 0 || tags.some(tag => {
+        if (tag === 'Top Deals') return product.discount;
+        if (tag === 'New Arrivals') return new Date(product.created_at) > new Date('2024-01-01');
+        return false;
+      });
+
+      return inPriceRange && inCategory && hasTags;
+    });
+
+    setFilteredProducts(filtered);
+  };
+
+  const topDeals = filteredProducts.filter(p => p.discount);
+  const newArrivals = filteredProducts.filter(p => new Date(p.created_at) > new Date('2024-01-01'));
+
+
   return (
-    <div className="bg-white min-h-screen">
-      
-
-      <header className="flex justify-between items-center p-4">
-        <button className="text-purple-800">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <div className="flex items-center">
-          <span className="ml-2 text-purple-800 font-bold">BETTER DAYS CLOSET</span>
+    <div className="space-y-8 p-4">
+      <div className="relative">
+        <div className="overflow-x-auto whitespace-nowrap">
+          <CategoryListing categories={categories} />
         </div>
-        <div className="flex items-center">
-          <button className="mr-4 text-purple-800 relative">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <span className="absolute -top-2 -right-2 bg-pink-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">3</span>
-          </button>
-          <button className="text-purple-800">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+        <div className="absolute top-[50%] right-0 z-10 bg-white p-2 rounded shadow-lg">
+          <button
+            onClick={toggleFilterModal}
+            className="text-purple-800 hover:text-purple-600"
+          >
+            <Filter size={24} />
           </button>
         </div>
-      </header>
+      </div>
 
-      <main className="p-4">
-        <h2 className="text-purple-800 font-bold text-xl mb-4">CATEGORIES</h2>
-        <div className="flex space-x-4 mb-6">
-          <button className="bg-pink-300 text-purple-800 px-6 py-2 rounded-full">Women</button>
-          <button className="bg-pink-300 text-purple-800 px-6 py-2 rounded-full">Men</button>
-          <button className="bg-pink-300 text-purple-800 px-6 py-2 rounded-full">Kids</button>
-        </div>
 
-        <h2 className="text-purple-800 font-bold text-xl mb-4">TOP DEALS</h2>
-<div className="flex overflow-x-auto space-x-4 pb-4 -mx-4 px-4">
-  {/* Sample product card */}
-  <div className="bg-gray-100 rounded-lg p-2 w-40 flex-shrink-0">
-    <Image src="/product1.jpg" alt="College Jackets" width={150} height={200} className="w-full h-40 object-cover rounded-lg" />
-    <h3 className="text-purple-800 font-semibold mt-2">College Jackets</h3>
-    <p className="text-gray-500 line-through">Ksh. 3000</p>
-    <p className="text-pink-500 font-bold">Ksh. 2000</p>
-  </div>
-  <div className="bg-gray-100 rounded-lg p-2 w-40 flex-shrink-0">
-    <Image src="/product1.jpg" alt="College Jackets" width={150} height={200} className="w-full h-40 object-cover rounded-lg" />
-    <h3 className="text-purple-800 font-semibold mt-2">College Jackets</h3>
-    <p className="text-gray-500 line-through">Ksh. 3000</p>
-    <p className="text-pink-500 font-bold">Ksh. 2000</p>
-  </div>
-  <div className="bg-gray-100 rounded-lg p-2 w-40 flex-shrink-0">
-    <Image src="/product1.jpg" alt="College Jackets" width={150} height={200} className="w-full h-40 object-cover rounded-lg" />
-    <h3 className="text-purple-800 font-semibold mt-2">College Jackets</h3>
-    <p className="text-gray-500 line-through">Ksh. 3000</p>
-    <p className="text-pink-500 font-bold">Ksh. 2000</p>
-  </div>
-  {/* Repeat for other products */}
-</div>
 
-        <h2 className="text-purple-800 font-bold text-xl mb-4">NEW ARRIVALS</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {/* Sample new arrival product */}
-          <div className="bg-gray-100 rounded-lg p-2">
-            <Image src="/new-arrival1.jpg" alt="New Arrival" width={150} height={200} className="w-full h-40 object-cover rounded-lg" />
-            <button className="absolute top-2 right-2 text-pink-500">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            </button>
-          </div>
-          {/* Repeat for other new arrivals */}
-        </div>
-      </main>
+      <div className="w-full h-48 bg-secondaryvariant">Marketing Banner Carousel</div>
 
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-        <div className="flex justify-around py-2">
-          <button className="flex flex-col items-center text-pink-500">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            <span className="text-xs">Home</span>
-          </button>
-          <button className="flex flex-col items-center text-purple-800">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <span className="text-xs">Search</span>
-          </button>
-          <button className="flex flex-col items-center text-purple-800">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-            <span className="text-xs">Wishlist</span>
-          </button>
-          <button className="flex flex-col items-center text-purple-800">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span className="text-xs">Profile</span>
-          </button>
-        </div>
-      </footer>
+      <ProductCarousel
+        title="TOP DEALS"
+        products={topDeals}
+        category="top-deals"
+        isSpecialCategory={true}
+      />
+
+      <ProductCarousel
+        title="NEW ARRIVALS"
+        products={newArrivals}
+        category="new-arrivals"
+        isSpecialCategory={true}
+      />
+
+      {categories.map(category => (
+        <ProductCarousel
+          key={category.id}
+          title={category.name}
+          products={filteredProducts.filter(p => p.category_id === category.id)}
+          category={category.name}
+          isSpecialCategory={false}
+        />
+      ))}
+
+      {isFilterModalOpen && (
+        <FilterModal
+          categories={categories.map(cat => cat.name)}
+          onApplyFilters={handleApplyFilters}
+          closeModal={toggleFilterModal}
+          initialFilters={appliedFilters}
+        />
+      )}
     </div>
   );
 }
