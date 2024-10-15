@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation'; // Use useParams instead of router.query
+import { useParams } from 'next/navigation';
 import { useSupabase } from '../../hooks/useSupabase';
 import ProductListing from '../../components/ProductListing';
 

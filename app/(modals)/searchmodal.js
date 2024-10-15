@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Search, X } from 'lucide-react'; // For the search icon
 import { useSupabase } from '../hooks/useSupabase'; // Assuming you have Supabase hooked up for fetching products
+import Link from 'next/link';
 
 export default function SearchModal({ closeModal }) {
   const { fetchProducts } = useSupabase(); // This hook will fetch products
@@ -108,7 +109,7 @@ export default function SearchModal({ closeModal }) {
           ) : (
             <div>
               {results.map((product) => (
-                <div key={product.id} className="flex items-center justify-between p-4 mb-2 border-b">
+                <Link href={`/product/${product.id}`} key={product.id} className="flex items-center justify-between p-4 mb-2 border-b">
                   <div>
                     <p className="font-bold text-primarycolor">{product.name}</p>
                     <p className="text-gray-600 line-through">Ksh. {product.originalPrice}</p>
@@ -116,14 +117,14 @@ export default function SearchModal({ closeModal }) {
                   </div>
 
                   <Image
-                    src={product.imageUrl}
+                    src={product.image_url}
                     alt={product.name}
                     width={64}  // 16 * 4 = 64px
                     height={64} // 16 * 4 = 64px
                     className="object-cover rounded"
                   />
 
-                </div>
+                </Link>
               ))}
             </div>
           )}

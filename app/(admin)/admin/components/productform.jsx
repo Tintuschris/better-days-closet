@@ -67,7 +67,7 @@ export default function ProductForm({ product, categories, onSave }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 text-primarycolor">
       <input
         type="text"
         placeholder="Product Name"
@@ -135,7 +135,7 @@ export default function ProductForm({ product, categories, onSave }) {
 
       <button
         type="submit"
-        className="bg-blue-600 text-white p-2 rounded"
+        className="bg-primarycolor text-white p-2 rounded-lg"
         disabled={isSubmitting} // Disable button when submitting
       >
         {isSubmitting ? 'Submitting...' : product ? 'Update Product' : 'Add Product'}

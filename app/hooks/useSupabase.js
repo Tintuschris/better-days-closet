@@ -16,7 +16,6 @@ export const useSupabase = () => {
     console.log("Fetched categories:", data);  // Add this line for debugging
     return data;
   };
-  
 
   const fetchProductById = async (id) => {
     const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
@@ -25,11 +24,11 @@ export const useSupabase = () => {
   };
 
   // New function to fetch products by category
-  const fetchProductsByCategory = async (category) => {
+  const fetchProductsByCategory = async (categoryName) => {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('category', category);  // Adjust according to your category field in the database
+      .eq('category_name', categoryName);  // Adjust according to your category field in the database
     if (error) throw error;
     return data;
   };
@@ -60,6 +59,14 @@ export const useSupabase = () => {
     return data;
   };
 
+  const addToWishlist = async (userId, productId) => {
+    const { data, error } = await supabase
+      .from('wishlist')
+      .insert([{ user_id: userId, product_id: productId }]);
+    if (error) throw error;
+    return data;
+  };
+
   const deleteFromWishlist = async (userId, productId) => {
     const { data, error } = await supabase
       .from('wishlist')
@@ -74,11 +81,12 @@ export const useSupabase = () => {
     fetchProducts,
     fetchCategories,
     fetchProductById,
-    fetchProductsByCategory,  // Return the new function here
+    fetchProductsByCategory,
     addToCart,
     fetchCartItems,
     fetchOrders,
     fetchWishlistItems,
+    addToWishlist,  // Add the new function here
     deleteFromWishlist,
   };
 };

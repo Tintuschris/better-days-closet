@@ -33,11 +33,42 @@ export const useAuth = () => {
   };
 
   const signUp = async (name, email, password) => {
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-
-    // Optionally save user details like name to another table
+    try {
+      // Sign up the user using Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password
+      });
+  
+      if (error) {
+        throw error; // Handle signup errors
+      }
+  
+      // Extract the user ID from the response
+      const userId = data?.user?.id; // Extract user ID safely
+  
+      if (!userId) {
+        throw new Error('User ID not found after signup');
+      }
+  
+      // After successful sign-up, insert user details into the users table
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert([{ id: userId, name, email }]);
+  
+      if (insertError) {
+        throw insertError; // Handle insertion errors
+      }
+  
+    } catch (err) {
+      console.error('Error during signup:', err);
+      throw err; // Re-throw the error to be handled by the calling function
+    }
   };
+  
+
+
+  
 
   return { user, signIn, signOut, signUp };
 };

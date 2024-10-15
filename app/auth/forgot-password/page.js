@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl mb-4">Forgot Password</h1>
+      <h1 className="text-xl mb-4 text-primarycolor">Forgot Password</h1>
       <form onSubmit={handleReset}>
         <input
           type="email"
@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded w-full">Reset Password</button>
+        <button type="submit" className="bg-primarycolor text-white py-2 px-4 rounded-full w-full">Reset Password</button>
       </form>
       {message && <p className="mt-4 text-green-500">{message}</p>}
     </div>
