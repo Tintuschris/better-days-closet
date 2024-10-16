@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSupabase } from '../../hooks/useSupabase';
 
 export default function Orders() {
@@ -7,9 +7,14 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const userId = 1;  // Replace with actual user ID
 
+  const fetchOrdersCallback = useCallback(
+    () => fetchOrders(userId).then(setOrders),
+    [fetchOrders, userId]
+  );
+
   useEffect(() => {
-    fetchOrders(userId).then(setOrders);
-  }, []);
+    fetchOrdersCallback();
+  }, [fetchOrdersCallback]);
 
   return (
     <div>
@@ -25,3 +30,4 @@ export default function Orders() {
     </div>
   );
 }
+

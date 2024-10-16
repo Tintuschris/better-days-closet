@@ -1,5 +1,5 @@
 'use client';
-
+import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle } from 'lucide-react'; // Import checkmark icon
@@ -50,9 +50,8 @@ export default function Checkout() {
             <h2 className="text-xl font-bold text-purple-700 mb-4">PAYMENT METHOD</h2>
 
             <div className="mb-4">
-              <img src="/images/mpesa.png" alt="Mpesa" className="w-16 h-16 mx-auto" />
+              <Image src="/images/mpesa.png" alt="Mpesa" width={64} height={64} className="mx-auto" />
             </div>
-
             <div className="instructions text-purple-700 text-center">
               <ol className="text-sm">
                 <li>1. Go to <strong>Mpesa</strong> menu</li>

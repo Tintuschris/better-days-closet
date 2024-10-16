@@ -2,16 +2,21 @@
 import ProductForm from '../components/ProductForm';
 import ProductTable from '../components/ProductTable';
 import { useSupabase } from '../hooks/useSupabase';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export default function ProductManagement() {
-  const { fetchCategories } = useSupabase();
+  const { fetchCategories: originalFetchCategories } = useSupabase();
   const [categories, setCategories] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null); // Track selected product for editing
 
+  // Memoize fetchCategories using useCallback
+  const fetchCategories = useCallback(() => {
+    return originalFetchCategories();
+  }, [originalFetchCategories]);
+
   useEffect(() => {
     fetchCategories().then(setCategories);
-  }, []);
+  }, [fetchCategories]); // Now fetchCategories is safely included as a dependency
 
   // Handle when a product is selected for editing
   const handleEditProduct = (product) => {

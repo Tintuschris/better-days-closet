@@ -2,7 +2,7 @@
 import { AlignLeft, ShoppingCart, User, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSupabase } from "../hooks/useSupabase";
 import { useAuth } from "../hooks/useAuth";
 
@@ -16,7 +16,8 @@ export default function Header({ activeIcon, setActiveIcon }) {
   // Local cart state
   const [cartCount, setCartCount] = useState(0);
 
-  useEffect(() => {
+  // Fetch categories using useCallback
+  const getCategories = useCallback(() => {
     fetchCategories()
       .then((data) => {
         console.log("Categories from Supabase:", data);
@@ -29,36 +30,44 @@ export default function Header({ activeIcon, setActiveIcon }) {
       .catch((error) => {
         console.error("Failed to fetch categories:", error);
       });
-  }, []);
+  }, [fetchCategories]);
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    getCategories();
+  }, [getCategories]);
 
   // Retrieve cart items from localStorage
-  useEffect(() => {
+  const updateCartCount = useCallback(() => {
     const cartItems = JSON.parse(localStorage.getItem("cart")) || [];
     const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
     setCartCount(totalItems);
   }, []);
 
+  useEffect(() => {
+    updateCartCount(); // Set initial cart count
+  }, [updateCartCount]);
+
   // Handle cart change in localStorage
   useEffect(() => {
     const handleCartUpdate = () => {
-      const cartItems = JSON.parse(localStorage.getItem("cart")) || [];
-      const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-      setCartCount(totalItems);
+      updateCartCount(); // Update cart count when local storage changes
     };
 
     window.addEventListener("storage", handleCartUpdate);
     return () => {
       window.removeEventListener("storage", handleCartUpdate);
     };
-  }, []);
+  }, [updateCartCount]);
 
   // Close menu when clicking outside
   useEffect(() => {
-    function handleClickOutside(event) {
+    const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false);
       }
-    }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);

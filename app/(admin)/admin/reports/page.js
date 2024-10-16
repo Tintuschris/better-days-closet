@@ -1,15 +1,20 @@
-"use client"
+"use client";
 import SalesGraph from '../components/SalesGraph';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 
 export default function SalesReports() {
-  const { fetchSalesData } = useSupabase();
+  const { fetchSalesData: originalFetchSalesData } = useSupabase();
   const [salesData, setSalesData] = useState([]);
+
+  // Memoize fetchSalesData using useCallback
+  const fetchSalesData = useCallback(() => {
+    return originalFetchSalesData();
+  }, [originalFetchSalesData]);
 
   useEffect(() => {
     fetchSalesData().then(setSalesData);
-  }, []);
+  }, [fetchSalesData]); // Include fetchSalesData in the dependency array
 
   return (
     <div>

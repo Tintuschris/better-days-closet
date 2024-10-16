@@ -1,14 +1,19 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 
 export default function ProductTable({ onEdit }) {
-  const { fetchProducts, deleteProduct } = useSupabase();
+  const { fetchProducts: originalFetchProducts, deleteProduct } = useSupabase();
   const [products, setProducts] = useState([]);
 
+  // Memoize fetchProducts using useCallback
+  const fetchProducts = useCallback(() => {
+    return originalFetchProducts();
+  }, [originalFetchProducts]);
+
   useEffect(() => {
-    fetchProducts().then(setProducts);
-  }, []);
+    fetchProducts().then(setProducts); // Safe to add fetchProducts in the dependency array
+  }, [fetchProducts]);
 
   // Handle delete product
   const handleDelete = async (id) => {
