@@ -1,5 +1,5 @@
-"use client"
-import { useEffect, useState } from 'react';
+"use client";
+import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 import ProductCard from '../components/ProductCard';
 
@@ -7,14 +7,17 @@ export default function NewArrivalsPage() {
   const [products, setProducts] = useState([]);
   const { fetchProducts } = useSupabase();
 
+  // Fetch new arrivals using useCallback
+  const loadProducts = useCallback(async () => {
+    const allProducts = await fetchProducts();
+    const newArrivals = allProducts.filter(p => new Date(p.created_at) > new Date('2024-01-01'));
+    setProducts(newArrivals);
+  }, [fetchProducts]);
+
+  // Load products on component mount
   useEffect(() => {
-    async function loadProducts() {
-      const allProducts = await fetchProducts();
-      const newArrivals = allProducts.filter(p => new Date(p.created_at) > new Date('2024-01-01'));
-      setProducts(newArrivals);
-    }
     loadProducts();
-  }, []);
+  }, [loadProducts]);
 
   return (
     <div className="p-4">

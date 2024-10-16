@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 import ProductCard from '../components/ProductCard';
 
@@ -7,14 +7,15 @@ export default function TopDealsPage() {
   const [products, setProducts] = useState([]);
   const { fetchProducts } = useSupabase();
 
+  const loadProducts = useCallback(async () => {
+    const allProducts = await fetchProducts();
+    const topDeals = allProducts.filter(p => p.discount);
+    setProducts(topDeals);
+  }, [fetchProducts]);
+
   useEffect(() => {
-    async function loadProducts() {
-      const allProducts = await fetchProducts();
-      const topDeals = allProducts.filter(p => p.discount);
-      setProducts(topDeals);
-    }
     loadProducts();
-  }, []);
+  }, [loadProducts]);
 
   return (
     <div className="p-4">

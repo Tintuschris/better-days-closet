@@ -1,14 +1,19 @@
-"use client"
-import { useEffect, useState } from 'react';
+"use client";
+import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 
 export default function OrderTable() {
-  const { fetchOrders, approveOrder } = useSupabase();
+  const { fetchOrders: originalFetchOrders, approveOrder } = useSupabase();
   const [orders, setOrders] = useState([]);
+
+  // Memoize fetchOrders using useCallback
+  const fetchOrders = useCallback(() => {
+    return originalFetchOrders();
+  }, [originalFetchOrders]);
 
   useEffect(() => {
     fetchOrders().then(setOrders);
-  }, []);
+  }, [fetchOrders]); // Include fetchOrders in the dependency array
 
   const handleApprove = async (orderId) => {
     await approveOrder(orderId);

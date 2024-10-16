@@ -1,5 +1,5 @@
-"use client"
-import { useEffect, useState } from 'react';
+"use client";
+import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from './hooks/useSupabase';
 import ProductCarousel from './components/ProductCarousel';
 import CategoryListing from './components/CategoryListing';
@@ -14,22 +14,27 @@ export default function HomePage() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState(null);
 
+  // Load data on component mount
   useEffect(() => {
     async function loadData() {
-      const fetchedProducts = await fetchProducts();
-      const fetchedCategories = await fetchCategories();
+      const [fetchedProducts, fetchedCategories] = await Promise.all([
+        fetchProducts(),
+        fetchCategories()
+      ]);
       setAllProducts(fetchedProducts);
       setFilteredProducts(fetchedProducts);
       setCategories(fetchedCategories);
     }
     loadData();
-  }, []);
+  }, [fetchProducts, fetchCategories]);
 
+  // Toggle the filter modal
   const toggleFilterModal = () => {
     setIsFilterModalOpen((prevState) => !prevState);
   };
 
-  const handleApplyFilters = (filters) => {
+  // Apply filters and update filtered products
+  const handleApplyFilters = useCallback((filters) => {
     setAppliedFilters(filters);
     const { priceRange, categories, tags } = filters;
 
@@ -46,11 +51,10 @@ export default function HomePage() {
     });
 
     setFilteredProducts(filtered);
-  };
+  }, [allProducts]);
 
   const topDeals = filteredProducts.filter(p => p.discount);
   const newArrivals = filteredProducts.filter(p => new Date(p.created_at) > new Date('2024-01-01'));
-
 
   return (
     <div className="space-y-8 p-4">
@@ -67,8 +71,6 @@ export default function HomePage() {
           </button>
         </div>
       </div>
-
-
 
       <div className="w-full h-48 bg-secondaryvariant">Marketing Banner Carousel</div>
 

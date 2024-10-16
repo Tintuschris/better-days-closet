@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from '../../hooks/useSupabase';
 
 export default function Wishlist() {
@@ -7,14 +7,25 @@ export default function Wishlist() {
   const [wishlist, setWishlist] = useState([]);
   const userId = 1;  // Replace with actual user ID
 
-  useEffect(() => {
-    fetchWishlistItems(userId).then(setWishlist);
-  }, []);
+  const fetchWishlist = useCallback(
+    async () => {
+      const data = await fetchWishlistItems(userId);
+      setWishlist(data);
+    },
+    [fetchWishlistItems, userId]
+  );
 
-  const handleDelete = async (productId) => {
-    await deleteFromWishlist(userId, productId);
-    setWishlist(wishlist.filter(item => item.product_id !== productId));
-  };
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
+
+  const handleDelete = useCallback(
+    async (productId) => {
+      await deleteFromWishlist(userId, productId);
+      setWishlist(wishlist.filter(item => item.product_id !== productId));
+    },
+    [deleteFromWishlist, userId, wishlist]
+  );
 
   return (
     <div>
@@ -29,3 +40,5 @@ export default function Wishlist() {
     </div>
   );
 }
+
+

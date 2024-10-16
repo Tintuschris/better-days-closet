@@ -119,7 +119,7 @@ export default function LoginPage() {
       {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
       
       <p className="mt-8 text-center">
-        <span className="text-secondarycolor">Don't have an account? </span>
+        <span className="text-secondarycolor">Don&apos;t have an account? </span>
         <a href="/auth/signup" className="text-primarycolor underline">Create account</a>
       </p>
       

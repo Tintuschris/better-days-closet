@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 
 export default function WishlistPage() {
@@ -7,9 +7,13 @@ export default function WishlistPage() {
   const [wishlist, setWishlist] = useState([]);
   const userId = 1;  // Fetch the actual user ID here
 
-  useEffect(() => {
+  const fetchWishlist = useCallback(() => {
     fetchWishlistItems(userId).then(setWishlist);
-  }, []);
+  }, [fetchWishlistItems, userId]);
+
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
 
   const handleDelete = async (productId) => {
     await deleteFromWishlist(userId, productId);
@@ -29,3 +33,4 @@ export default function WishlistPage() {
     </div>
   );
 }
+
