@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from 'react';
-import CategoryForm from '../components/CategoryForm';
+import CategoryForm from '../components/categoryform';
 import { useSupabase } from '../hooks/useSupabase'; // Adjust import path if necessary
 
 export default function CategoryManagement() {

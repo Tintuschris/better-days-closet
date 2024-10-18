@@ -1,4 +1,4 @@
-import OrderTable from '../components/OrderTable';
+import OrderTable from '../components/ordertable';
 
 export default function OrderManagement() {
   return (
