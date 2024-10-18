@@ -1,5 +1,5 @@
 "use client";
-import ProductForm from '../components/ProductForm';
+import ProductForm from '../components/productform';
 import ProductTable from '../components/producttable';
 import { useSupabase } from '../hooks/useSupabase';
 import { useEffect, useState, useCallback } from 'react';

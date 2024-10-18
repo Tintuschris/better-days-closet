@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from './hooks/useSupabase';
-import ProductCarousel from './components/ProductCarousel';
-import CategoryListing from './components/CategoryListing';
+import ProductCarousel from './components/productcarousel';
+import CategoryListing from './components/categorylisting';
 import { Filter } from 'lucide-react';
 import FilterModal from './(modals)/filtermodal';
 

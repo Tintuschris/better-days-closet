@@ -3,7 +3,7 @@
 
 import { usePathname } from 'next/navigation';
 import LayoutWrapper from './layoutwrapper';
-import Footer from './components/Footer';
+import Footer from './components/footer';
 
 export default function ClientLayoutWrapper({ children }) {
   const pathname = usePathname();

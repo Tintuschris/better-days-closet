@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
-import ProductCard from '../components/ProductCard';
+import ProductCard from '../components/productcard';
 
 export default function TopDealsPage() {
   const [products, setProducts] = useState([]);
