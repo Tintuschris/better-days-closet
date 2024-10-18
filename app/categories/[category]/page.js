@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useSupabase } from '../../hooks/useSupabase';
-import ProductListing from '../../components/ProductListing';
+import ProductListing from '../../components/productlisting';
 
 export default function CategoryPage() {
   const { fetchProductsByCategory } = useSupabase();

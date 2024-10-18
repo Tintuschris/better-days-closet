@@ -1,7 +1,7 @@
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
-import ProductCard from './ProductCard';
+import ProductCard from './productcard';
 import Link from 'next/link';
 
 // Import Swiper styles
