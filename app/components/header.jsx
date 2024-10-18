@@ -112,7 +112,7 @@ export default function Header({ activeIcon, setActiveIcon }) {
 
       {/* Hamburger Menu - Categories */}
       {menuOpen && (
-        <nav ref={menuRef} className="absolute left-0 top-16 text-primarycolor bg-secondarycolor w-full shadow-md">
+        <nav ref={menuRef} className="absolute z-100 left-0 top-16 text-primarycolor bg-secondarycolor w-full shadow-md">
           <ul className="p-4">
             {categories.length > 0 ? (
               categories.map((category) => (

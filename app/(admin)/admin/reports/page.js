@@ -1,5 +1,5 @@
 "use client";
-import SalesGraph from '../components/SalesGraph';
+import SalesGraph from '../components/salesgraph';
 import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 
