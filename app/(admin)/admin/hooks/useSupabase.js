@@ -1,6 +1,5 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique file names
-
 export const useSupabase = () => {
   // Fetch products from the database
   const fetchProducts = async () => {
