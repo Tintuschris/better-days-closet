@@ -13,7 +13,7 @@ export const useSupabase = () => {
       console.error("Error fetching categories:", error);
       throw error;
     }
-    console.log("Fetched categories:", data);  // Add this line for debugging
+    console.log("Fetched categories:", data);
     return data;
   };
 
@@ -23,23 +23,58 @@ export const useSupabase = () => {
     return data;
   };
 
-  // New function to fetch products by category
   const fetchProductsByCategory = async (categoryName) => {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('category_name', categoryName);  // Adjust according to your category field in the database
+      .eq('category_name', categoryName);
     if (error) throw error;
     return data;
   };
 
-  const addToCart = async (userId, productId, quantity) => {
-    const { data, error } = await supabase
+ // Updated addToCart function with upsert logic
+const addToCart = async (userId, productId, quantity) => {
+  try {
+    // First check if item exists
+    const { data: existingItem } = await supabase
       .from('cart')
-      .insert([{ user_id: userId, product_id: productId, quantity }]);
-    if (error) throw error;
-    return data;
-  };
+      .select('*')
+      .eq('user_id', userId)
+      .eq('product_id', productId)
+      .single();
+
+    if (existingItem) {
+      // Update existing item
+      const { data, error } = await supabase
+        .from('cart')
+        .update({ 
+          quantity: existingItem.quantity + quantity,
+          updated_at: new Date().toISOString() // Optional: track last update
+        })
+        .eq('user_id', userId)
+        .eq('product_id', productId);
+
+      if (error) throw error;
+      return data;
+    } else {
+      // Insert new item
+      const { data, error } = await supabase
+        .from('cart')
+        .insert([{ 
+          user_id: userId, 
+          product_id: productId, 
+          quantity,
+          created_at: new Date().toISOString() // Optional: track creation time
+        }]);
+
+      if (error) throw error;
+      return data;
+    }
+  } catch (error) {
+    console.error('Error in addToCart:', error);
+    throw error;
+  }
+};
 
   const fetchCartItems = async (userId) => {
     const { data, error } = await supabase.from('cart').select('*').eq('user_id', userId);
@@ -47,6 +82,39 @@ export const useSupabase = () => {
     return data;
   };
 
+  const updateCartInDatabase = async (userId, cartItems) => {
+    // Only update the specific items that have changed
+    for (const item of cartItems) {
+      const { error } = await supabase
+        .from('cart')
+        .upsert({
+          user_id: userId,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          total_amount: item.total_amount,
+        }, {
+          onConflict: 'user_id,product_id'
+        });
+  
+      if (error) {
+        console.error('Error updating cart in database:', error);
+        throw error;
+      }
+    }
+  };
+  
+  // Add this new function to delete cart items
+  const deleteFromCart = async (userId, productId) => {
+    const { error } = await supabase
+      .from('cart')
+      .delete()
+      .match({ user_id: userId, product_id: productId });
+  
+    if (error) {
+      console.error('Error deleting from cart:', error);
+      throw error;
+    }
+  };
   const fetchOrders = async (userId) => {
     const { data, error } = await supabase.from('orders').select('*').eq('user_id', userId);
     if (error) throw error;
@@ -84,9 +152,11 @@ export const useSupabase = () => {
     fetchProductsByCategory,
     addToCart,
     fetchCartItems,
+    deleteFromCart,
+    updateCartInDatabase,  // Make sure it's available for the CartPage
     fetchOrders,
     fetchWishlistItems,
-    addToWishlist,  // Add the new function here
+    addToWishlist,
     deleteFromWishlist,
   };
 };

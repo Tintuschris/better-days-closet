@@ -1,7 +1,10 @@
 // app/layout.js (Root Layout - Server Component)
 import { Montserrat } from 'next/font/google';
 import './globals.css';
-import ClientLayoutWrapper from './clientlayoutwrapper'; // Import client-side layout handler
+import ClientLayoutWrapper from './clientlayoutwrapper';
+import { SupabaseProvider } from './context/supabaseContext';
+import { CartProvider } from './context/cartContext'
+
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -17,11 +20,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={montserrat.variable}>
-        {/* Client-side logic to conditionally render layout based on route */}
-        <ClientLayoutWrapper>
-          {children}
-        </ClientLayoutWrapper>
+      <body className={`${montserrat.variable} font-montserrat`}>
+        <SupabaseProvider>
+          <CartProvider>
+            <ClientLayoutWrapper>
+              {children}
+            </ClientLayoutWrapper>
+          </CartProvider>
+        </SupabaseProvider>
       </body>
     </html>
   );

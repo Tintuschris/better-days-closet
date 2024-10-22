@@ -2,11 +2,11 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Search, X } from 'lucide-react'; // For the search icon
-import { useSupabase } from '../hooks/useSupabase'; // Assuming you have Supabase hooked up for fetching products
+import { useSupabaseContext } from '../context/supabaseContext';
 import Link from 'next/link';
 
 export default function SearchModal({ closeModal }) {
-  const { fetchProducts } = useSupabase(); // This hook will fetch products
+  const { fetchProducts } = useSupabaseContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]); // For the floating suggestions list
   const [results, setResults] = useState([]); // For search results

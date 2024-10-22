@@ -4,10 +4,12 @@
 import { usePathname } from 'next/navigation';
 import LayoutWrapper from './layoutwrapper';
 import Footer from './components/footer';
+import Header from './components/header'; 
 
 export default function ClientLayoutWrapper({ children }) {
   const pathname = usePathname();
   const isHomepage = pathname === '/';
+  const isCategoryPage = pathname.startsWith('/categories/');
 
   if (isHomepage) {
     return (
@@ -18,6 +20,16 @@ export default function ClientLayoutWrapper({ children }) {
     );
   }
 
-  // For all other routes, just render the children without LayoutWrapper and Footer
+  if (isCategoryPage) {
+    return (
+      <>
+        <Header />
+        {children}
+        <Footer />
+      </>
+    );
+  }
+
+  // For all other routes, just render the children
   return <>{children}</>;
 }

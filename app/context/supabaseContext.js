@@ -1,149 +1,135 @@
 // context/SupabaseContext.js
 "use client";
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';  // Import the useAuth hook
+import { useAuth } from '../hooks/useAuth';
 
 const SupabaseContext = createContext();
 
 export const SupabaseProvider = ({ children }) => {
-  const { user, signIn, signOut, isAuthenticated } = useAuth();  // Destructure auth-related functions
-
-  // Caching state for products, categories, etc.
+  const { user, signIn, signOut, isAuthenticated, userDetails, fetchUserDetails } = useAuth();
   const [products, setProducts] = useState(null);
   const [categories, setCategories] = useState(null);
   const [cartItems, setCartItems] = useState(null);
   const [wishlistItems, setWishlistItems] = useState(null);
 
-  // Cache expiry setup (optional)
-  const CACHE_EXPIRY_MS = 60 * 1000; // Cache expiry in milliseconds (e.g., 60 seconds)
+  const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes cache expiry
   const [cacheTimestamp, setCacheTimestamp] = useState({});
 
-  const isCacheExpired = (key) => {
+  const isCacheExpired = useCallback((key) => {
     return Date.now() - (cacheTimestamp[key] || 0) > CACHE_EXPIRY_MS;
-  };
+  }, [cacheTimestamp]);
 
-  // ----------------- Read Operations -----------------
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     if (products && !isCacheExpired('products')) return products;
     const { data, error } = await supabase.from('products').select('*');
     if (error) throw error;
     setProducts(data);
-    setCacheTimestamp((prev) => ({ ...prev, products: Date.now() }));
+    setCacheTimestamp(prev => ({ ...prev, products: Date.now() }));
     return data;
-  };
+  }, [products, isCacheExpired]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     if (categories && !isCacheExpired('categories')) return categories;
     const { data, error } = await supabase.from('categories').select('*');
     if (error) throw error;
     setCategories(data);
-    setCacheTimestamp((prev) => ({ ...prev, categories: Date.now() }));
+    setCacheTimestamp(prev => ({ ...prev, categories: Date.now() }));
     return data;
-  };
+  }, [categories, isCacheExpired]);
 
-  const fetchCartItems = async (userId) => {
-    if (cartItems && !isCacheExpired('cartItems')) return cartItems;
-    const { data, error } = await supabase.from('cart').select('*').eq('user_id', userId);
-    if (error) throw error;
-    setCartItems(data);
-    setCacheTimestamp((prev) => ({ ...prev, cartItems: Date.now() }));
-    return data;
-  };
-
-  const fetchWishlistItems = async (userId) => {
-    if (wishlistItems && !isCacheExpired('wishlistItems')) return wishlistItems;
-    const { data, error } = await supabase.from('wishlist').select('*').eq('user_id', userId);
-    if (error) throw error;
-    setWishlistItems(data);
-    setCacheTimestamp((prev) => ({ ...prev, wishlistItems: Date.now() }));
-    return data;
-  };
-
-  const fetchProductById = async (id) => {
+  const fetchProductById = useCallback(async (id) => {
     const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
     if (error) throw error;
     return data;
-  };
+  }, []);
 
-  const fetchProductsByCategory = async (categoryName) => {
+  const fetchProductsByCategory = useCallback(async (categoryName) => {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('category_name', categoryName);
     if (error) throw error;
     return data;
-  };
+  }, []);
 
-  const fetchOrders = async (userId) => {
-    const { data, error } = await supabase.from('orders').select('*').eq('user_id', userId);
-    if (error) throw error;
-    return data;
-  };
-
-  // ----------------- Mutation Operations (Write Operations) -----------------
-
-  const addToCart = async (userId, productId, quantity) => {
+  const addToCart = useCallback(async (userId, productId, quantity) => {
     const { data, error } = await supabase
       .from('cart')
-      .insert([{ user_id: userId, product_id: productId, quantity }]);
+      .upsert({ user_id: userId, product_id: productId, quantity }, { onConflict: ['user_id', 'product_id'] });
     if (error) throw error;
-
-    // After adding to cart, invalidate the cart cache
-    setCacheTimestamp((prev) => ({ ...prev, cartItems: 0 }));
+    setCacheTimestamp(prev => ({ ...prev, cartItems: 0 }));
     return data;
-  };
+  }, []);
 
-  const addToWishlist = async (userId, productId) => {
+  const fetchCartItems = useCallback(async (userId) => {
+    if (cartItems && !isCacheExpired('cartItems')) return cartItems;
+    const { data, error } = await supabase.from('cart').select('*').eq('user_id', userId);
+    if (error) throw error;
+    setCartItems(data);
+    setCacheTimestamp(prev => ({ ...prev, cartItems: Date.now() }));
+    return data;
+  }, [cartItems, isCacheExpired]);
+
+  const fetchWishlistItems = useCallback(async (userId) => {
+    if (wishlistItems && !isCacheExpired('wishlistItems')) return wishlistItems;
+    const { data, error } = await supabase.from('wishlist').select('*').eq('user_id', userId);
+    if (error) throw error;
+    setWishlistItems(data);
+    setCacheTimestamp(prev => ({ ...prev, wishlistItems: Date.now() }));
+    return data;
+  }, [wishlistItems, isCacheExpired]);
+
+  const addToWishlist = useCallback(async (userId, productId) => {
     const { data, error } = await supabase
       .from('wishlist')
       .insert([{ user_id: userId, product_id: productId }]);
     if (error) throw error;
-
-    // Invalidate wishlist cache after adding item
-    setCacheTimestamp((prev) => ({ ...prev, wishlistItems: 0 }));
+    setCacheTimestamp(prev => ({ ...prev, wishlistItems: 0 }));
     return data;
-  };
+  }, []);
 
-  const deleteFromWishlist = async (userId, productId) => {
+  const deleteFromWishlist = useCallback(async (userId, productId) => {
     const { data, error } = await supabase
       .from('wishlist')
       .delete()
       .eq('user_id', userId)
       .eq('product_id', productId);
     if (error) throw error;
-
-    // Invalidate wishlist cache after deletion
-    setCacheTimestamp((prev) => ({ ...prev, wishlistItems: 0 }));
+    setCacheTimestamp(prev => ({ ...prev, wishlistItems: 0 }));
     return data;
+  }, []);
+
+  const fetchOrders = useCallback(async (userId) => {
+    const { data, error } = await supabase.from('orders').select('*').eq('user_id', userId);
+    if (error) throw error;
+    return data;
+  }, []);
+
+  const value = {
+    fetchProducts,
+    fetchCategories,
+    fetchProductById,
+    fetchProductsByCategory,
+    addToCart,
+    fetchCartItems,
+    fetchWishlistItems,
+    addToWishlist,
+    deleteFromWishlist,
+    fetchOrders,
+    user,
+    signIn,
+    signOut,
+    isAuthenticated,
+    userDetails,
+    fetchUserDetails,
   };
 
-  // ----------------- Provide Everything Through Context -----------------
-
   return (
-    <SupabaseContext.Provider
-      value={{
-        fetchProducts,
-        fetchCategories,
-        fetchProductById,
-        fetchProductsByCategory,
-        addToCart,
-        fetchCartItems,
-        fetchOrders,
-        fetchWishlistItems,
-        addToWishlist,
-        deleteFromWishlist,
-        user,            // Provide the auth-related values
-        signIn,
-        signOut,
-        isAuthenticated,
-      }}
-    >
+    <SupabaseContext.Provider value={value}>
       {children}
     </SupabaseContext.Provider>
   );
 };
 
-// Hook to use the Supabase context
 export const useSupabaseContext = () => useContext(SupabaseContext);

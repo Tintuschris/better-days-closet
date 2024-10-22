@@ -3,24 +3,49 @@ import { supabase } from '../lib/supabase';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
-    // Make useEffect asynchronous to handle promises
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();  // Use getSession to get session data
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) {
+        await fetchUserDetails(session.user.id);
+      }
     };
 
-    getSession();  // Call the function to get the session
+    getSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user || null);
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) {
+        await fetchUserDetails(session.user.id);
+      } else {
+        setUserDetails(null);
+      }
     });
 
     return () => {
-      listener.subscription.unsubscribe();  // Updated unsubscribe pattern
+      listener.subscription.unsubscribe();
     };
   }, []);
+
+  const fetchUserDetails = async (userId) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('name, email')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching user details:', error);
+    } else {
+      setUserDetails(data);
+    }
+  };
 
   const signIn = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -30,45 +55,42 @@ export const useAuth = () => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setIsAuthenticated(false);
+    setUserDetails(null);
   };
 
   const signUp = async (name, email, password) => {
     try {
-      // Sign up the user using Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password
       });
   
       if (error) {
-        throw error; // Handle signup errors
+        throw error;
       }
   
-      // Extract the user ID from the response
-      const userId = data?.user?.id; // Extract user ID safely
+      const userId = data?.user?.id;
   
       if (!userId) {
         throw new Error('User ID not found after signup');
       }
   
-      // After successful sign-up, insert user details into the users table
       const { error: insertError } = await supabase
         .from('users')
         .insert([{ id: userId, name, email }]);
   
       if (insertError) {
-        throw insertError; // Handle insertion errors
+        throw insertError;
       }
+  
+      await fetchUserDetails(userId);
   
     } catch (err) {
       console.error('Error during signup:', err);
-      throw err; // Re-throw the error to be handled by the calling function
+      throw err;
     }
   };
-  
 
-
-  
-
-  return { user, signIn, signOut, signUp };
+  return { user, signIn, signOut, signUp, isAuthenticated, userDetails };
 };
