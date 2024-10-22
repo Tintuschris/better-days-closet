@@ -1,22 +1,19 @@
-"use client"
-import { useEffect, useState, useCallback } from 'react';
-import { useSupabase } from '../hooks/useSupabase';
+"use client";
+import { useEffect, useState } from 'react';
+import { useSupabaseContext } from '../context/supabaseContext';
 
 export default function WishlistPage() {
-  const { fetchWishlistItems, deleteFromWishlist } = useSupabase();
+  const { fetchWishlistItems, deleteFromWishlist, user } = useSupabaseContext();
   const [wishlist, setWishlist] = useState([]);
-  const userId = 1;  // Fetch the actual user ID here
-
-  const fetchWishlist = useCallback(() => {
-    fetchWishlistItems(userId).then(setWishlist);
-  }, [fetchWishlistItems, userId]);
 
   useEffect(() => {
-    fetchWishlist();
-  }, [fetchWishlist]);
+    if (user) {
+      fetchWishlistItems(user.id).then(setWishlist);
+    }
+  }, [user, fetchWishlistItems]);
 
   const handleDelete = async (productId) => {
-    await deleteFromWishlist(userId, productId);
+    await deleteFromWishlist(user.id, productId);
     setWishlist(wishlist.filter(item => item.product_id !== productId));
   };
 
@@ -33,4 +30,3 @@ export default function WishlistPage() {
     </div>
   );
 }
-

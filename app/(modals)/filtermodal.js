@@ -58,7 +58,7 @@ export default function FilterModal({ categories = [], onApplyFilters, closeModa
       {/* Category Filter */}
       <div className="mb-6">
         <h2 className="mb-2">Category</h2>
-        {['Men', 'Women', 'Kids', 'Shoes', 'Kitchenware', 'Electronics'].map((category) => (
+        {categories.map((category) => (
           <div key={category} className="flex items-center mb-2">
             <input
               type="checkbox"

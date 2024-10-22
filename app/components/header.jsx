@@ -2,65 +2,21 @@
 import { AlignLeft, ShoppingCart, User, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useSupabase } from "../hooks/useSupabase";
-import { useAuth } from "../hooks/useAuth";
+import { useState, useEffect, useRef } from "react";
+import { useSupabaseContext } from "../context/supabaseContext";
+import { useCart } from '../context/cartContext';
 
 export default function Header({ activeIcon, setActiveIcon }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { fetchCategories } = useSupabase();
+  const { fetchCategories, user } = useSupabaseContext();
   const [categories, setCategories] = useState([]);
   const menuRef = useRef(null);
-  const { user } = useAuth();
+  const { cartCount } = useCart();
 
-  // Local cart state
-  const [cartCount, setCartCount] = useState(0);
-
-  // Fetch categories using useCallback
-  const getCategories = useCallback(() => {
-    fetchCategories()
-      .then((data) => {
-        console.log("Categories from Supabase:", data);
-        if (data) {
-          setCategories(data);
-        } else {
-          console.log("No categories found");
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to fetch categories:", error);
-      });
+  useEffect(() => {
+    fetchCategories().then(setCategories).catch(console.error);
   }, [fetchCategories]);
 
-  // Fetch categories on component mount
-  useEffect(() => {
-    getCategories();
-  }, [getCategories]);
-
-  // Retrieve cart items from localStorage
-  const updateCartCount = useCallback(() => {
-    const cartItems = JSON.parse(localStorage.getItem("cart")) || [];
-    const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-    setCartCount(totalItems);
-  }, []);
-
-  useEffect(() => {
-    updateCartCount(); // Set initial cart count
-  }, [updateCartCount]);
-
-  // Handle cart change in localStorage
-  useEffect(() => {
-    const handleCartUpdate = () => {
-      updateCartCount(); // Update cart count when local storage changes
-    };
-
-    window.addEventListener("storage", handleCartUpdate);
-    return () => {
-      window.removeEventListener("storage", handleCartUpdate);
-    };
-  }, [updateCartCount]);
-
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -75,59 +31,80 @@ export default function Header({ activeIcon, setActiveIcon }) {
   }, []);
 
   return (
-    <header className="p-4 text-primarycolor bg-white shadow-md flex justify-between items-center">
-      {/* Hamburger Menu Toggle */}
-      <button onClick={() => setMenuOpen(!menuOpen)} className="text-center">
-        {menuOpen ? <X className="h-6 w-6 text-warningcolor" /> : <AlignLeft className="h-6 w-6 text-primarycolor" />}
-      </button>
-
-      {/* Logo */}
-      <Link href="/">
-        <Image src="/logo.png" alt="Better Days Closet" width={32} height={32} />
-      </Link>
-
-      {/* Icons */}
-      <div className="relative flex space-x-4">
-        {/* Shopping Cart Icon */}
-        <button onClick={() => setActiveIcon("cart")} className="relative text-center">
-          <Link href="/cart">
-            <ShoppingCart className={`h-6 w-6 ${activeIcon === "cart" ? "text-secondarycolor" : "text-primarycolor"}`} />
-          </Link>
-
-          {/* Badge for Cart Item Count */}
-          {cartCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-warningcolor text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              {cartCount}
-            </span>
-          )}
+    <>
+      <header className="relative z-50 p-4 text-primarycolor bg-white shadow-md flex justify-between items-center">
+        <button 
+          onClick={() => setMenuOpen(!menuOpen)} 
+          className="text-center transition-transform duration-200 ease-in-out hover:scale-110"
+        >
+          {menuOpen ? 
+            <X className="h-6 w-6 text-warningcolor transition-all duration-200 ease-in-out" /> : 
+            <AlignLeft className="h-6 w-6 text-primarycolor transition-all duration-200 ease-in-out" />
+          }
         </button>
 
-        {/* Profile Icon */}
-        <button onClick={() => setActiveIcon("profile")} className="text-center">
-          <Link href={user ? "/profile" : "/auth/login"}>
-            <User className={`h-6 w-6 ${activeIcon === "profile" ? "text-secondarycolor" : "text-primarycolor"}`} />
-          </Link>
-        </button>
-      </div>
+        <Link href="/">
+          <Image src="/logo.png" alt="Better Days Closet" width={32} height={32} />
+        </Link>
 
-      {/* Hamburger Menu - Categories */}
-      {menuOpen && (
-        <nav ref={menuRef} className="absolute z-100 left-0 top-16 text-primarycolor bg-secondarycolor w-full shadow-md">
-          <ul className="p-4">
-            {categories.length > 0 ? (
-              categories.map((category) => (
-                <li key={category.id} className="py-2">
-                  <Link href={`/categories/${category.name}`}>
-                    {category.name}
-                  </Link>
-                </li>
-              ))
-            ) : (
-              <li>No categories available</li>
+        <div className="relative flex space-x-4">
+          <button onClick={() => setActiveIcon("cart")} className="relative text-center">
+            <Link href="/cart">
+              <ShoppingCart className={`h-6 w-6 transition-colors duration-200 ${activeIcon === "cart" ? "text-secondarycolor" : "text-primarycolor"}`} />
+            </Link>
+
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-warningcolor text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {cartCount}
+              </span>
             )}
-          </ul>
-        </nav>
-      )}
-    </header>
+          </button>
+
+          <button onClick={() => setActiveIcon("profile")} className="text-center">
+            <Link href={user ? "/profile" : "/auth/login"}>
+              <User className={`h-6 w-6 transition-colors duration-200 ${activeIcon === "profile" ? "text-secondarycolor" : "text-primarycolor"}`} />
+            </Link>
+          </button>
+        </div>
+      </header>
+
+      {/* Overlay */}
+      <div 
+        className={`fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ease-in-out z-30
+          ${menuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setMenuOpen(false)}
+      />
+
+      {/* Menu */}
+      <nav 
+        ref={menuRef} 
+        className={`fixed z-40 left-0 text-primarycolor bg-secondarycolor w-full shadow-md
+          transition-all duration-300 ease-in-out
+          ${menuOpen ? 'top-16' : '-top-[100%]'}
+          max-h-[calc(100vh-4rem)] overflow-y-auto`}
+      >
+        <ul className="p-4">
+          {categories.length > 0 ? (
+            categories.map((category, index) => (
+              <li 
+                key={category.id} 
+                className={`py-2 border-b border-white/20 ${index === categories.length - 1 ? 'border-b-0' : ''}
+                  transition-colors duration-200 hover:bg-white/10`}
+              >
+                <Link 
+                  href={`/categories/${category.name}`}
+                  className="block w-full"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {category.name}
+                </Link>
+              </li>
+            ))
+          ) : (
+            <li>No categories available</li>
+          )}
+        </ul>
+      </nav>
+    </>
   );
 }

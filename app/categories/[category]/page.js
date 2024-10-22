@@ -1,22 +1,23 @@
-'use client';
+"use client";
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useSupabase } from '../../hooks/useSupabase';
+import { useSupabaseContext } from '../../context/supabaseContext';
 import ProductListing from '../../components/productlisting';
 
 export default function CategoryPage() {
-  const { fetchProductsByCategory } = useSupabase();
+  const { fetchProductsByCategory } = useSupabaseContext();
   const [products, setProducts] = useState([]);
-  const { category } = useParams();  // Access dynamic category from the URL
+  const { category } = useParams();
 
   useEffect(() => {
-    if (!category) return;
-    fetchProductsByCategory(category).then(setProducts);
+    if (category) {
+      fetchProductsByCategory(category).then(setProducts);
+    }
   }, [category, fetchProductsByCategory]);
 
   return (
     <div className="p-4 min-h-screen">
-      <h1 className="text-xl font-bold mb-4 capitalize">{category}</h1>
+      <h1 className="text-xl font-bold mb-4 text-primarycolor capitalize">{category}</h1>
       <ProductListing products={products} />
     </div>
   );

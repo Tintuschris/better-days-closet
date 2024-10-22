@@ -15,10 +15,13 @@ module.exports = {
         secondarycolor: "#FC9AE7",
         secondaryvariant: "#FFD6F6",
         warningcolor: "#FF5449"
-
       },
       borderRadius:{
         primaryradius: "18px"
+      },
+      fontFamily: {
+        sans: ['var(--font-montserrat)'],
+        montserrat: ['var(--font-montserrat)'],
       },
     },
   },
