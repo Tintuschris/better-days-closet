@@ -7,6 +7,10 @@
   --foreground: #171717;
   --primarycolor:#460066;
   --secondarycolor:#FC9AE7;
+  --toast-background: var(--primarycolor);
+  --toast-border: 2px solid var(--secondarycolor);
+  --toast-color: white;
+  --toast-border-radius: 24px;
 }
 
 @media (prefers-color-scheme: dark) {

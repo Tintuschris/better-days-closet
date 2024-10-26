@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useSupabase } from '../hooks/useSupabase';
 
 const SupabaseContext = createContext();
 
@@ -12,6 +13,8 @@ export const SupabaseProvider = ({ children }) => {
   const [categories, setCategories] = useState(null);
   const [cartItems, setCartItems] = useState(null);
   const [wishlistItems, setWishlistItems] = useState(null);
+  const [deliveryAddress, setDeliveryAddress] = useState(null);
+  const [deliveryCost, setDeliveryCost] = useState(null);
 
   const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes cache expiry
   const [cacheTimestamp, setCacheTimestamp] = useState({});
@@ -100,29 +103,78 @@ export const SupabaseProvider = ({ children }) => {
     return data;
   }, []);
 
-  const fetchOrders = useCallback(async (userId) => {
-    const { data, error } = await supabase.from('orders').select('*').eq('user_id', userId);
-    if (error) throw error;
-    return data;
-  }, []);
+  const fetchOrders = async (userId) => {
+    // First get the orders
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('user_id', userId);
 
+    if (error) throw error;
+    
+    // Then get the associated product details
+    if (orders) {
+      const ordersWithDetails = await Promise.all(
+        orders.map(async (order) => {
+          const { data: product } = await supabase
+            .from('products')
+            .select('name, image_url, price')
+            .eq('id', order.product_id)
+            .single();
+            
+          return {
+            ...order,
+            product_details: product
+          };
+        })
+      );
+      return ordersWithDetails;
+    }
+    
+    return [];
+  };
+
+  const fetchDeliveryAddress = useCallback(async (userId) => {
+    if (!userId) return;
+    const { data, error } = await supabase
+      .from('addresses')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+  
+    if (!error && data) {
+      setDeliveryAddress(data);
+      setDeliveryCost(data.cost);
+    }
+  }, []);
+  const updateDeliveryDetails = (address, cost) => {
+    setDeliveryAddress(address);
+    setDeliveryCost(cost);
+  };
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchDeliveryAddress(user.id);
+    }
+  }, [user, fetchDeliveryAddress]);
   const value = {
-    fetchProducts,
-    fetchCategories,
-    fetchProductById,
-    fetchProductsByCategory,
-    addToCart,
-    fetchCartItems,
-    fetchWishlistItems,
-    addToWishlist,
-    deleteFromWishlist,
-    fetchOrders,
     user,
     signIn,
     signOut,
     isAuthenticated,
     userDetails,
     fetchUserDetails,
+    products,
+    categories,
+    fetchProducts,
+    fetchCategories,
+    fetchOrders,
+    supabase,
+    deliveryAddress,
+    deliveryCost,
+    setDeliveryCost,
+    updateDeliveryDetails,
+    fetchDeliveryAddress
   };
 
   return (
@@ -130,6 +182,4 @@ export const SupabaseProvider = ({ children }) => {
       {children}
     </SupabaseContext.Provider>
   );
-};
-
-export const useSupabaseContext = () => useContext(SupabaseContext);
+};export const useSupabaseContext = () => useContext(SupabaseContext);

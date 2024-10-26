@@ -6,13 +6,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import DeliveryAddress from './components/deliveryaddress';
 import Wishlist from './components/wishlist';
 import Orders from './components/orders';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import AccountSettings from './components/accountsettings';
 
 export default function ProfilePage() {
   const { user, signOut, userDetails, fetchUserDetails } = useSupabaseContext();
   const router = useRouter();
-  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') || null;
 
   useEffect(() => {
     if (user && fetchUserDetails) {
@@ -29,47 +30,43 @@ export default function ProfilePage() {
     {
       icon: <MapPin className="w-6 h-6" />,
       label: "Delivery Address",
-      id: "delivery-address",
-      component: DeliveryAddress,
-      route: "/delivery-address"
+      id: "delivery",
+      component: DeliveryAddress
     },
     {
       icon: <Heart className="w-6 h-6" />,
       label: "My Wishlist",
       id: "wishlist",
-      component: Wishlist,
-      route: "/wishlist"
+      component: Wishlist
     },
     {
       icon: <Package className="w-6 h-6" />,
       label: "My Orders",
       id: "orders",
-      component: Orders,
-      route: "/orders"
+      component: Orders
     },
     {
       icon: <Settings className="w-6 h-6" />,
       label: "Account Settings",
-      id: "account-settings",
-      component: AccountSettings,
-      route: "/account-settings"
+      id: "account",
+      component: AccountSettings
     }
   ];
 
-  const setActiveTab = (route) => {
-    router.push(`/profile/${route}`);
+  const setActiveTab = (tabId) => {
+    router.push(`/profile?tab=${tabId}`);
   };
-
-  const activeTab = navigationItems.find(item => pathname.includes(item.id))?.id || null;
 
   const handleSignOut = async () => {
     await signOut();
     router.push('/auth/login');
   };
 
+  const isActiveTab = activeTab !== null;
+
   return (
     <AnimatePresence mode="wait">
-      {!activeTab ? (
+      {!isActiveTab ? (
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}

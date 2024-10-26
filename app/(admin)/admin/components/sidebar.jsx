@@ -22,14 +22,14 @@ export default function Sidebar() {
     <>
       {isMobile && (
         <button
-          className="fixed top-4 left-4 z-20 text-primarycolor"
+          className="fixed top-4 w-24 left-4 z-20 text-primarycolor"
           onClick={toggleSidebar}
         >
           <Menu size={24} />
         </button>
       )}
       <div
-        className={`fixed top-0 left-0 w-64 h-screen bg-primarycolor text-white transform transition-transform duration-300 ease-in-out ${
+        className={`relative top-0 left-0 w-64 h-screen bg-primarycolor text-white transform transition-transform duration-300 ease-in-out ${
           isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'
         }`}
       >
@@ -46,6 +46,12 @@ export default function Sidebar() {
           </li>
           <li className="p-4">
             <Link href="/admin/reports">Sales Reports</Link>
+          </li>
+          <li className="p-4">
+            <Link href="/admin/reports">Sales Reports</Link>
+          </li>
+          <li className="p-4">
+            <Link href="/admin/delivery-addresses">Delivery Addresses</Link>
           </li>
         </ul>
       </div>

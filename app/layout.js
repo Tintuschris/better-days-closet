@@ -6,6 +6,7 @@ import { SupabaseProvider } from './context/supabaseContext';
 import { CartProvider } from './context/cartContext'
 
 
+
 const montserrat = Montserrat({
   subsets: ['latin'],
   weight: ['500'],
