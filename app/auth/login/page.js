@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { ChevronLeft } from 'lucide-react';
 import { setCookie, getCookie, hasCookie } from 'cookies-next';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const { signIn, user } = useAuth();
@@ -120,7 +121,7 @@ export default function LoginPage() {
       
       <p className="mt-8 text-center">
         <span className="text-secondarycolor">Don&apos;t have an account? </span>
-        <a href="/auth/signup" className="text-primarycolor underline">Create account</a>
+        <Link href="/auth/signup" className="text-primarycolor underline">Create account</Link>
       </p>
       
       {/* Pink wave at the bottom */}
