@@ -1,3 +1,4 @@
+import Link from "next/link";
 export default function CategoryListing({ categories }) {
   return (
     <div className="space-y-4 ">
@@ -5,13 +6,13 @@ export default function CategoryListing({ categories }) {
       {/* Make the container horizontally scrollable but hide the scrollbar */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide">
         {categories.map((category) => (
-          <a
+          <Link
             key={category.id}
             href={`/categories/${category.name}`}
-            className="block p-[0.35rem] bg-secondarycolor text-primarycolor h-[34px] rounded-primaryradius text-sm text-center font-medium flex-grow min-w-[100px]"
+            className="block p-[0.35rem] bg-secondarycolor text-primarycolor h-[34px] rounded-primaryradius border border-primarycolor text-sm text-center font-medium flex-grow min-w-[100px]"
           >
             {category.name}
-          </a>
+          </Link>
         ))}
       </div>
     </div>

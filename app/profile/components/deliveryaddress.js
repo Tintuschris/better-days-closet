@@ -1,171 +1,453 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useSupabase } from '../../hooks/useSupabase';
+import { useAuth } from '../../hooks/useAuth';
+import { useCart } from '../../context/cartContext';
+import { Icon } from '@iconify/react';
+import arcticonsGlovoCouriers from '@iconify-icons/arcticons/glovo-couriers';
+
+const SavedAddressDetails = ({ savedAddress, deliveryDetails }) => {
+  if (!savedAddress) return null;
+
+  return (
+    <div className="my-8 p-6 border-2 border-primarycolor rounded-lg">
+      <h3 className="text-2xl font-semibold text-primarycolor mb-6">SAVED DELIVERY DETAILS</h3>
+
+      <div className="space-y-2">
+        <p className="text-lg">
+          <span className="font-medium text-primarycolor">Delivery Option: </span>
+          <span className="text-secondarycolor">{savedAddress.delivery_option}</span>
+        </p>
+
+        {savedAddress.area && (
+          <p className="text-lg">
+            <span className="font-medium text-primarycolor">Area: </span>
+            <span className="text-secondarycolor">{savedAddress.area}</span>
+          </p>
+        )}
+
+        {savedAddress.pickup_point && (
+          <p className="text-lg">
+            <span className="font-medium text-primarycolor">Pickup Point: </span>
+            <span className="text-secondarycolor">{savedAddress.pickup_point}</span>
+          </p>
+        )}
+
+        {savedAddress.courier_service && (
+          <p className="text-lg">
+            <span className="font-medium text-primarycolor">Courier Service: </span>
+            <span className="text-secondarycolor">{savedAddress.courier_service}</span>
+          </p>
+        )}
+      </div>
+
+      <div className="mt-6 space-y-4">
+        <div>
+          <h4 className="text-lg font-medium text-primarycolor">Reminder</h4>
+          <p className="text-secondarycolor leading-relaxed">
+            {deliveryDetails?.description}
+          </p>
+        </div>
+        <p className="text-lg">
+          <span className="font-medium text-primarycolor">Delivery Cost: </span>
+          <span className="text-secondarycolor">Ksh. {deliveryDetails?.cost}</span>
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function DeliveryAddress() {
   const router = useRouter();
-  const { /* Supabase functions */ } = useSupabase();
+  const { user } = useAuth();
+  const { fetchDeliveryAddresses, getCurrentUserAddress, saveUserAddress, getDeliveryOptionDetails, getFullDeliveryDetails, deleteUserAddress } = useSupabase();
 
+  const [deliveryOptions, setDeliveryOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState('');
-  const [region, setRegion] = useState('');
-  const [area, setArea] = useState('');
-  const [courierService, setCourierService] = useState('');
-  const [pickupPoint, setPickupPoint] = useState('');
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const [selectedArea, setSelectedArea] = useState('');
+  const [selectedCourier, setSelectedCourier] = useState('');
+  const [selectedPickupPoint, setSelectedPickupPoint] = useState('');
+  const [currentDetails, setCurrentDetails] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [savedAddress, setSavedAddress] = useState(null);
+  const [deliveryDetails, setDeliveryDetails] = useState(null);
 
-  const deliveryOptions = [
-    {
-      id: 'nairobi',
-      name: 'Nairobi Delivery',
-      cost: 200,
-      description: 'Delivery to this address happens with the help of a rider. Your contact will be given to the rider for specific details of the drop-off point of your product. We request that you stay on until you receive your product'
-    },
-    {
-      id: 'pickup',
-      name: 'CBD Pickup Point',
-      cost: 0,
-      description: 'Pickup mtaani is located in Room B5 Star Mall along Tom Mboya Street. Operating hours is 8am to 6pm, They also do doorstep delivery. Please visit their website www.pickupmtaani.com for more info.'
-    },
-    {
-      id: 'countrywide',
-      name: 'Rest of Kenya',
-      cost: 450,
-      description: 'Ena Coach delivers to different parts of the country. The price of delivery might change depending on weight. The cost indicated below is the base cost for any delivery.'
+  const getSavedAddressDetails = (savedAddress, deliveryOptions) => {
+    if (!savedAddress || !deliveryOptions.length) return null;
+
+    const option = deliveryOptions.find(opt => opt.id === savedAddress.delivery_option);
+    if (!option) return null;
+
+    let details;
+    if (savedAddress.delivery_option === 'Nairobi Delivery') {
+      details = option.addresses.find(addr => addr.area === savedAddress.area);
+    } else if (savedAddress.delivery_option === 'CBD Pickup Point') {
+      details = option.addresses.find(addr => addr.pickup_point_name === savedAddress.pickup_point);
+    } else if (savedAddress.delivery_option === 'Rest of Kenya') {
+      details = option.addresses.find(addr =>
+        addr.region === savedAddress.region &&
+        addr.area === savedAddress.area &&
+        addr.courier === savedAddress.courier_service
+      );
     }
-  ];
+    return details;
+  };
 
-  const pickupPoints = [
-    { id: 'pickup-mtaani', name: 'Pickup Mtaani' },
-    { id: 'nairobabe', name: 'Nairobabe' },
-    { id: 'drop-n-pick', name: 'Drop-N-Pick' }
-  ];
+  useEffect(() => {
+    const loadDeliveryAddresses = async () => {
+      try {
+        const addresses = await fetchDeliveryAddresses();
+        const uniqueOptions = Array.from(new Set(addresses.map(addr => addr.option_name)));
 
-  const courierServices = [
-    { id: 'ena-coach', name: 'Ena Coach' },
-    { id: '2nk', name: '2NK Sacco' },
-    { id: 'easy-coach', name: 'Easy Coach' }
-  ];
+        const groupedOptions = uniqueOptions.map(optionName => {
+          const relatedAddresses = addresses.filter(addr => addr.option_name === optionName);
+          return {
+            id: optionName,
+            name: optionName,
+            addresses: relatedAddresses
+          };
+        });
 
+        setDeliveryOptions(groupedOptions);
+      } catch (error) {
+        console.error('Error loading delivery addresses:', error);
+      }
+    };
+
+    loadDeliveryAddresses();
+  }, [fetchDeliveryAddresses]);
+
+  useEffect(() => {
+    const loadSavedAddress = async () => {
+      if (user) {
+       
+        const fullDetails = await getFullDeliveryDetails(user.id);
+        if (fullDetails) {
+          setSavedAddress(fullDetails);
+          setDeliveryDetails(fullDetails.deliveryDetails);
+          setSelectedOption(fullDetails.delivery_option);
+          setSelectedArea(fullDetails.area);
+          setSelectedCourier(fullDetails.courier_service);
+          setSelectedPickupPoint(fullDetails.pickup_point);
+          setCurrentDetails(fullDetails.deliveryDetails);
+          setIsEditing(false);
+        } else {
+          setIsEditing(true);
+          setCurrentDetails(null);
+        }
+      }
+    };
+    loadSavedAddress();
+  }, [user, getFullDeliveryDetails]);
+
+  const handleOptionSelect = async (optionId) => {
+    setSelectedOption(optionId);
+    resetSelections();
+    const option = deliveryOptions.find(opt => opt.id === optionId);
+
+    // Get delivery details for the selected option
+    const details = await getDeliveryOptionDetails(optionId);
+    setCurrentDetails(details);
+
+    setSelectedAddress({
+      ...option,
+      availableRegions: [...new Set(option.addresses.map(addr => addr.region))],
+      availableAreas: [...new Set(option.addresses.map(addr => addr.area))],
+      availableCouriers: [...new Set(option.addresses.map(addr => addr.courier))],
+      availablePickupPoints: [...new Set(option.addresses.map(addr => addr.pickup_point_name))]
+    });
+  };
+
+  const resetSelections = () => {
+    setSelectedRegion('');
+    setSelectedArea('');
+    setSelectedCourier('');
+    setSelectedPickupPoint('');
+    setCurrentDetails(null);
+  };
+
+  const handleAreaSelect = (area) => {
+    setSelectedArea(area);
+    const option = deliveryOptions.find(opt => opt.id === selectedOption);
+    const details = option.addresses.find(addr => addr.area === area);
+    setCurrentDetails(details);
+  };
+
+  const handlePickupPointSelect = (point) => {
+    setSelectedPickupPoint(point);
+    const option = deliveryOptions.find(opt => opt.id === selectedOption);
+    const details = option.addresses.find(addr => addr.pickup_point_name === point);
+    setCurrentDetails(details);
+  };
+
+  // First, update how getDeliveryOptionDetails is called in handleCountrywideSelect
+const handleCountrywideSelect = (field, value) => {
+  switch (field) {
+    case 'region':
+      setSelectedRegion(value);
+      break;
+    case 'area':
+      setSelectedArea(value);
+      break;
+    case 'courier':
+      setSelectedCourier(value);
+      break;
+  }
+
+  const option = deliveryOptions.find(opt => opt.id === selectedOption);
+  const details = option.addresses.find(addr =>
+    addr.region === (field === 'region' ? value : selectedRegion) &&
+    addr.area === (field === 'area' ? value : selectedArea) &&
+    addr.courier === (field === 'courier' ? value : selectedCourier)
+  );
+
+  if (details) {
+    setCurrentDetails(details);
+  }
+};
+
+
+  const { setDeliveryCost } = useCart();
   const handleSaveAddress = async () => {
     try {
-      const deliveryData = {
-        option_name: selectedOption,
-        region,
-        area,
-        courier_service: courierService,
-        pickup_point_name: pickupPoint,
-        cost: deliveryOptions.find(opt => opt.id === selectedOption)?.cost || 0
+      if (!currentDetails || !user) return;
+
+      const addressDetails = {
+        selectedOption,
+        selectedArea,
+        selectedCourier,
+        selectedPickupPoint
       };
 
-      // Save to Supabase
-      // await saveDeliveryAddress(deliveryData);
-
-      // Navigate back to cart
+      const savedAddress = await saveUserAddress(user.id, addressDetails);
+      setDeliveryCost(savedAddress.cost);
       router.push('/cart');
     } catch (error) {
       console.error('Error saving address:', error);
     }
   };
-
+  const handleChangeAddress = async () => {
+    try {
+      if (savedAddress?.id) {
+        await deleteUserAddress(savedAddress.id);
+      }
+      setIsEditing(true);
+      setSavedAddress(null);
+      setSelectedOption('');
+      setSelectedRegion('');
+      setSelectedArea('');
+      setSelectedCourier('');
+      setSelectedPickupPoint('');
+      setCurrentDetails(null);
+    } catch (error) {
+      console.error('Error changing address:', error);
+    }
+  };
+  
   return (
-    <div className="min-h-screen bg-white">
-      <div className="sticky top-0 bg-white p-4 flex items-center border-b">
-        <button onClick={() => router.back()}>
-          <ArrowLeft className="text-purple-600" />
+    <div className="h-screen flex flex-col">
+      {/* Header - Fixed at top */}
+      <div className="sticky top-0 z-20 bg-white px-6 py-4 flex items-center justify-center border-b shadow-sm">
+        <button
+          onClick={() => router.back()}
+          className="absolute left-6 p-2 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <ChevronLeft className="w-6 h-6 text-primarycolor" />
         </button>
-        <h1 className="text-xl font-semibold text-purple-700 ml-4">DELIVERY ADDRESS</h1>
+        <h1 className="text-xl font-bold text-primarycolor">DELIVERY ADDRESS</h1>
       </div>
 
-      <div className="p-4 space-y-6">
-        <div className="space-y-4">
-          <h2 className="text-lg font-medium text-purple-700">Choose Your Delivery Option</h2>
-          
-          <div className="grid grid-cols-3 gap-4">
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-2xl mx-auto px-6">
+          {/* Your existing content sections */}
+          <div className="text-left my-8">
+            <h2 className="text-4xl font-semibold text-primarycolor">CHOOSE YOUR</h2>
+            <h2 className="text-4xl font-semibold text-primarycolor">DELIVERY OPTION</h2>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 mb-8 pb-8 border-b border-primarycolor">
             {deliveryOptions.map((option) => (
               <button
                 key={option.id}
-                onClick={() => setSelectedOption(option.id)}
-                className={`p-4 rounded-xl text-center ${
-                  selectedOption === option.id
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-purple-50 text-purple-700'
-                }`}
+                onClick={() => !savedAddress || isEditing ? handleOptionSelect(option.id) : null}
+                className={`
+             flex flex-col items-center space-y-4
+             ${(!savedAddress || isEditing) ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}
+             ${savedAddress && savedAddress.delivery_option === option.id ? 'opacity-100' : ''}
+           `}
+                disabled={savedAddress && !isEditing}
               >
-                {option.name}
+                <div className={`
+                    p-6 rounded-xl transition-all duration-200 w-full aspect-square flex items-center justify-center
+                    ${selectedOption === option.id
+                    ? 'bg-primarycolor'
+                    : 'bg-white border border-primarycolor hover:border-primarycolor'
+                  }
+                  `}>
+                  {option.id === 'Nairobi Delivery' && (
+                    <Icon
+                      icon="material-symbols-light:home-outline"
+                      className={`w-10 h-10 ${selectedOption === option.id ? 'text-secondarycolor' : 'text-primarycolor'}`}
+                    />
+                  )}
+                  {option.id === 'CBD Pickup Point' && (
+                    <Icon
+                      icon={arcticonsGlovoCouriers}
+                      className={`w-10 h-10 ${selectedOption === option.id ? 'text-secondarycolor' : 'text-primarycolor'}`}
+                    />
+                  )}
+                  {option.id === 'Rest of Kenya' && (
+                    <Icon
+                      icon="mdi:courier-fast"
+                      className={`w-10 h-10 ${selectedOption === option.id ? 'text-secondarycolor' : 'text-primarycolor'}`}
+                    />
+                  )}
+                </div>
+                <span className={`
+                    text-sm font-medium text-center
+                    ${selectedOption === option.id ? 'text-secondarycolor' : 'text-primarycolor'}
+                  `}>
+                  {option.name}
+                </span>
               </button>
             ))}
           </div>
 
-          {selectedOption === 'nairobi' && (
-            <div className="space-y-4">
-              <select
-                value={region}
-                onChange={(e) => setRegion(e.target.value)}
-                className="w-full p-3 border rounded-lg"
-              >
-                <option value="">Select Region</option>
-                <option value="Nairobi">Nairobi</option>
-              </select>
+          {/* Form/Saved Address Section */}
+          {isEditing ? (
+            <>
+              {/* Form Section */}
+              {selectedOption && selectedAddress && (
+                <div className="space-y-6">
+                  {selectedOption === 'Nairobi Delivery' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-medium text-primarycolor">AREA</span>
+                      <select
+                        value={selectedArea}
+                        onChange={(e) => handleAreaSelect(e.target.value)}
+                        className="w-1/2 p-2 bg-primarycolor text-secondarycolor rounded-lg outline-none"
+                      >
+                        <option value="">Select Area</option>
+                        {selectedAddress.availableAreas.map(area => (
+                          <option key={area} value={area}>{area}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
-              <select
-                value={area}
-                onChange={(e) => setArea(e.target.value)}
-                className="w-full p-3 border rounded-lg"
-              >
-                <option value="">Select Area</option>
-                <option value="Ruaka">Ruaka</option>
-              </select>
-            </div>
+                  {selectedOption === 'CBD Pickup Point' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-medium text-primarycolor">PICKUP POINT</span>
+                      <select
+                        value={selectedPickupPoint}
+                        onChange={(e) => handlePickupPointSelect(e.target.value)}
+                        className="w-1/2 p-2 bg-primarycolor text-secondarycolor rounded-lg outline-none"
+                      >
+                        <option value="">Select Point</option>
+                        {selectedAddress.availablePickupPoints.map(point => (
+                          <option key={point} value={point}>{point}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {selectedOption === 'Rest of Kenya' && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-medium text-primarycolor">REGION</span>
+                        <select
+                          value={selectedRegion}
+                          onChange={(e) => handleCountrywideSelect('region', e.target.value)}
+                          className="w-1/2 p-2 bg-primarycolor text-secondarycolor rounded-lg outline-none"
+                        >
+                          <option value="">Select Region</option>
+                          {selectedAddress.availableRegions.map(region => (
+                            <option key={region} value={region}>{region}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-medium text-primarycolor">AREA</span>
+                        <select
+                          value={selectedArea}
+                          onChange={(e) => handleCountrywideSelect('area', e.target.value)}
+                          className="w-1/2 p-2 bg-primarycolor text-secondarycolor rounded-lg outline-none"
+                        >
+                          <option value="">Select Area</option>
+                          {selectedAddress.availableAreas.map(area => (
+                            <option key={area} value={area}>{area}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-medium text-primarycolor">COURIER SERVICE</span>
+                        <select
+                          value={selectedCourier}
+                          onChange={(e) => handleCountrywideSelect('courier', e.target.value)}
+                          className="w-1/2 p-2 bg-primarycolor text-secondarycolor rounded-lg outline-none"
+                        >
+                          <option value="">Select Courier</option>
+                          {selectedAddress.availableCouriers.map(courier => (
+                            <option key={courier} value={courier}>{courier}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Description and Cost Section */}
+              {currentDetails && (
+                <div className="mt-6 space-y-4">
+                  <p className="text-secondarycolor leading-relaxed">
+                    {currentDetails.description}
+                  </p>
+                  <p className="text-primarycolor font-semibold">
+                    Delivery Cost: Ksh. {currentDetails.cost}
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            savedAddress && (
+              <SavedAddressDetails
+                savedAddress={savedAddress}
+                deliveryDetails={currentDetails}
+              />
+            )
           )}
 
-          {selectedOption === 'pickup' && (
-            <select
-              value={pickupPoint}
-              onChange={(e) => setPickupPoint(e.target.value)}
-              className="w-full p-3 border rounded-lg"
-            >
-              <option value="">Select Pickup Point</option>
-              {pickupPoints.map(point => (
-                <option key={point.id} value={point.id}>{point.name}</option>
-              ))}
-            </select>
-          )}
-
-          {selectedOption === 'countrywide' && (
-            <select
-              value={courierService}
-              onChange={(e) => setCourierService(e.target.value)}
-              className="w-full p-3 border rounded-lg"
-            >
-              <option value="">Select Courier Service</option>
-              {courierServices.map(service => (
-                <option key={service.id} value={service.id}>{service.name}</option>
-              ))}
-            </select>
-          )}
-
-          {selectedOption && (
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <p className="text-sm text-purple-700">
-                {deliveryOptions.find(opt => opt.id === selectedOption)?.description}
-              </p>
-              <p className="text-sm font-medium text-purple-700 mt-2">
-                Delivery Cost: Ksh. {deliveryOptions.find(opt => opt.id === selectedOption)?.cost}
-              </p>
-            </div>
-          )}
+          {/* Add bottom padding to account for floating button */}
+          <div className="h-24"></div>
         </div>
+      </div>
 
-        <button
-          onClick={handleSaveAddress}
-          disabled={!selectedOption}
-          className={`w-full py-4 rounded-full text-white ${
-            selectedOption ? 'bg-purple-600' : 'bg-gray-400'
-          }`}
-        >
-          Save Address
-        </button>
+      {/* Floating Button */}
+      <div className="fixed bottom-6 left-0 right-0 px-6 z-30">
+        <div className="max-w-2xl mx-auto">
+          <button
+            onClick={isEditing ? handleSaveAddress : handleChangeAddress}
+            disabled={isEditing && !currentDetails}
+            className={`
+                w-full py-4 px-6 rounded-full text-white text-lg font-medium
+                transition-all duration-200 transform
+                ${isEditing && !currentDetails
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-primarycolor hover:bg-primarycolor hover:scale-105 shadow-lg'
+              }
+              `}
+          >
+            {isEditing ? 'Save Address' : 'Change Address'}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -114,13 +114,13 @@ export default function ProductPage() {
       {/* Header */}
       <div className="flex justify-between items-center p-4">
         <button onClick={() => router.back()}>
-          <ChevronLeft className="w-12 h-12 text-primarycolor" />
+          <ChevronLeft className="w-8 h-8 text-primarycolor" />
         </button>
         <h1 className="text-[1rem] font-semibold text-primarycolor">
           PRODUCT DETAILS
         </h1>
         <Heart
-          className={`w-10 h-10 cursor-pointer ${
+          className={`w-16 h-6 cursor-pointer ${
             isInWishlist
               ? "fill-secondarycolor text-secondarycolor"
               : "fill-none text-primarycolor"
@@ -136,7 +136,7 @@ export default function ProductPage() {
           alt={product.name}
           height={500}
           width={500}
-          className="object-contain w-full h-full"
+          className="object-contain w-full h-full rounded-[12px]"
         />
       </div>
 

@@ -5,31 +5,64 @@ import { usePathname } from 'next/navigation';
 import LayoutWrapper from './layoutwrapper';
 import Footer from './components/footer';
 import Header from './components/header'; 
+import { Toaster } from 'sonner';
 
 export default function ClientLayoutWrapper({ children }) {
   const pathname = usePathname();
   const isHomepage = pathname === '/';
   const isCategoryPage = pathname.startsWith('/categories/');
 
-  if (isHomepage) {
-    return (
-      <>
-        <LayoutWrapper>{children}</LayoutWrapper>
-        <Footer />
-      </>
-    );
-  }
-
-  if (isCategoryPage) {
-    return (
-      <>
-        <Header />
-        {children}
-        <Footer />
-      </>
-    );
-  }
-
-  // For all other routes, just render the children
-  return <>{children}</>;
+  return (
+    <>
+      {isHomepage ? (
+        <>
+          <LayoutWrapper>{children}</LayoutWrapper>
+          <Footer />
+          <Toaster 
+            theme="light"
+             position="top-right"
+            toastOptions={{
+              style: {
+                background: 'var(--primarycolor)',
+                color: 'white',
+                borderRadius: '24px',
+              },
+            }}
+          />
+        </>
+      ) : isCategoryPage ? (
+        <>
+          <Header />
+          {children}
+          <Footer />
+          <Toaster 
+            theme="light"
+             position="top-right"
+            toastOptions={{
+              style: {
+                background: 'var(--primarycolor)',
+                color: 'white',
+                borderRadius: '24px',
+              },
+            }}
+          />
+        </>
+      ) : (
+        <>
+          {children}
+          <Toaster 
+            theme="light"
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: 'var(--primarycolor)',
+                color: 'white',
+                borderRadius: '24px',
+              },
+            }}
+          />
+        </>
+      )}
+    </>
+  );
 }

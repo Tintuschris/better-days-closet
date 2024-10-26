@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@iconify-icons/arcticons": "^1.2.77",
+    "@iconify/react": "^5.0.2",
     "@supabase/supabase-js": "^2.45.4",
     "chart.js": "^4.4.4",
     "cookies-next": "^4.3.0",
