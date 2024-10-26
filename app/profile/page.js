@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSupabaseContext } from '../context/supabaseContext';
 import { ChevronLeft, MapPin, Heart, Package, Settings, LogOut, User } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -9,7 +9,7 @@ import Orders from './components/orders';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AccountSettings from './components/accountsettings';
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const { user, signOut, userDetails, fetchUserDetails } = useSupabaseContext();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -139,12 +139,6 @@ export default function ProfilePage() {
             const Component = navigationItems.find(item => item.id === activeTab)?.component;
             return Component ? (
               <div>
-                {/* <div className="flex items-center p-4">
-                  <button onClick={() => router.push('/profile')} className="mr-4">
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <h2 className="text-xl font-semibold">{navigationItems.find(item => item.id === activeTab)?.label}</h2>
-                </div> */}
                 <Component />
               </div>
             ) : null;
@@ -152,5 +146,13 @@ export default function ProfilePage() {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProfilePageContent />
+    </Suspense>
   );
 }
