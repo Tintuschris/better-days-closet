@@ -307,38 +307,106 @@ export const useSupabase = () => {
     if (error) throw error;
   };
 
-  return {
-    // Product-related functions
-    fetchProducts,
-    fetchCategories,
-    fetchProductById,
-    fetchProductsByCategory,
-    
-    // Cart-related functions
-    addToCart,
-    fetchCartItems,
-    deleteFromCart,
-    updateCartInDatabase,
-    
-    // Order-related functions
-    fetchOrders,
-    
-    // Wishlist-related functions
-    fetchWishlistItems,
-    addToWishlist,
-    deleteFromWishlist,
-    
-    // Delivery-related functions
-    fetchDeliveryAddresses,
-    addDeliveryAddress,
-    updateDeliveryAddress,
-    deleteDeliveryAddress,
-    getDeliveryOptionDetails,
-    saveUserAddress,
-    getUserAddresses,
-    getCurrentUserAddress,
-    getFullDeliveryDetails,
-    updateUserAddress,
-    deleteUserAddress,
+  const createOrder = async (orderData) => {
+    const { data, error } = await supabase
+      .from('orders')
+      .insert([{
+        user_id: orderData.user_id,
+        status: 'PENDING',
+        total_amount: orderData.total_amount,
+        mpesa_code: orderData.mpesa_code,
+        delivery_option: orderData.delivery_option,
+        region: orderData.region || null,
+        area: orderData.area || null,
+        courier_service: orderData.courier_service || null,
+        pickup_point: orderData.pickup_point || null,
+        delivery_cost: orderData.delivery_cost,
+        cart_items: orderData.cart_items, // Store cart items as JSON
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+  
+    if (error) throw error;
+    return data;
   };
-};
+
+  // Add subscription to order status changes
+  const subscribeToOrderStatus = (orderId, onStatusChange) => {
+    return supabase
+      .channel(`order-${orderId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'orders',
+        filter: `id=eq.${orderId}`
+      }, (payload) => {
+        onStatusChange(payload.new);
+      })
+      .subscribe();
+  };
+
+  const createOrderItems = async (orderItems) => {
+    const { error } = await supabase
+      .from('order_items')
+      .insert(orderItems.map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.price,
+        user_id: item.user_id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })));
+  
+    if (error) throw error;
+  };
+
+  const clearUserCart = async (userId) => {
+    const { error } = await supabase
+      .from('cart')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (error) throw error;
+  };
+
+    return {
+      // Product-related functions
+      fetchProducts,
+      fetchCategories,
+      fetchProductById,
+      fetchProductsByCategory,
+    
+      // Cart-related functions
+      addToCart,
+      fetchCartItems,
+      deleteFromCart,
+      updateCartInDatabase,
+    
+      // Order-related functions
+      fetchOrders,
+    
+      // Wishlist-related functions
+      fetchWishlistItems,
+      addToWishlist,
+      deleteFromWishlist,
+    
+      // Delivery-related functions
+      fetchDeliveryAddresses,
+      addDeliveryAddress,
+      updateDeliveryAddress,
+      deleteDeliveryAddress,
+      getDeliveryOptionDetails,
+      saveUserAddress,
+      getUserAddresses,
+      getCurrentUserAddress,
+      getFullDeliveryDetails,
+      updateUserAddress,
+      deleteUserAddress,
+      createOrder,
+      createOrderItems,
+      subscribeToOrderStatus,
+      clearUserCart,
+    };
+  };
