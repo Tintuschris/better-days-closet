@@ -31,3 +31,21 @@ body {
     text-wrap: balance;
   }
 }
+
+@keyframes shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.animate-shrink {
+  animation: shrink 5s linear forwards;
+}
+
+.custom-toast {
+  transform: translateX(100%);
+  animation: slideIn 0.5s forwards;
+}
+
+@keyframes slideIn {
+  to { transform: translateX(0); }
+}
