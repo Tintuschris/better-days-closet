@@ -1,25 +1,56 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 
 export const useSupabase = () => {
+  const queryClient = useQueryClient();
+
   const fetchProducts = async () => {
     const { data, error } = await supabase.from('products').select('*');
     if (error) throw error;
     return data;
   };
 
+  const useProducts = () => {
+    return useQuery({
+      queryKey: ['products'],
+      queryFn: fetchProducts,
+      staleTime: 5 * 60 * 1000, // Data considered fresh for 5 minutes
+      cacheTime: 30 * 60 * 1000, // Cache persists for 30 minutes
+    });
+  };
+
   const fetchCategories = async () => {
     const { data, error } = await supabase.from('categories').select('*');
-    if (error) {
-      console.error("Error fetching categories:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   };
 
+  const useCategories = () => {
+    return useQuery({
+      queryKey: ['categories'],
+      queryFn: fetchCategories,
+      staleTime: 10 * 60 * 1000, // Categories stay fresh longer
+      cacheTime: 60 * 60 * 1000, // Cache for 1 hour
+    });
+  };
+
   const fetchProductById = async (id) => {
-    const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single();
     if (error) throw error;
     return data;
+  };
+
+  const useProduct = (id) => {
+    return useQuery({
+      queryKey: ['product', id],
+      queryFn: () => fetchProductById(id),
+      enabled: !!id,
+      staleTime: 5 * 60 * 1000,
+    });
   };
 
   const fetchProductsByCategory = async (categoryName) => {
@@ -29,6 +60,30 @@ export const useSupabase = () => {
       .eq('category_name', categoryName);
     if (error) throw error;
     return data;
+  };
+
+  const useProductsByCategory = (categoryName) => {
+    return useQuery({
+      queryKey: ['products', categoryName],
+      queryFn: () => fetchProductsByCategory(categoryName),
+      enabled: !!categoryName,
+      staleTime: 5 * 60 * 1000,
+    });
+  };
+
+  // Prefetch functions for optimal performance
+  const prefetchProducts = () => {
+    queryClient.prefetchQuery({
+      queryKey: ['products'],
+      queryFn: fetchProducts,
+    });
+  };
+
+  const prefetchCategories = () => {
+    queryClient.prefetchQuery({
+      queryKey: ['categories'],
+      queryFn: fetchCategories,
+    });
   };
 
   const addToCart = async (userId, productId, quantity) => {
@@ -201,7 +256,9 @@ export const useSupabase = () => {
     const { data, error } = await query.single();
     if (error) throw error;
     return data;
-  };  const saveUserAddress = async (userId, addressDetails) => {
+  };
+
+  const saveUserAddress = async (userId, addressDetails) => {
     try {
       // Get delivery option details including description and cost
       const deliveryOptionDetails = await getDeliveryOptionDetails(
@@ -278,7 +335,7 @@ export const useSupabase = () => {
     const deliveryDetails = await getDeliveryOptionDetails(
       userAddress.delivery_option,
       userAddress.delivery_option === 'Nairobi Delivery' ? userAddress.area :
-      userAddress.delivery_option === 'CBD Pickup Point' ? userAddress.pickup_point : // Changed from 'Pickup Point'
+      userAddress.delivery_option === 'CBD Pickup Point' ? userAddress.pickup_point :
       userAddress.courier_service
     );
 
@@ -287,6 +344,7 @@ export const useSupabase = () => {
       deliveryDetails
     };
   };
+
   const updateUserAddress = async (addressId, addressDetails) => {
     const { data, error } = await supabase
       .from('addresses')
@@ -371,42 +429,48 @@ export const useSupabase = () => {
     if (error) throw error;
   };
 
-    return {
-      // Product-related functions
-      fetchProducts,
-      fetchCategories,
-      fetchProductById,
-      fetchProductsByCategory,
-    
-      // Cart-related functions
-      addToCart,
-      fetchCartItems,
-      deleteFromCart,
-      updateCartInDatabase,
-    
-      // Order-related functions
-      fetchOrders,
-    
-      // Wishlist-related functions
-      fetchWishlistItems,
-      addToWishlist,
-      deleteFromWishlist,
-    
-      // Delivery-related functions
-      fetchDeliveryAddresses,
-      addDeliveryAddress,
-      updateDeliveryAddress,
-      deleteDeliveryAddress,
-      getDeliveryOptionDetails,
-      saveUserAddress,
-      getUserAddresses,
-      getCurrentUserAddress,
-      getFullDeliveryDetails,
-      updateUserAddress,
-      deleteUserAddress,
-      createOrder,
-      createOrderItems,
-      subscribeToOrderStatus,
-      clearUserCart,
-    };
+  return {
+    useProducts,
+    useCategories,
+    useProduct,
+    useProductsByCategory,
+    prefetchProducts,
+    prefetchCategories,
+    // Product-related functions
+    fetchProducts,
+    fetchCategories,
+    fetchProductById,
+    fetchProductsByCategory,
+  
+    // Cart-related functions
+    addToCart,
+    fetchCartItems,
+    deleteFromCart,
+    updateCartInDatabase,
+  
+    // Order-related functions
+    fetchOrders,
+  
+    // Wishlist-related functions
+    fetchWishlistItems,
+    addToWishlist,
+    deleteFromWishlist,
+  
+    // Delivery-related functions
+    fetchDeliveryAddresses,
+    addDeliveryAddress,
+    updateDeliveryAddress,
+    deleteDeliveryAddress,
+    getDeliveryOptionDetails,
+    saveUserAddress,
+    getUserAddresses,
+    getCurrentUserAddress,
+    getFullDeliveryDetails,
+    updateUserAddress,
+    deleteUserAddress,
+    createOrder,
+    createOrderItems,
+    subscribeToOrderStatus,
+    clearUserCart,
   };
+};

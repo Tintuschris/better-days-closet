@@ -6,7 +6,6 @@ import { SupabaseProvider } from './context/supabaseContext';
 import { CartProvider } from './context/cartContext'
 
 
-
 const montserrat = Montserrat({
   subsets: ['latin'],
   weight: ['500'],
@@ -22,13 +21,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${montserrat.variable} font-montserrat`}>
-        <SupabaseProvider>
-          <CartProvider>
-            <ClientLayoutWrapper>
-              {children}
-            </ClientLayoutWrapper>
-          </CartProvider>
-        </SupabaseProvider>
+          <SupabaseProvider>
+            <CartProvider>
+              <ClientLayoutWrapper>
+                {children}
+              </ClientLayoutWrapper>
+            </CartProvider>
+          </SupabaseProvider>
       </body>
     </html>
   );

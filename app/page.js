@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState,useCallback } from 'react';
 import { useSupabase } from './hooks/useSupabase';
 import ProductCarousel from './components/productcarousel';
 import CategoryListing from './components/categorylisting';
@@ -7,26 +7,21 @@ import { Filter } from 'lucide-react';
 import FilterModal from './(modals)/filtermodal';
 
 export default function HomePage() {
-  const { fetchProducts, fetchCategories } = useSupabase();
-  const [allProducts, setAllProducts] = useState([]);
+  const { useProducts, useCategories } = useSupabase();
+  const { data: products = [], isLoading } = useProducts();
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
+
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Load data on component mount
   useEffect(() => {
-    async function loadData() {
-      const [fetchedProducts, fetchedCategories] = await Promise.all([
-        fetchProducts(),
-        fetchCategories()
-      ]);
-      setAllProducts(fetchedProducts);
-      setFilteredProducts(fetchedProducts);
-      setCategories(fetchedCategories);
-    }
-    loadData();
-  }, [fetchProducts, fetchCategories]);
+    const filtered = products.filter(product => 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredProducts(filtered);
+  }, [products, searchQuery]);
 
   // Toggle the filter modal
   const toggleFilterModal = () => {
@@ -38,7 +33,7 @@ export default function HomePage() {
     setAppliedFilters(filters);
     const { priceRange, categories, tags } = filters;
 
-    const filtered = allProducts.filter(product => {
+    const filtered = products.filter(product => {
       const inPriceRange = product.price >= priceRange[0] && product.price <= priceRange[1];
       const inCategory = categories.length === 0 || categories.includes(product.category_name);
       const hasTags = tags.length === 0 || tags.some(tag => {
@@ -51,7 +46,7 @@ export default function HomePage() {
     });
 
     setFilteredProducts(filtered);
-  }, [allProducts]);
+  }, [products]);
 
   const topDeals = filteredProducts.filter(p => p.discount);
   const newArrivals = filteredProducts.filter(p => new Date(p.created_at) > new Date('2024-01-01'));
