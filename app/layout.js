@@ -2,13 +2,10 @@
 import { Montserrat } from 'next/font/google';
 import './globals.css';
 import ClientLayoutWrapper from './clientlayoutwrapper';
-import { SupabaseProvider } from './context/supabaseContext';
-import { CartProvider } from './context/cartContext'
-
 
 const montserrat = Montserrat({
   subsets: ['latin'],
-  weight: ['500'],
+  weight: ['300', '400', '500', '600', '700'],  // Add multiple weights if needed
   variable: '--font-montserrat',
 });
 
@@ -21,13 +18,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${montserrat.variable} font-montserrat`}>
-          <SupabaseProvider>
-            <CartProvider>
-              <ClientLayoutWrapper>
-                {children}
-              </ClientLayoutWrapper>
-            </CartProvider>
-          </SupabaseProvider>
+        <ClientLayoutWrapper>
+          {children}
+        </ClientLayoutWrapper>
       </body>
     </html>
   );

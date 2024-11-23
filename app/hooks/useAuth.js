@@ -1,51 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 
 export const useAuth = () => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userDetails, setUserDetails] = useState(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const getSession = async () => {
+  const { data: session } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-      setIsAuthenticated(!!session?.user);
-      if (session?.user) {
-        await fetchUserDetails(session.user.id);
-      }
-    };
+      return session;
+    },
+    staleTime: 1000 * 60 * 30, // Session stays fresh for 30 minutes
+    cacheTime: 1000 * 60 * 60, // Cache for 1 hour
+  });
 
-    getSession();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user || null);
-      setIsAuthenticated(!!session?.user);
-      if (session?.user) {
-        await fetchUserDetails(session.user.id);
-      } else {
-        setUserDetails(null);
-      }
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, []);
-
-  const fetchUserDetails = async (userId) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('name, email')
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching user details:', error);
-    } else {
-      setUserDetails(data);
-    }
-  };
+  const { data: userDetails } = useQuery({
+    queryKey: ['userDetails', session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', session?.user?.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+    staleTime: 1000 * 60 * 5, // User details stay fresh for 5 minutes
+    cacheTime: 1000 * 60 * 30, // Cache for 30 minutes
+  });
 
   const signIn = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -54,9 +37,7 @@ export const useAuth = () => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUser(null);
-    setIsAuthenticated(false);
-    setUserDetails(null);
+    queryClient.clear();
   };
 
   const signUp = async (name, email, password) => {
@@ -84,7 +65,7 @@ export const useAuth = () => {
         throw insertError;
       }
   
-      await fetchUserDetails(userId);
+      queryClient.invalidateQueries(['userDetails', userId]);
   
     } catch (err) {
       console.error('Error during signup:', err);
@@ -92,5 +73,5 @@ export const useAuth = () => {
     }
   };
 
-  return { user, signIn, signOut, signUp, isAuthenticated, userDetails };
+  return { user: session?.user, signIn, signOut, signUp, isAuthenticated: !!session?.user, userDetails };
 };

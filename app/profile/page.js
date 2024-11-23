@@ -16,9 +16,10 @@ function ProfilePageContent() {
   const activeTab = searchParams.get('tab') || null;
 
   useEffect(() => {
-    if (user && fetchUserDetails) {
-      fetchUserDetails();
+    if (user?.id && fetchUserDetails) {
+      fetchUserDetails(user.id);
     }
+    
   }, [user, fetchUserDetails]);
 
   if (!user || !userDetails) {

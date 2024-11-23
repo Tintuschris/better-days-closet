@@ -165,7 +165,12 @@ export const useSupabase = () => {
   };
 
   const fetchOrders = async (userId) => {
-    const { data, error } = await supabase.from('orders').select('*').eq('user_id', userId);
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
     if (error) throw error;
     return data;
   };

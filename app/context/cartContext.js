@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 
 const CartContext = createContext();
 
-export function CartProvider({ children }) {
+export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const { user } = useAuth();
@@ -94,6 +94,6 @@ export function CartProvider({ children }) {
       {children}
     </CartContext.Provider>
   );
-}
+};
 
 export const useCart = () => useContext(CartContext);

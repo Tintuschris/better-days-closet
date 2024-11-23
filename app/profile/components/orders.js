@@ -1,58 +1,71 @@
-"use client"
-import { useState, useCallback, useEffect } from 'react';
+"use client";
+import { useState, useEffect } from 'react';
 import { useSupabaseContext } from '../../context/supabaseContext';
 import Image from 'next/image';
 
 export default function Orders() {
-  const { fetchOrders, user, supabase } = useSupabaseContext();
+  const { fetchOrders, user } = useSupabaseContext();
   const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState("ongoing");
-  const [ordersWithProducts, setOrdersWithProducts] = useState([]);
-
-  const fetchOrdersCallback = useCallback(
-    async () => {
-      if (user && supabase) {  // Add check for supabase
-        try {
-          const orderData = await fetchOrders(user.id);
-          setOrders(orderData);
-          
-          // Only proceed if we have orderData
-          if (orderData && orderData.length > 0) {
-            const ordersWithProductDetails = await Promise.all(
-              orderData.map(async (order) => {
-                const { data: product } = await supabase
-                  .from('products')
-                  .select('name, image_url, price')
-                  .eq('id', order.product_id)
-                  .single();
-                
-                return {
-                  ...order,
-                  product_name: product?.name,
-                  product_image: product?.image_url,
-                  product_price: product?.price
-                };
-              })
-            );
-            
-            setOrdersWithProducts(ordersWithProductDetails);
-          }
-        } catch (error) {
-          console.error('Error fetching orders:', error);
-        }
-      }
-    },
-    [fetchOrders, user, supabase]
-  );
 
   useEffect(() => {
-    fetchOrdersCallback();
-    console.log('Orders:', ordersWithProducts); // Add this
-  }, [fetchOrdersCallback]);
+    const getOrders = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const orderData = await fetchOrders(user.id);
+        if (orderData) {
+          setOrders(orderData);
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      }
+    };
 
-  const ongoingOrders = ordersWithProducts.filter(order => order.status === "PENDING");
-  const completedOrders = ordersWithProducts.filter(order => order.status === "COMPLETED");
+    if (user?.id) {
+      getOrders();
+    }
+  }, [user?.id, fetchOrders]);
 
+  const ongoingOrders = orders.filter((order) => order.status === "PENDING");
+  const completedOrders = orders.filter(
+    (order) => order.status === "COMPLETED"
+  );
+
+  const OrderCard = ({ order }) => (
+    <div className="bg-primarycolor rounded-2xl mb-4 overflow-hidden shadow-sm">
+      {order.cart_items?.map((item, index) => (
+        <div
+          key={`${order.id}-${index}`}
+          className="flex items-center p-3 border-b last:border-b-0 border-white/10"
+        >
+          <div className="w-20 h-20 relative rounded-xl overflow-hidden">
+            {item.product?.image_url && (
+              <Image
+                src={item.product.image_url}
+                alt={item.product.name || "Product image"}
+                fill
+                className="object-cover"
+              />
+            )}
+          </div>
+          <div className="flex-1 ml-4">
+            <h3 className="font-medium text-white text-lg">
+              {item.product?.name}
+            </h3>
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-secondarycolor text-sm">
+                Quantity: {item.quantity}
+              </span>
+              <span className="text-secondarycolor font-semibold">
+                Ksh. {item.total_amount}
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
   const EmptyState = ({ message }) => (
     <div className="flex flex-col items-center justify-center h-[60vh] text-center">
       <Image
@@ -64,44 +77,25 @@ export default function Orders() {
       />
       <p className="text-primarycolor mb-2">{message}</p>
       <p className="text-sm text-primarycolor">
-        {activeTab === "ongoing" 
+        {activeTab === "ongoing"
           ? "You don't have an ongoing order yet at this time!"
           : "Please make purchases to see your orders here."}
       </p>
     </div>
   );
 
-  const OrderCard = ({ order }) => (
-    <div className="bg-primarycolor rounded-3xl mb-4 overflow-hidden">
-      <div className="flex items-center">
-        <div className="w-24 h-24 relative">
-          <Image
-            src={order.product_image}
-            alt={order.product_name}
-            fill
-            className="object-cover"
-          />
-        </div>
-        <div className="flex-1 p-4 text-white">
-          <h3 className="font-medium text-xl mb-1">{order.product_name}</h3>
-          <p className="text-pink-300">Ksh. {order.product_price}</p>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="max-w-2xl mx-auto p-4">
       <div className="flex items-center mb-6">
-        <button 
-          onClick={() => window.history.back()} 
+        <button
+          onClick={() => window.history.back()}
           className="mr-4 text-primarycolor"
         >
           ←
         </button>
         <h2 className="text-xl font-bold text-primarycolor">MY ORDERS</h2>
       </div>
-      
+
       {/* Tabs */}
       <div className="mb-8">
         <div className="flex">
@@ -135,7 +129,7 @@ export default function Orders() {
             {ongoingOrders.length === 0 ? (
               <EmptyState message="You don't have an order yet" />
             ) : (
-              ongoingOrders.map(order => (
+              ongoingOrders.map((order) => (
                 <OrderCard key={order.id} order={order} />
               ))
             )}
@@ -147,7 +141,7 @@ export default function Orders() {
             {completedOrders.length === 0 ? (
               <EmptyState message="You don't have any complete orders yet" />
             ) : (
-              completedOrders.map(order => (
+              completedOrders.map((order) => (
                 <OrderCard key={order.id} order={order} />
               ))
             )}
