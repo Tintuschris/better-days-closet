@@ -7,6 +7,7 @@ const WishlistContext = createContext();
 
 export function WishlistProvider({ children }) {
   const [wishlistItems, setWishlistItems] = useState([]);
+  const [wishlistProductIds, setWishlistProductIds] = useState(new Set());
   const { fetchWishlistItems, deleteFromWishlist, addToWishlist, fetchProductById } = useSupabase();
 
   const loadWishlist = useCallback(async (userId) => {
@@ -16,6 +17,7 @@ export function WishlistProvider({ children }) {
         items.map(item => fetchProductById(item.product_id))
       );
       setWishlistItems(products);
+      setWishlistProductIds(new Set(products.map(p => p.id)));
       return products;
     } catch (error) {
       toast.error('Failed to load wishlist');
@@ -44,16 +46,20 @@ export function WishlistProvider({ children }) {
     }
   }, [deleteFromWishlist]);
 
+  const isInWishlist = useCallback((productId) => {
+    return wishlistProductIds.has(productId);
+  }, [wishlistProductIds]);
+
   return (
     <WishlistContext.Provider value={{
       wishlistItems,
       loadWishlist,
       addItem,
-      removeItem
+      removeItem,
+      isInWishlist
     }}>
       {children}
     </WishlistContext.Provider>
   );
 }
-
 export const useWishlist = () => useContext(WishlistContext);

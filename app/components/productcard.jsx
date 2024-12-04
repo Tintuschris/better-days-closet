@@ -3,55 +3,50 @@ import Image from "next/image";
 import { Heart } from 'lucide-react';
 import Link from "next/link";
 import { useState, useEffect } from 'react';
-import { useRouter } from "next/navigation";  // Updated to useNavigation
-import { useAuth } from '../hooks/useAuth';
-import { useSupabase } from '../hooks/useSupabase';
+import { useRouter } from "next/navigation";
+import { useSupabaseContext } from '../context/supabaseContext';
 
 export default function ProductCard({ product }) {
-  const { user } = useAuth();  // Get the current user
-  const { fetchWishlistItems, deleteFromWishlist, addToWishlist } = useSupabase();  // Import addToWishlist
-  const router = useRouter();  // Using Next.js useNavigation
-  const [isInWishlist, setIsInWishlist] = useState(false);  // Track if product is in wishlist
-  const [discountPercentage, setDiscountPercentage] = useState(0);  // Track product discount
+  const router = useRouter();
+  const { 
+    user, 
+    wishlistItems,
+    addToWishlist,
+    deleteFromWishlist
+  } = useSupabaseContext();
+  
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [discountPercentage, setDiscountPercentage] = useState(0);
 
-  // Check if the product is in the user's wishlist when the component mounts
   useEffect(() => {
-    const checkWishlistStatus = async () => {
-      if (user) {
-        const wishlistItems = await fetchWishlistItems(user.id);
-        const productInWishlist = wishlistItems.some(item => item.product_id === product.id);
-        setIsInWishlist(productInWishlist);  // Set initial wishlist status
-      }
-    };
-    checkWishlistStatus();
+    if (wishlistItems) {
+      const productInWishlist = wishlistItems.some(item => item.product_id === product.id);
+      setIsInWishlist(productInWishlist);
+    }
 
-    // Fetch and set the discount percentage for the product
     if (product.discount) {
       setDiscountPercentage(product.discount);
     }
-  }, [user, product.id, product.discount, fetchWishlistItems]);
+  }, [wishlistItems, product.id, product.discount]);
 
   const handleWishlistClick = async (e) => {
-    e.preventDefault();  // Prevent the default link behavior when clicking the heart icon
+    e.preventDefault();
     
-    if (user) {
-      try {
-        if (isInWishlist) {
-          // If the product is already in the wishlist, remove it
-          await deleteFromWishlist(user.id, product.id);
-          setIsInWishlist(false);  // Update state to reflect removal
-        } else {
-          // If not in the wishlist, add it
-          await addToWishlist(user.id, product.id);  // Use the new addToWishlist function
-          setIsInWishlist(true);  // Update state to reflect addition
-        }
-      } catch (err) {
-        console.error('Error updating wishlist:', err);
-        alert('Failed to update wishlist');
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+
+    try {
+      if (isInWishlist) {
+        await deleteFromWishlist({ userId: user.id, productId: product.id });
+        setIsInWishlist(false);
+      } else {
+        await addToWishlist({ userId: user.id, productId: product.id });
+        setIsInWishlist(true);
       }
-    } else {
-      // Redirect to login if the user is not logged in
-      router.push('/auth/login');  // Redirect to login page
+    } catch (err) {
+      console.error('Error updating wishlist:', err);
     }
   };
 

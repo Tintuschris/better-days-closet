@@ -8,14 +8,9 @@ import { useCart } from '../context/cartContext';
 
 export default function Header({ activeIcon, setActiveIcon }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { fetchCategories, user } = useSupabaseContext();
-  const [categories, setCategories] = useState([]);
+  const { categories, user } = useSupabaseContext();
   const menuRef = useRef(null);
   const { cartCount } = useCart();
-
-  useEffect(() => {
-    fetchCategories().then(setCategories).catch(console.error);
-  }, [fetchCategories]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -84,25 +79,20 @@ export default function Header({ activeIcon, setActiveIcon }) {
           max-h-[calc(100vh-4rem)] overflow-y-auto`}
       >
         <ul className="p-4">
-          {categories.length > 0 ? (
-            categories.map((category, index) => (
-              <li 
-                key={category.id} 
-                className={`py-2 border-b border-white/20 ${index === categories.length - 1 ? 'border-b-0' : ''}
-                  transition-colors duration-200 hover:bg-white/10`}
+          {categories?.map((category) => (
+            <li 
+              key={category.id} 
+              className="py-2 border-b border-white/20 last:border-b-0 transition-colors duration-200 hover:bg-white/10"
+            >
+              <Link 
+                href={`/categories/${category.name}`}
+                className="block w-full"
+                onClick={() => setMenuOpen(false)}
               >
-                <Link 
-                  href={`/categories/${category.name}`}
-                  className="block w-full"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {category.name}
-                </Link>
-              </li>
-            ))
-          ) : (
-            <li>No categories available</li>
-          )}
+                {category.name}
+              </Link>
+            </li>
+          ))}
         </ul>
       </nav>
     </>

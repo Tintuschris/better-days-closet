@@ -1,11 +1,14 @@
 import Link from "next/link";
-export default function CategoryListing({ categories }) {
+import { useSupabaseContext } from "../context/supabaseContext";
+
+export default function CategoryListing() {
+  const { categories } = useSupabaseContext();
+
   return (
-    <div className="space-y-4 ">
+    <div className="space-y-4">
       <h2 className="text-md font-medium text-primarycolor">CATEGORIES</h2>
-      {/* Make the container horizontally scrollable but hide the scrollbar */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-        {categories.map((category) => (
+        {categories?.map((category) => (
           <Link
             key={category.id}
             href={`/categories/${category.name}`}

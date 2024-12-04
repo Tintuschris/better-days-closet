@@ -3,11 +3,13 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
 import ProductCard from './productcard';
 import Link from 'next/link';
+import { useSupabaseContext } from '../context/supabaseContext';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
 
-export default function ProductCarousel({ title, products, category, isSpecialCategory }) {
+export default function ProductCarousel({ title, products = [], category, isSpecialCategory }) {
+  const { user } = useSupabaseContext();
   const limitedProducts = products.slice(0, 10);
 
   const getViewMoreLink = () => {

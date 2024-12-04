@@ -1,14 +1,9 @@
-import { useEffect, useState } from 'react';
 import { useSupabaseContext } from '../context/supabaseContext';
 import { Phone, PinIcon } from "lucide-react";
 import Link from "next/link";
-export default function Footer() {
-  const { fetchCategories } = useSupabaseContext();
-  const [categories, setCategories] = useState([]);
 
-  useEffect(() => {
-    fetchCategories().then(setCategories);
-  }, [fetchCategories]);
+export default function Footer() {
+  const { categories } = useSupabaseContext();
 
   return (
     <footer className="bg-primarycolor text-white px-8 py-12">
@@ -26,13 +21,14 @@ export default function Footer() {
           </div>
         </div>
       </div>
+
       {/* Categories and Links Section */}
       <div className="grid grid-cols-2 gap-8 mb-8 border-t border-white/20 pt-8">
         {/* Categories */}
         <div>
           <h3 className="text-lg font-medium mb-4">Categories</h3>
           <ul className="space-y-2 font-normal">
-            {categories.map((category) => (
+            {categories?.map((category) => (
               <li key={category.id}>
                 <Link href={`/categories/${category.name.toLowerCase()}`} className="hover:text-secondarycolor">
                   {category.name}

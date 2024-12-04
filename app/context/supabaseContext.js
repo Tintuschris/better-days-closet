@@ -1,141 +1,218 @@
 // context/SupabaseContext.js
 "use client";
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
-import { useSupabase } from '../hooks/useSupabase';
 
 const SupabaseContext = createContext();
-  export const SupabaseProvider = ({ children }) => {
-    const { user, signIn, signOut, isAuthenticated, userDetails, fetchUserDetails } = useAuth();
-    const [products, setProducts] = useState(null);
-    const [categories, setCategories] = useState(null);
-    const [cartItems, setCartItems] = useState(null);
-    const [wishlistItems, setWishlistItems] = useState(null);
-    const [deliveryAddress, setDeliveryAddress] = useState(null);
-    const [deliveryCost, setDeliveryCost] = useState(null);
 
-    const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes cache expiry
-    const [cacheTimestamp, setCacheTimestamp] = useState({});
+export const SupabaseProvider = ({ children }) => {
+  const queryClient = useQueryClient();
+  const { user, signIn, signOut, isAuthenticated, userDetails, fetchUserDetails } = useAuth();
+  const [deliveryAddress, setDeliveryAddress] = useState(null);
+  const [deliveryCost, setDeliveryCost] = useState(null);
 
-    const isCacheExpired = useCallback((key) => {
-      return Date.now() - (cacheTimestamp[key] || 0) > CACHE_EXPIRY_MS;
-    }, [CACHE_EXPIRY_MS, cacheTimestamp]);
-
-    const fetchProducts = useCallback(async () => {
-      if (products && !isCacheExpired('products')) return products;
+  // Products Query
+  const { data: products } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
       const { data, error } = await supabase.from('products').select('*');
       if (error) throw error;
-      setProducts(data);
-      setCacheTimestamp(prev => ({ ...prev, products: Date.now() }));
       return data;
-    }, [products, isCacheExpired]);
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
-    const fetchCategories = useCallback(async () => {
-      if (categories && !isCacheExpired('categories')) return categories;
+  // Categories Query
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
       const { data, error } = await supabase.from('categories').select('*');
       if (error) throw error;
-      setCategories(data);
-      setCacheTimestamp(prev => ({ ...prev, categories: Date.now() }));
       return data;
-    }, [categories, isCacheExpired]);
+    },
+    staleTime: 1000 * 60 * 10, // 10 minutes
+  });
 
-    const fetchProductById = useCallback(async (id) => {
-      const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
-      if (error) throw error;
-      return data;
-    }, []);
-
-    const fetchProductsByCategory = useCallback(async (categoryName) => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('category_name', categoryName);
-      if (error) throw error;
-      return data;
-    }, []);
-
-    const addToCart = useCallback(async (userId, productId, quantity) => {
+  // Cart Items Query
+  const { data: cartItems } = useQuery({
+    queryKey: ['cart', user?.id],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('cart')
-        .upsert({ user_id: userId, product_id: productId, quantity }, { onConflict: ['user_id', 'product_id'] });
+        .select('*')
+        .eq('user_id', user.id);
       if (error) throw error;
-      setCacheTimestamp(prev => ({ ...prev, cartItems: 0 }));
       return data;
-    }, []);
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
 
-    const fetchCartItems = useCallback(async (userId) => {
-      if (cartItems && !isCacheExpired('cartItems')) return cartItems;
-      const { data, error } = await supabase.from('cart').select('*').eq('user_id', userId);
+  // Wishlist Items Query
+  const { data: wishlistItems } = useQuery({
+    queryKey: ['wishlist', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('wishlist')
+        .select('*')
+        .eq('user_id', user.id);
       if (error) throw error;
-      setCartItems(data);
-      setCacheTimestamp(prev => ({ ...prev, cartItems: Date.now() }));
       return data;
-    }, [cartItems, isCacheExpired]);
+    },
+    enabled: !!user?.id,
+  });
 
-    const fetchWishlistItems = useCallback(async (userId) => {
-      if (wishlistItems && !isCacheExpired('wishlistItems')) return wishlistItems;
-      const { data, error } = await supabase.from('wishlist').select('*').eq('user_id', userId);
+  // Add to Cart Mutation
+  const addToCartMutation = useMutation({
+    mutationFn: async ({ userId, productId, quantity }) => {
+      const { data, error } = await supabase
+        .from('cart')
+        .upsert({ user_id: userId, product_id: productId, quantity },
+          { onConflict: ['user_id', 'product_id'] });
       if (error) throw error;
-      setWishlistItems(data);
-      setCacheTimestamp(prev => ({ ...prev, wishlistItems: Date.now() }));
       return data;
-    }, [wishlistItems, isCacheExpired]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['cart']);
+    },
+  });
 
-    const addToWishlist = useCallback(async (userId, productId) => {
+  // Delete from Cart Mutation
+  const deleteFromCartMutation = useMutation({
+    mutationFn: async ({ userId, productId }) => {
+      const { data, error } = await supabase
+        .from('cart')
+        .delete()
+        .eq('user_id', userId)
+        .eq('product_id', productId);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['cart']);
+    },
+  });
+
+  // Add to Wishlist Mutation
+  const addToWishlistMutation = useMutation({
+    mutationFn: async ({ userId, productId }) => {
       const { data, error } = await supabase
         .from('wishlist')
         .insert([{ user_id: userId, product_id: productId }]);
       if (error) throw error;
-      setCacheTimestamp(prev => ({ ...prev, wishlistItems: 0 }));
       return data;
-    }, []);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['wishlist']);
+    },
+  });
 
-    const deleteFromWishlist = useCallback(async (userId, productId) => {
+  // Delete from Wishlist Mutation
+  const deleteFromWishlistMutation = useMutation({
+    mutationFn: async ({ userId, productId }) => {
       const { data, error } = await supabase
         .from('wishlist')
         .delete()
         .eq('user_id', userId)
         .eq('product_id', productId);
       if (error) throw error;
-      setCacheTimestamp(prev => ({ ...prev, wishlistItems: 0 }));
       return data;
-    }, []);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['wishlist']);
+    },
+  });
 
-    const fetchOrders = async (userId) => {
-      const { data: orders, error } = await supabase
+  // Orders Query
+  const { data: orders } = useQuery({
+    queryKey: ['orders', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-  
       if (error) throw error;
-      return orders;
-    };
-  
-    const fetchDeliveryAddress = useCallback(async (userId) => {
-      if (!userId) return;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+    // Delivery Address Query
+    const { data: deliveryAddressData } = useQuery({
+      queryKey: ['address', user?.id],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from('addresses')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        console.log('Fetched Address Data:', data); // Add this log
+        if (error && error.code !== 'PGRST116') throw error;
+        return data;
+      },
+      enabled: !!user?.id,
+      onSuccess: (data) => {
+        if (data) {
+          console.log('Setting Address Data:', data); // Add this log
+          setDeliveryAddress(data);
+          setDeliveryCost(Number(data.cost));
+        }
+      },
+    });
+  // Create Order Mutation
+  const createOrderMutation = useMutation({
+    mutationFn: async (orderData) => {
       const { data, error } = await supabase
-        .from('addresses')
-        .select('*')
-        .eq('user_id', userId)
+        .from('orders')
+        .insert([{
+          user_id: orderData.user_id,
+          status: 'PENDING',
+          total_amount: orderData.total_amount,
+          mpesa_code: orderData.mpesa_code,
+          delivery_option: orderData.delivery_option,
+          region: orderData.region || null,
+          area: orderData.area || null,
+          courier_service: orderData.courier_service || null,
+          pickup_point: orderData.pickup_point || null,
+          delivery_cost: orderData.delivery_cost,
+          cart_items: orderData.cart_items,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
         .single();
   
-      if (!error && data) {
-        setDeliveryAddress(data);
-        setDeliveryCost(data.cost);
-      }
-    }, []);
-    const updateDeliveryDetails = (address, cost) => {
-      setDeliveryAddress(address);
-      setDeliveryCost(cost);
-    };
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['orders']);
+      queryClient.invalidateQueries(['cart']);
+    },
+  });
+  const createOrderItemsMutation = useMutation({
+    mutationFn: async (orderItems) => {
+      const { data, error } = await supabase
+        .from('order_items')
+        .insert(orderItems.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: item.price,
+          user_id: item.user_id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })));
+      if (error) throw error;
+      return data;
+    }
+  });
 
-    useEffect(() => {
-      if (user?.id) {
-        fetchDeliveryAddress(user.id);
-      }
-    }, [user, fetchDeliveryAddress]);
+  const updateDeliveryDetails = (address, cost) => {
+    setDeliveryAddress(address);
+    setDeliveryCost(cost);
+  };
     const value = {
       user,
       signIn,
@@ -145,26 +222,27 @@ const SupabaseContext = createContext();
       fetchUserDetails,
       products,
       categories,
-      fetchProducts,
-      fetchCategories,
-      fetchOrders,
-      supabase,
+      cartItems,
+      wishlistItems,
+      orders,
       deliveryAddress,
       deliveryCost,
+      deliveryAddressData,
       setDeliveryCost,
+      addToCart: addToCartMutation.mutate,
+      deleteFromCart: deleteFromCartMutation.mutate,
+      addToWishlist: addToWishlistMutation.mutate,
+      deleteFromWishlist: deleteFromWishlistMutation.mutate,
+      createOrder: createOrderMutation.mutate,
       updateDeliveryDetails,
-      fetchDeliveryAddress,
-      fetchProductsByCategory,
-      fetchWishlistItems,
-      deleteFromWishlist,
-      addToWishlist
+      supabase,
+      createOrderItems: createOrderItemsMutation.mutate,
     };
-
-    return (
-      <SupabaseContext.Provider value={value}>
-        {children}
-      </SupabaseContext.Provider>
-    );
-  };
+  return (
+    <SupabaseContext.Provider value={value}>
+      {children}
+    </SupabaseContext.Provider>
+  );
+};
 
 export const useSupabaseContext = () => useContext(SupabaseContext);

@@ -1,36 +1,31 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useSupabaseContext } from '../../context/supabaseContext';
+import { useRouter } from "next/navigation";
+import {ChevronLeft} from 'lucide-react';
 import Image from 'next/image';
 
 export default function Orders() {
   const { fetchOrders, user } = useSupabaseContext();
   const [orders, setOrders] = useState([]);
+  const router = useRouter();
+  const { orders: contextOrders } = useSupabaseContext();
   const [activeTab, setActiveTab] = useState("ongoing");
 
   useEffect(() => {
-    const getOrders = async () => {
-      if (!user?.id) return;
-      
-      try {
-        const orderData = await fetchOrders(user.id);
-        if (orderData) {
-          setOrders(orderData);
-        }
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      }
-    };
-
     if (user?.id) {
-      getOrders();
+      setOrders(contextOrders || []);
     }
-  }, [user?.id, fetchOrders]);
+  }, [user?.id, contextOrders]);
 
-  const ongoingOrders = orders.filter((order) => order.status === "PENDING");
-  const completedOrders = orders.filter(
-    (order) => order.status === "COMPLETED"
-  );
+ // Filter orders by status
+const ongoingOrders = orders.filter(order => 
+  order.status === 'PENDING' || order.status === 'PROCESSING'
+);
+
+const completedOrders = orders.filter(order => 
+  order.status === 'CONFIRMED' || order.status === 'DELIVERED'
+);
 
   const OrderCard = ({ order }) => (
     <div className="bg-primarycolor rounded-2xl mb-4 overflow-hidden shadow-sm">
@@ -86,35 +81,36 @@ export default function Orders() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <div className="flex items-center mb-6">
-        <button
-          onClick={() => window.history.back()}
-          className="mr-4 text-primarycolor"
-        >
-          ←
-        </button>
-        <h2 className="text-xl font-bold text-primarycolor">MY ORDERS</h2>
-      </div>
+        <div className="flex items-center justify-between mb-6 relative">
+      <ChevronLeft 
+        className="text-primarycolor cursor-pointer" 
+        onClick={() => router.back()} 
+      />
+      <h1 className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-bold text-primarycolor">
+        MY ORDERS
+      </h1>
+      <div className="w-6" /> {/* Spacer for alignment */}
+    </div>
 
-      {/* Tabs */}
-      <div className="mb-8">
-        <div className="flex">
+      {/* Tab navigation with proper spacing and centering */}
+      <div className="flex justify-center items-center w-full border-b border-gray-200 mb-6">
+        <div className="grid grid-cols-2 w-full">
           <button
-            onClick={() => setActiveTab("ongoing")}
-            className={`flex-1 py-2 text-center ${
-              activeTab === "ongoing"
-                ? "text-primarycolor font-semibold"
-                : "text-gray-500"
+            onClick={() => setActiveTab('ongoing')}
+            className={`pb-2 text-lg font-medium transition-all duration-200 text-center ${
+              activeTab === 'ongoing'
+                ? 'text-secondarycolor border-b-2 border-secondarycolor'
+                : 'text-gray-400'
             }`}
           >
             Ongoing
           </button>
           <button
-            onClick={() => setActiveTab("completed")}
-            className={`flex-1 py-2 text-center ${
-              activeTab === "completed"
-                ? "text-secondarycolor font-semibold border-b-2 border-secondarycolor"
-                : "text-gray-500"
+            onClick={() => setActiveTab('completed')}
+            className={`pb-2 text-lg font-medium transition-all duration-200 text-center ${
+              activeTab === 'completed'
+                ? 'text-secondarycolor border-b-2 border-secondarycolor'
+                : 'text-gray-400'
             }`}
           >
             Completed
@@ -125,7 +121,7 @@ export default function Orders() {
       {/* Tab Content */}
       <div className="mt-4">
         {activeTab === "ongoing" && (
-          <div>
+          <div className="space-y-4">
             {ongoingOrders.length === 0 ? (
               <EmptyState message="You don't have an order yet" />
             ) : (
@@ -137,7 +133,7 @@ export default function Orders() {
         )}
 
         {activeTab === "completed" && (
-          <div>
+          <div className="space-y-4">
             {completedOrders.length === 0 ? (
               <EmptyState message="You don't have any complete orders yet" />
             ) : (
