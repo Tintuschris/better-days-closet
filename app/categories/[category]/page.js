@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSupabaseContext } from "../../context/supabaseContext";
 import ProductListing from "../../components/productlisting";
+import CategoryFilterModal from '../../(modals)/categoryfiltermodal';
 import {
   ChevronDown,
   Filter,
@@ -10,10 +11,9 @@ import {
   List,
   SlidersHorizontal,
 } from "lucide-react";
-import FilterModal from "../../(modals)/filtermodal";
 
 export default function CategoryPage() {
-  const { products, categories } = useSupabaseContext();
+  const { products } = useSupabaseContext();
   const [categoryProducts, setCategoryProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState("grid");
@@ -54,8 +54,29 @@ export default function CategoryPage() {
   }, [products, category, sortBy]);
 
   const handleFilter = (filters) => {
+    let filtered = products.filter(
+      product => product.category_name.toLowerCase() === category.toLowerCase()
+    );
+
+    if (filters.priceRange) {
+      filtered = filtered.filter(product => 
+        product.price >= filters.priceRange[0] && 
+        product.price <= filters.priceRange[1]
+      );
+    }
+
+    if (filters.ratings?.length) {
+      filtered = filtered.filter(product => 
+        filters.ratings.includes(Math.floor(product.rating || 0))
+      );
+    }
+
+    if (filters.availability === 'inStock') {
+      filtered = filtered.filter(product => product.in_stock);
+    }
+
+    setCategoryProducts(filtered);
     setActiveFilters(filters);
-    // Implement filter logic here
     setIsFilterModalOpen(false);
   };
 
@@ -141,10 +162,13 @@ export default function CategoryPage() {
           <div className="flex flex-col items-center justify-center py-12">
             <p className="text-lg text-primarycolor mb-4">No products found</p>
             <button
-              onClick={() => router.push("/")}
+              onClick={() => {
+                setActiveFilters(null);
+                handleFilter({});
+              }}
               className="px-6 py-2 bg-primarycolor text-white rounded-full"
             >
-              Continue Shopping
+              Clear Filters
             </button>
           </div>
         ) : (
@@ -154,8 +178,7 @@ export default function CategoryPage() {
 
       {/* Filter Modal */}
       {isFilterModalOpen && (
-        <FilterModal
-          categories={categories?.map((cat) => cat.name) || []}
+        <CategoryFilterModal
           onApplyFilters={handleFilter}
           closeModal={() => setIsFilterModalOpen(false)}
           initialFilters={activeFilters}

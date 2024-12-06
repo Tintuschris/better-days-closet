@@ -19,11 +19,15 @@ function ProfilePageContent() {
     if (user?.id && fetchUserDetails) {
       fetchUserDetails(user.id);
     }
-    
   }, [user, fetchUserDetails]);
 
+  useEffect(() => {
+    if (!user || !userDetails) {
+      router.push('/auth/login');
+    }
+  }, [user, userDetails, router]);
+
   if (!user || !userDetails) {
-    router.push('/auth/login');
     return null;
   }
 
@@ -74,57 +78,53 @@ function ProfilePageContent() {
           exit={{ opacity: 0, x: 20 }}
           className="min-h-screen bg-white relative"
         >
-          {/* Background rectangle */}
-          <div className="absolute bottom-0 left-0 right-0 h-[80%] bg-secondarycolor rounded-t-[4rem] z-0"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-[80%] bg-secondarycolor rounded-t-[2rem] z-0"></div>
 
           <div className="relative z-10">
-            {/* Header */}
-            <div className="p-6">
+            <div className="p-3">
               <button onClick={() => router.back()}>
-                <ChevronLeft className="text-purple-900 w-6 h-6" />
+                <ChevronLeft className="text-purple-900 w-5 h-5" />
               </button>
-              <h1 className="text-center text-2xl font-semibold text-primarycolor mt-2">PROFILE</h1>
+              <h1 className="text-center text-xl font-semibold text-primarycolor mt-2">PROFILE</h1>
             </div>
 
-            {/* Profile Picture and Name */}
-            <div className="flex flex-col items-center mt-4 mb-8">
-              <div className="w-24 h-24 rounded-full overflow-hidden mb-6">
+            <div className="flex flex-col items-center mt-3 mb-6">
+              <div className="w-20 h-20 rounded-full overflow-hidden mb-4">
                 <User className="w-full h-full object-cover bg-primarycolor"/>
               </div>
               
-              <h2 className="text-2xl font-bold text-center text-primarycolor">
+              <h2 className="text-lg font-bold text-center text-primarycolor">
                 {userDetails.name.split(' ').slice(0, 1).join(' ')}
                 <br />
                 {userDetails.name.split(' ').slice(1).join(' ')}
               </h2>
-              <p className="text-xl text-primarycolor mt-2">{userDetails.email}</p>
+              <p className="text-base text-primarycolor mt-1">{userDetails.email}</p>
             </div>
 
-            {/* Navigation Items */}
-            <div className="px-6 space-y-4">
+            <div className="px-4 space-y-3">
               {navigationItems.map((item, index) => (
                 <button
                   key={index}
                   onClick={() => setActiveTab(item.id)}
-                  className="w-full bg-purple-900 text-white p-4 rounded-xl flex items-center justify-between hover:bg-primarycolor transition-colors"
+                  className="w-full bg-purple-900 text-white p-3 rounded-xl flex items-center justify-between hover:bg-primarycolor transition-colors"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     {item.icon}
-                    <span className="text-xl">{item.label}</span>
+                    <span className="text-base">{item.label}</span>
                   </div>
-                  <ChevronLeft className="w-6 h-6 rotate-180" />
+                  <ChevronLeft className="w-5 h-5 rotate-180" />
                 </button>
               ))}
 
               <button
                 onClick={handleSignOut}
-                className="w-full bg-purple-900 text-white p-4 rounded-xl flex items-center justify-between hover:bg-primarycolor transition-colors"
+                className="w-full bg-purple-900 text-white p-3 rounded-xl flex items-center justify-between hover:bg-primarycolor transition-colors"
               >
-                <div className="flex items-center gap-4">
-                  <LogOut className="w-6 h-6 text-red-500" />
-                  <span className="text-xl text-red-500">Sign out</span>
+                <div className="flex items-center gap-3">
+                  <LogOut className="w-5 h-5 text-red-500" />
+                  <span className="text-base text-red-500">Sign out</span>
                 </div>
-                <ChevronLeft className="w-6 h-6 rotate-180" />
+                <ChevronLeft className="w-5 h-5 rotate-180" />
               </button>
             </div>
           </div>
@@ -138,18 +138,13 @@ function ProfilePageContent() {
         >
           {(() => {
             const Component = navigationItems.find(item => item.id === activeTab)?.component;
-            return Component ? (
-              <div>
-                <Component />
-              </div>
-            ) : null;
+            return Component ? <Component /> : null;
           })()}
         </motion.div>
       )}
     </AnimatePresence>
   );
 }
-
 export default function ProfilePage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>

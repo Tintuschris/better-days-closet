@@ -7,6 +7,8 @@ import Image from "next/image";
 import { ChevronLeft, Heart, ShoppingCart, Share2, Star } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../context/cartContext";
+import { toast } from "sonner";
+
 
 export default function ProductPage() {
   const { products, user, wishlistItems, addToWishlist, deleteFromWishlist } =

@@ -1,13 +1,43 @@
 "use client";
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSupabaseContext } from './context/supabaseContext';
 import ProductCarousel from './components/productcarousel';
 import CategoryListing from './components/categorylisting';
+import MarketingBanner from './components/marketingbanner';
 import { Filter, X } from 'lucide-react';
 import FilterModal from './(modals)/filtermodal';
 
+const ProductCardSkeleton = () => (
+  <div className="bg-white rounded-lg overflow-hidden shadow-lg animate-pulse">
+    <div className="w-full h-48 bg-gray-200" />
+    <div className="p-4">
+      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+      <div className="h-4 bg-gray-200 rounded w-1/2" />
+    </div>
+  </div>
+);
+
+const SkeletonCarousel = ({ count = 4 }) => (
+  <div className="space-y-4">
+    <div className="h-6 bg-gray-200 rounded w-1/4" />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {Array(count).fill(0).map((_, index) => (
+        <ProductCardSkeleton key={index} />
+      ))}
+    </div>
+  </div>
+);
+
 export default function HomePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomePageContent />
+    </Suspense>
+  );
+}
+
+function HomePageContent() {
   const { products, categories } = useSupabaseContext();
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -81,6 +111,21 @@ export default function HomePage() {
     router.push('/', { scroll: false });
   };
 
+  if (!products) {
+    return (
+      <div className="space-y-8 p-4">
+        <div className="h-12 bg-gray-200 rounded animate-pulse" /> {/* Category listing skeleton */}
+        
+        {/* Marketing Banner Skeleton */}
+        <div className="h-40 bg-gray-200 rounded-lg animate-pulse" />
+        
+        <SkeletonCarousel /> {/* Top Deals */}
+        <SkeletonCarousel /> {/* New Arrivals */}
+        <SkeletonCarousel /> {/* Regular category */}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 p-4">
       <div className="relative">
@@ -92,6 +137,9 @@ export default function HomePage() {
           <Filter size={24} />
         </button>
       </div>
+
+      {/* Marketing Banner Component */}
+      <MarketingBanner />
 
       {activeFilters && (
         <div className="flex flex-wrap gap-2 items-center">
