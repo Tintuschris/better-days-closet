@@ -1,89 +1,196 @@
 'use client';
-
 import { useState, useEffect } from 'react';
-import { useSupabase } from '../../../hooks/useSupabase';
+import { useSupabase } from '../hooks/useSupabase';
+import { toast } from 'sonner';
+import { FiX } from 'react-icons/fi';
 
-export default function DeliveryAddressesForm({ address, onSave }) {
-  const { addDeliveryAddress, updateDeliveryAddress } = useSupabase();
-  const [optionName, setOptionName] = useState(address?.option_name || '');
-  const [region, setRegion] = useState(address?.region || '');
-  const [area, setArea] = useState(address?.area || '');
-  const [cost, setCost] = useState(address?.cost || '');
-  const [description, setDescription] = useState(address?.description || '');
-  const [courier, setCourier] = useState(address?.courier || '');
-  const [pickupPointName, setPickupPointName] = useState(address?.pickup_point_name || '');
+export default function DeliveryAddressesForm({ address, onClose }) {
+  const { useAddDeliveryAddress, useUpdateDeliveryAddress } = useSupabase();
+  const addMutation = useAddDeliveryAddress();
+  const updateMutation = useUpdateDeliveryAddress();
+
+  const [formData, setFormData] = useState({
+    option_name: '',
+    region: '',
+    area: '',
+    cost: '',
+    description: '',
+    courier: '',
+    pickup_point_name: ''
+  });
+
+  useEffect(() => {
+    if (address) {
+      setFormData(address);
+    }
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [address]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const addressData = { option_name: optionName, region, area, cost, description, courier, pickup_point_name: pickupPointName };
-
-    if (address) {
-      await updateDeliveryAddress(address.id, addressData);
-    } else {
-      await addDeliveryAddress(addressData);
+    try {
+      if (address) {
+        await updateMutation.mutateAsync({ id: address.id, address: formData });
+        toast.success('Delivery address updated successfully');
+      } else {
+        await addMutation.mutateAsync(formData);
+        toast.success('Delivery address added successfully');
+      }
+      onClose();
+    } catch (error) {
+      toast.error(address ? 'Failed to update address' : 'Failed to add address');
     }
-    onSave(); // Callback to refresh the list
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <input
-        type="text"
-        placeholder="Option Name"
-        value={optionName}
-        onChange={(e) => setOptionName(e.target.value)}
-        className="w-full p-2 border"
-        required
-      />
-      <input
-        type="text"
-        placeholder="Region"
-        value={region}
-        onChange={(e) => setRegion(e.target.value)}
-        className="w-full p-2 border"
-        required
-      />
-      <input
-        type="text"
-        placeholder="Area"
-        value={area}
-        onChange={(e) => setArea(e.target.value)}
-        className="w-full p-2 border"
-        required
-      />
-      <input
-        type="number"
-        placeholder="Cost"
-        value={cost}
-        onChange={(e) => setCost(e.target.value)}
-        className="w-full p-2 border"
-        required
-      />
-      <input
-        type="text"
-        placeholder="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="w-full p-2 border"
-      />
-      <input
-        type="text"
-        placeholder="Courier Service"
-        value={courier}
-        onChange={(e) => setCourier(e.target.value)}
-        className="w-full p-2 border"
-        required
-      />
-      <input
-        type="text"
-        placeholder="Pickup Point Name"
-        value={pickupPointName}
-        onChange={(e) => setPickupPointName(e.target.value)}
-        className="w-full p-2 border"
-      />
-      <button type="submit" className="bg-blue-600 text-white p-2 rounded">
-        {address ? 'Update Address' : 'Add Address'}
-      </button>
-    </form>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg w-full max-w-lg relative">
+        <button
+          onClick={onClose}
+          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 z-10"
+        >
+          <FiX size={20} />
+        </button>
+
+        <div className="max-h-[85vh] overflow-y-auto p-6">
+          <h2 className="text-xl font-semibold mb-6 pr-8">
+            {address ? 'Edit Delivery Address' : 'Add New Delivery Address'}
+          </h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Option Name
+              </label>
+              <input
+                type="text"
+                name="option_name"
+                value={formData.option_name}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Region
+                </label>
+                <input
+                  type="text"
+                  name="region"
+                  value={formData.region}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Area
+                </label>
+                <input
+                  type="text"
+                  name="area"
+                  value={formData.area}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Cost
+              </label>
+              <input
+                type="number"
+                name="cost"
+                value={formData.cost}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+                rows="3"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Courier Service
+              </label>
+              <input
+                type="text"
+                name="courier"
+                value={formData.courier}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Pickup Point Name
+              </label>
+              <input
+                type="text"
+                name="pickup_point_name"
+                value={formData.pickup_point_name}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-4 mt-6">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-primarycolor text-white rounded-md hover:bg-primarycolor/90"
+                disabled={addMutation.isLoading || updateMutation.isLoading}
+              >
+                {addMutation.isLoading || updateMutation.isLoading
+                  ? 'Saving...'
+                  : address
+                  ? 'Update'
+                  : 'Add'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 }

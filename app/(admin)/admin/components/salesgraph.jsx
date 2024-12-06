@@ -1,4 +1,4 @@
-import React from 'react';
+"use client";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -7,7 +7,7 @@ import {
   LineElement,
   Title,
   Tooltip,
-  Legend,
+  Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
@@ -21,7 +21,7 @@ ChartJS.register(
   Legend
 );
 
-export default function SalesGraph({ salesData }) {
+export default function SalesGraph({ salesData = [] }) {
   const options = {
     responsive: true,
     plugins: {
@@ -30,31 +30,36 @@ export default function SalesGraph({ salesData }) {
       },
       title: {
         display: true,
-        text: 'Sales Revenue Over Time',
+        text: 'Daily Sales Revenue',
       },
     },
     scales: {
-      x: {
-        type: 'category',
-      },
       y: {
-        type: 'linear',
-      },
-    },
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Revenue (KES)'
+        }
+      }
+    }
   };
 
   const data = {
-    labels: salesData.map((entry) => entry.date),
+    labels: salesData.map(item => item.date),
     datasets: [
       {
-        label: 'Sales Revenue',
-        data: salesData.map((entry) => entry.revenue),
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      },
-    ],
+        label: 'Daily Sales',
+        data: salesData.map(item => item.revenue),
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+        tension: 0.3
+      }
+    ]
   };
 
-  return <Line options={options} data={data} />;
+  return (
+    <div className="w-full h-[400px]">
+      <Line options={options} data={data} />
+    </div>
+  );
 }

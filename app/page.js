@@ -144,7 +144,7 @@ function HomePageContent() {
       {activeFilters && (
         <div className="flex flex-wrap gap-2 items-center">
           {activeFilters.categories.map(category => (
-            <span key={category} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolorbg-gray-100">
+            <span key={category} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor">
               {category}
               <button onClick={() => removeFilter('category', category)} className="ml-2">
                 <X size={14} />

@@ -1,42 +1,38 @@
 "use client";
+import { Suspense } from 'react';
 import ProductForm from '../components/productform';
 import ProductTable from '../components/producttable';
 import { useSupabase } from '../hooks/useSupabase';
-import { useEffect, useState, useCallback } from 'react';
 
-export default function ProductManagement() {
-  const { fetchCategories: originalFetchCategories } = useSupabase();
-  const [categories, setCategories] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState(null); // Track selected product for editing
+function LoadingSkeleton() {
+  return (
+    <div className="p-4 space-y-4">
+      <div className="h-8 bg-gray-200 rounded w-48 animate-pulse" />
+      <div className="h-64 bg-gray-200 rounded animate-pulse" />
+    </div>
+  );
+}
 
-  // Memoize fetchCategories using useCallback
-  const fetchCategories = useCallback(() => {
-    return originalFetchCategories();
-  }, [originalFetchCategories]);
+function ProductsContent() {
+  const { useProducts, useCategories } = useSupabase();
+  const { data: products, isLoading: productsLoading } = useProducts();
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
 
-  useEffect(() => {
-    fetchCategories().then(setCategories);
-  }, [fetchCategories]); // Now fetchCategories is safely included as a dependency
-
-  // Handle when a product is selected for editing
-  const handleEditProduct = (product) => {
-    setSelectedProduct(product);
-  };
-
-  // Refresh the product list and clear the form
-  const handleSave = () => {
-    setSelectedProduct(null); // Clear the selected product after saving
-  };
+  if (productsLoading || categoriesLoading) return <LoadingSkeleton />;
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4 text-primarycolor">Manage Products</h1>
-
-      {/* Pass the selected product for editing */}
-      <ProductForm product={selectedProduct} categories={categories} onSave={handleSave} />
-      
-      {/* Pass handleEditProduct to ProductTable */}
-      <ProductTable onEdit={handleEditProduct} />
+      <ProductForm categories={categories} />
+      <ProductTable products={products} />
     </div>
+  );
+}
+
+export default function ProductManagement() {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <ProductsContent />
+    </Suspense>
   );
 }

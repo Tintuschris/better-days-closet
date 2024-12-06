@@ -90,7 +90,7 @@ function ProfilePageContent() {
 
             <div className="flex flex-col items-center mt-3 mb-6">
               <div className="w-20 h-20 rounded-full overflow-hidden mb-4">
-                <User className="w-full h-full object-cover bg-primarycolor"/>
+                <User className="w-full h-full object-cover bg-primarycolor text-white"/>
               </div>
               
               <h2 className="text-lg font-bold text-center text-primarycolor">

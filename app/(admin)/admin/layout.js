@@ -1,22 +1,18 @@
 import Sidebar from './components/sidebar';
 import Navbar from './components/navbar';
-import AdminNotifications from './components/adminNotifications'
-import RealtimeDebugger from './components/RealTimeDebugger'
-import { Toaster } from 'sonner'
+import { Toaster } from 'sonner';
 
 export default function AdminLayout({ children }) {
   return (
-
-    <div className="flex">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-grow">
+      <div className="flex-1">
         <Navbar />
-        <AdminNotifications />
-        <RealtimeDebugger />
-        <main className="p-6">{children}</main>
+        <main className="p-6">
+          {children}
+        </main>
         <Toaster />
       </div>
     </div>
-
   );
 }

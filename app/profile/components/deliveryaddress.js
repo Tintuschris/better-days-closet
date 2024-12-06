@@ -106,7 +106,7 @@ export default function DeliveryAddress() {
     };
 
     initializeAddresses();
-  }, [user]);
+  }, [fetchDeliveryAddresses, getFullDeliveryDetails, user]);
 
   const handleSelection = (field, value) => {
     const updatedState = { ...state, [field]: value };

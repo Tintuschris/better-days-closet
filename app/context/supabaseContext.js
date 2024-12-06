@@ -213,6 +213,7 @@ export const SupabaseProvider = ({ children }) => {
     setDeliveryAddress(address);
     setDeliveryCost(cost);
   };
+  
     const value = {
       user,
       signIn,

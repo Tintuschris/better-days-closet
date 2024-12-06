@@ -2,38 +2,24 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useSupabase } from '../(admin)/admin/hooks/useSupabase';
 
 export default function MarketingBanner() {
   const [currentSlide, setCurrentSlide] = useState(0);
-
-  const banners = [
-    {
-      id: 1,
-      imageUrl: '/banner1.jpg',
-      title: 'Summer Sale',
-      description: 'Up to 50% off on selected items'
-    },
-    {
-      id: 2,
-      imageUrl: '/banner2.jpg',
-      title: 'New Collection',
-      description: 'Check out our latest arrivals'
-    },
-    {
-      id: 3,
-      imageUrl: '/banner3.jpg',
-      title: 'Free Delivery',
-      description: 'On orders above Ksh. 2000'
-    }
-  ];
+  const { useBanners } = useSupabase();
+  const { data: banners, isLoading } = useBanners();
 
   useEffect(() => {
+    if (!banners?.length) return;
+    
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % banners.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [banners]);
+
+  if (isLoading || !banners?.length) return null;
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % banners.length);
@@ -49,13 +35,13 @@ export default function MarketingBanner() {
         className="flex transition-transform duration-500 ease-out h-full"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
-        {banners.map((banner) => (
+        {banners.filter(banner => banner.is_active).map((banner) => (
           <div 
             key={banner.id}
             className="w-full h-full flex-shrink-0 relative"
           >
             <Image
-              src={banner.imageUrl}
+              src={banner.image_url}
               alt={banner.title}
               fill
               className="object-cover"
@@ -87,7 +73,7 @@ export default function MarketingBanner() {
 
       {/* Dots Indicator */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
-        {banners.map((_, index) => (
+        {banners.filter(banner => banner.is_active).map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
