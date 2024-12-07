@@ -18,7 +18,8 @@ export default function OrderManagement() {
   const orderStats = {
     total: orders?.length || 0,
     pending: orders?.filter(order => order.status === 'PENDING').length || 0,
-    completed: orders?.filter(order => order.status === 'CONFIRMED').length || 0,
+    confirmed: orders?.filter(order => order.status === 'CONFIRMED').length || 0,
+    shipped: orders?.filter(order => order.status === 'SHIPPED').length || 0,
     cancelled: orders?.filter(order => order.status === 'CANCELLED').length || 0
   };
 

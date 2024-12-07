@@ -125,7 +125,7 @@ export const useSupabase = () => {
       mutationFn: async ({ id, status }) => {
         const { data, error } = await supabase
           .from('orders')
-          .update({ status })
+          .update({ status, updated_at: new Date().toISOString() })
           .eq('id', id);
         if (error) throw error;
         return data;
@@ -166,27 +166,39 @@ export const useSupabase = () => {
       queryFn: async () => {
         const { data, error } = await supabase
           .from('orders')
-          .select('created_at, total_amount')
-          .order('created_at');
+          .select('id, total_amount, created_at, status')
+          .order('created_at', { ascending: true });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Sales Data Error:', error);
+          throw error;
+        }
   
-        // Group orders by date and calculate daily totals
+        // Debug log
+        console.log('Raw Orders:', data);
+  
         const dailySales = data.reduce((acc, order) => {
+          if (order.status === 'CANCELLED') return acc;
+          
           const date = new Date(order.created_at).toLocaleDateString();
-          acc[date] = (acc[date] || 0) + order.total_amount;
+          acc[date] = (acc[date] || 0) + Number(order.total_amount);
           return acc;
         }, {});
   
-        // Convert to array format needed for chart
-        return Object.entries(dailySales).map(([date, revenue]) => ({
+        const formattedData = Object.entries(dailySales).map(([date, amount]) => ({
           date,
-          revenue
+          amount
         }));
+  
+        // Debug log
+        console.log('Formatted Sales Data:', formattedData);
+        return formattedData;
       },
       staleTime: 1000 * 60 * 5, // 5 minutes
     });
   };
+  
+  
   
   // Add these inside useSupabase hook
   const useDeliveryAddresses = () => {

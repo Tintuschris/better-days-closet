@@ -4,6 +4,12 @@ import { useSupabase } from '../hooks/useSupabase';
 import { toast } from 'sonner';
 import { FiX } from 'react-icons/fi';
 
+const DELIVERY_OPTIONS = [
+  'Nairobi Delivery',
+  'CBD Pickup Point',
+  'Rest of Kenya'
+];
+
 export default function DeliveryAddressesForm({ address, onClose }) {
   const { useAddDeliveryAddress, useUpdateDeliveryAddress } = useSupabase();
   const addMutation = useAddDeliveryAddress();
@@ -54,6 +60,89 @@ export default function DeliveryAddressesForm({ address, onClose }) {
     }
   };
 
+  const renderOptionSpecificFields = () => {
+    switch (formData.option_name) {
+      case 'Nairobi Delivery':
+        return (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Area</label>
+            <input
+              type="text"
+              name="area"
+              value={formData.area}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+              required
+            />
+          </div>
+        );
+      case 'CBD Pickup Point':
+        return (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Pickup Point Name
+            </label>
+            <input
+              type="text"
+              name="pickup_point_name"
+              value={formData.pickup_point_name}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+              required
+            />
+          </div>
+        );
+      case 'Rest of Kenya':
+        return (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Region
+                </label>
+                <input
+                  type="text"
+                  name="region"
+                  value={formData.region}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Area
+                </label>
+                <input
+                  type="text"
+                  name="area"
+                  value={formData.area}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Courier Service
+              </label>
+              <input
+                type="text"
+                name="courier"
+                value={formData.courier}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+                required
+              />
+            </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg w-full max-w-lg relative">
@@ -74,45 +163,21 @@ export default function DeliveryAddressesForm({ address, onClose }) {
               <label className="block text-sm font-medium text-gray-700">
                 Option Name
               </label>
-              <input
-                type="text"
+              <select
                 name="option_name"
                 value={formData.option_name}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
                 required
-              />
+              >
+                <option value="">Select Delivery Option</option>
+                {DELIVERY_OPTIONS.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Region
-                </label>
-                <input
-                  type="text"
-                  name="region"
-                  value={formData.region}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Area
-                </label>
-                <input
-                  type="text"
-                  name="area"
-                  value={formData.area}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
-                  required
-                />
-              </div>
-            </div>
+            {renderOptionSpecificFields()}
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -138,33 +203,6 @@ export default function DeliveryAddressesForm({ address, onClose }) {
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
                 rows="3"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Courier Service
-              </label>
-              <input
-                type="text"
-                name="courier"
-                value={formData.courier}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Pickup Point Name
-              </label>
-              <input
-                type="text"
-                name="pickup_point_name"
-                value={formData.pickup_point_name}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
               />
             </div>
 
