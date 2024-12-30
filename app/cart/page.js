@@ -26,21 +26,6 @@ export default function CartPage() {
   const { user, deliveryAddressData, deliveryCost, setDeliveryCost } =
     useSupabaseContext();
 
-  // Remove the combined effect
-  useEffect(() => {
-    const savedCart = localStorage.getItem("cart");
-    if (savedCart) {
-      updateCart(JSON.parse(savedCart));
-    }
-  }, []); // Run only once on mount
-
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cartItems));
-    setCartWithDetails(cartItems);
-    setIsLoading(false);
-  }, [cartItems]);
-
-  // Separate delivery cost effect
   useEffect(() => {
     if (deliveryAddressData?.cost) {
       setDeliveryCost(Number(deliveryAddressData.cost));
@@ -150,166 +135,182 @@ export default function CartPage() {
   }
 
   return (
-    <div className="p-4 min-h-screen bg-white pb-48">
-      <div className="flex items-center justify-between mb-4 relative">
-        {isSelectionMode ? (
-          <>
-            <button
-              onClick={exitSelectionMode}
-              className="text-primarycolor flex items-center"
-            >
-              <X className="w-6 h-6 mr-1" />
-              Cancel
-            </button>
-            <span className="text-primarycolor font-medium">
-              {selectedItems.size} selected
-            </span>
-          </>
-        ) : (
-          <>
-            <ChevronLeft
-              className="text-primarycolor cursor-pointer"
-              onClick={() => router.back()}
-            />
-            <h1 className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-bold text-primarycolor">
-              MY CART
-            </h1>
-            <button
-              onClick={() => setIsSelectionMode(true)}
-              className="text-primarycolor text-sm"
-            >
-              Select Items
-            </button>
-          </>
-        )}
-      </div>
-
-      {cartWithDetails.map((item) => (
-        <div
-          key={item.productId}
-          className={`bg-secondaryvariant rounded-lg p-4 mb-4 flex items-center relative ${
-            isSelectionMode ? "cursor-pointer" : ""
-          } ${
-            selectedItems.has(item.productId)
-              ? "border-2 border-primarycolor"
-              : ""
-          }`}
-          onClick={() => toggleItemSelection(item.productId)}
-        >
-          <Image
-            src={item.product.image_url}
-            alt={item.product.name}
-            width={80}
-            height={80}
-            className="object-cover rounded-lg mr-4"
-          />
-          <div className="flex-grow">
-            <p className="font-semibold text-primarycolor">
-              {item.product.name}
-            </p>
-            <div className="flex items-center mt-2">
-              <div
-                className="flex items-center px-3 py-1 bg-transparent border border-primarycolor rounded-full"
-                onClick={(e) => isSelectionMode && e.stopPropagation()}
+    <div className="min-h-screen bg-white">
+      {/* Header with increased bottom margin on desktop */}
+      <div className="p-4 mb-4 md:mb-8">
+        <div className="flex items-center justify-between relative md:justify-start md:gap-4">
+          {isSelectionMode ? (
+            <>
+              <button
+                onClick={exitSelectionMode}
+                className="text-primarycolor flex items-center"
               >
-                <button
-                  onClick={() =>
-                    handleQuantityChange(item.productId, item.quantity - 1)
-                  }
-                  className="px-3 py-1 text-primarycolor font-bold"
+                <X className="w-6 h-6 mr-1" />
+                Cancel
+              </button>
+              <span className="text-primarycolor font-medium">
+                {selectedItems.size} selected
+              </span>
+            </>
+          ) : (
+            <>
+              <ChevronLeft
+                className="text-primarycolor cursor-pointer"
+                onClick={() => router.back()}
+              />
+              <h1 className="absolute left-1/2 -translate-x-1/2 md:static md:left-0 md:transform-none text-2xl font-bold text-primarycolor">
+                MY CART
+              </h1>
+              <button
+                onClick={() => setIsSelectionMode(true)}
+                className="text-primarycolor text-sm md:ml-auto"
+              >
+                Select Items
+              </button>
+            </>
+          )}
+        </div>
+        <div className="h-px bg-gray-200 mt-4"></div>
+      </div>
+      <div className="max-w-[1400px] mx-auto px-4">
+        <div className="md:grid md:grid-cols-2 md:gap-8 md:h-[calc(100vh-120px)]">
+
+          {/* Scrollable Cart Items Section with subtle background */}
+          <div className="md:overflow-auto md:pr-4 md:bg-primarycolor/5 md:rounded-lg md:p-4">
+            <div className="space-y-4">
+              {cartWithDetails.map((item) => (
+                <div
+                  key={item.productId}
+                  className={`bg-secondaryvariant rounded-lg p-4 flex items-center relative ${
+                    isSelectionMode ? "cursor-pointer" : ""
+                  } ${
+                    selectedItems.has(item.productId)
+                      ? "border-2 border-primarycolor"
+                      : ""
+                  }`}
+                  onClick={() => toggleItemSelection(item.productId)}
                 >
-                  -
-                </button>
-                <span className="px-3 py-1 text-primarycolor">
-                  {item.quantity}
+                  <Image
+                    src={item.product.image_url}
+                    alt={item.product.name}
+                    width={80}
+                    height={80}
+                    className="object-cover rounded-lg mr-4"
+                  />
+                  <div className="flex-grow">
+                    <p className="font-semibold text-primarycolor">
+                      {item.product.name}
+                    </p>
+                    <div className="flex items-center mt-2">
+                      <div
+                        className="flex items-center px-3 py-1 bg-transparent border border-primarycolor rounded-full"
+                        onClick={(e) => isSelectionMode && e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() =>
+                            handleQuantityChange(item.productId, item.quantity - 1)
+                          }
+                          className="px-3 py-1 text-primarycolor font-bold"
+                        >
+                          -
+                        </button>
+                        <span className="px-3 py-1 text-primarycolor">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() =>
+                            handleQuantityChange(item.productId, item.quantity + 1)
+                          }
+                          className="px-3 py-1 text-primarycolor font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end min-w-[100px]">
+                    <p className="font-bold text-purple-900 whitespace-nowrap">
+                      Ksh. {(item.product.price * item.quantity).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Static Pricing & Checkout Section */}
+          <div className="md:h-fit">
+            <div className="mt-6">
+              <div className="flex justify-between mb-8">
+                <span className="font-medium text-primarycolor">Sub Total</span>
+                <span className="font-medium text-primarycolor">
+                  Ksh. {subtotal.toFixed(2)}
                 </span>
-                <button
-                  onClick={() =>
-                    handleQuantityChange(item.productId, item.quantity + 1)
-                  }
-                  className="px-3 py-1 text-primarycolor font-bold"
-                >
-                  +
-                </button>
+              </div>
+
+              <div className="flex justify-between mb-8">
+                {!deliveryCost ? (
+                  <>
+                    <button
+                      onClick={handleAddDeliveryCost}
+                      className="w-1/2 border-2 border-primarycolor text-primarycolor font-medium py-2 rounded-full"
+                    >
+                      Add Delivery Cost
+                    </button>
+                    <span className="text-primarycolor font-medium">Ksh. 0</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium text-primarycolor">
+                      Delivery Cost
+                    </span>
+                    <span className="font-medium text-primarycolor">
+                      Ksh. {deliveryCost.toFixed(2)}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <div className="border-b border-primarycolor my-8"></div>
+
+              <div className="flex justify-between mb-8">
+                <span className="font-bold text-primarycolor">Total Cost</span>
+                <span className="font-bold text-primarycolor">
+                  Ksh. {totalCost.toFixed(2)}
+                </span>
+              </div>
+
+              <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-lg md:static md:p-0 md:shadow-none">
+                {isSelectionMode && selectedItems.size > 0 ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveForLater}
+                      className="w-1/2 py-3 rounded-full border-2 border-primarycolor text-primarycolor"
+                    >
+                      Save for Later
+                    </button>
+                    <button
+                      onClick={handleBulkDelete}
+                      className="w-1/2 py-3 rounded-full bg-warningcolor text-white"
+                    >
+                      Remove Items
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className={`w-full py-3 rounded-full ${
+                      deliveryCost
+                        ? "bg-primarycolor text-white hover:bg-primarycolor"
+                        : "bg-primarycolor/50 text-white"
+                    }`}
+                    onClick={handleCheckout}
+                  >
+                    Checkout
+                  </button>
+                )}
               </div>
             </div>
           </div>
-          <div className="flex flex-col items-end min-w-[100px]">
-            <p className="font-bold text-purple-900 whitespace-nowrap">
-              Ksh. {(item.product.price * item.quantity).toFixed(2)}
-            </p>
-          </div>
-        </div>
-      ))}
-
-      <div className="mt-6">
-        <div className="flex justify-between mb-8">
-          <span className="font-medium text-primarycolor">Sub Total</span>
-          <span className="font-medium text-primarycolor">
-            Ksh. {subtotal.toFixed(2)}
-          </span>
-        </div>
-
-        <div className="flex justify-between mb-8">
-          {!deliveryCost ? (
-            <>
-              <button
-                onClick={handleAddDeliveryCost}
-                className="w-1/2 border-2 border-primarycolor text-primarycolor font-medium py-2 rounded-full"
-              >
-                Add Delivery Cost
-              </button>
-              <span className="text-primarycolor font-medium">Ksh. 0</span>
-            </>
-          ) : (
-            <>
-              <span className="font-medium text-primarycolor">
-                Delivery Cost
-              </span>
-              <span className="font-medium text-primarycolor">
-                Ksh. {deliveryCost.toFixed(2)}
-              </span>
-            </>
-          )}
-        </div>
-
-        <div className="border-b border-primarycolor my-8"></div>
-
-        <div className="flex justify-between mb-8">
-          <span className="font-bold text-primarycolor">Total Cost</span>
-          <span className="font-bold text-primarycolor">
-            Ksh. {totalCost.toFixed(2)}
-          </span>
-        </div>
-
-        <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-lg">
-          {isSelectionMode && selectedItems.size > 0 ? (
-            <div className="flex gap-2">
-              <button
-                onClick={handleSaveForLater}
-                className="w-1/2 py-3 rounded-full border-2 border-primarycolor text-primarycolor"
-              >
-                Save for Later
-              </button>
-              <button
-                onClick={handleBulkDelete}
-                className="w-1/2 py-3 rounded-full bg-warningcolor text-white"
-              >
-                Remove Items
-              </button>
-            </div>
-          ) : (
-            <button
-              className={`w-full py-3 rounded-full ${
-                deliveryCost
-                  ? "bg-primarycolor text-white hover:bg-primarycolor"
-                  : "bg-primarycolor/50 text-white"
-              }`}
-              onClick={handleCheckout}
-            >
-              Checkout
-            </button>
-          )}
         </div>
       </div>
     </div>

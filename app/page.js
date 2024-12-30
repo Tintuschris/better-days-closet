@@ -7,6 +7,7 @@ import CategoryListing from './components/categorylisting';
 import MarketingBanner from './components/marketingbanner';
 import { Filter, X } from 'lucide-react';
 import FilterModal from './(modals)/filtermodal';
+import DesktopFilter from './components/DesktopFilter';
 
 const ProductCardSkeleton = () => (
   <div className="bg-white rounded-lg overflow-hidden shadow-lg animate-pulse">
@@ -113,84 +114,119 @@ function HomePageContent() {
 
   if (!products) {
     return (
-      <div className="space-y-8 p-4">
-        <div className="h-12 bg-gray-200 rounded animate-pulse" /> {/* Category listing skeleton */}
-        
-        {/* Marketing Banner Skeleton */}
-        <div className="h-40 bg-gray-200 rounded-lg animate-pulse" />
-        
-        <SkeletonCarousel /> {/* Top Deals */}
-        <SkeletonCarousel /> {/* New Arrivals */}
-        <SkeletonCarousel /> {/* Regular category */}
+      <div className="p-4 md:flex md:gap-8 max-w-[1400px] mx-auto">
+        <div className="hidden md:block md:w-64 space-y-6">
+          <div className="h-12 bg-gray-200 rounded animate-pulse" />
+        </div>
+        <div className="space-y-8 md:flex-1">
+          <div className="h-40 md:h-[400px] bg-gray-200 rounded-lg animate-pulse" />
+          <SkeletonCarousel />
+          <SkeletonCarousel />
+          <SkeletonCarousel />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 p-4">
-      <div className="relative">
-        <CategoryListing categories={categories} />
-        <button
-          onClick={() => setIsFilterModalOpen(true)}
-          className="absolute top-[50%] right-0 z-10 bg-white p-2 rounded shadow-lg text-purple-800 hover:text-purple-600"
-        >
-          <Filter size={24} />
-        </button>
+    <div className="max-w-[1400px] mx-auto pt-8">
+      {/* Marketing Banner - Desktop Only */}
+      <div className="hidden md:block w-full mb-8 px-4">
+        <MarketingBanner />
       </div>
 
-      {/* Marketing Banner Component */}
-      <MarketingBanner />
-
-      {activeFilters && (
-        <div className="flex flex-wrap gap-2 items-center">
-          {activeFilters.categories.map(category => (
-            <span key={category} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor">
-              {category}
-              <button onClick={() => removeFilter('category', category)} className="ml-2">
-                <X size={14} />
-              </button>
-            </span>
-          ))}
-          {activeFilters.tags.map(tag => (
-            <span key={tag} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor">
-              {tag}
-              <button onClick={() => removeFilter('tag', tag)} className="ml-2">
-                <X size={14} />
-              </button>
-            </span>
-          ))}
-          <button 
-            onClick={clearFilters}
-            className="text-sm text-warningcolor hover:underline"
-          >
-            Clear All
-          </button>
+      <div className="md:flex md:gap-8">
+        {/* Desktop Left Sidebar */}
+        <div className="hidden md:block md:w-64 min-w-[256px]">
+          <div className="sticky top-0">
+            <div className="bg-gray-50 p-6 space-y-6 rounded-lg border border-gray-100 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
+              <div className="space-y-6">
+                <CategoryListing />
+                {/* Elegant divider */}
+                <div className="h-px bg-gradient-to-r from-transparent via-primarycolor/20 to-transparent" />
+                <DesktopFilter
+                  categories={categories?.map(cat => cat.name) || []}
+                  onApplyFilters={applyFilters}
+                  initialFilters={activeFilters}
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+        {/* Main Content Area */}
+        <div className="flex-1 p-4 space-y-8">
+          {/* Mobile Layout */}
+          <div className="md:hidden space-y-8">
+            <div className="relative">
+              <CategoryListing />
+              <button
+                onClick={() => setIsFilterModalOpen(true)}
+                className="absolute top-[50%] right-0 z-10 bg-white p-2 rounded shadow-lg text-purple-800 hover:text-purple-600"
+              >
+                <Filter size={24} />
+              </button>
+            </div>
+            <MarketingBanner />
+          </div>
 
-      <ProductCarousel
-        title="TOP DEALS"
-        products={activeFilters ? filteredProducts.filter(p => p.discount) : products?.filter(p => p.discount) || []}
-        category="top-deals"
-        isSpecialCategory={true}
-      />
+          {/* Active Filters Display */}
+          {activeFilters && (
+            <div className="flex flex-wrap gap-2 items-center">
+              {activeFilters.categories.map(category => (
+                <span key={category} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor">
+                  {category}
+                  <button onClick={() => removeFilter('category', category)} className="ml-2">
+                    <X size={14} />
+                  </button>
+                </span>
+              ))}
+              {activeFilters.tags.map(tag => (
+                <span key={tag} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor">
+                  {tag}
+                  <button onClick={() => removeFilter('tag', tag)} className="ml-2">
+                    <X size={14} />
+                  </button>
+                </span>
+              ))}
+              <button 
+                onClick={clearFilters}
+                className="text-sm text-warningcolor hover:underline"
+              >
+                Clear All
+              </button>
+            </div>
+          )}
 
-      <ProductCarousel
-        title="NEW ARRIVALS"
-        products={activeFilters ? filteredProducts.filter(p => new Date(p.created_at) > new Date('2024-01-01')) : products?.filter(p => new Date(p.created_at) > new Date('2024-01-01')) || []}
-        category="new-arrivals"
-        isSpecialCategory={true}
-      />
+          <ProductCarousel
+            title="TOP DEALS"
+            products={activeFilters ? filteredProducts.filter(p => p.discount) : products?.filter(p => p.discount) || []}
+            category="top-deals"
+            isSpecialCategory={true}
+          />
 
-      {categories?.map(category => (
-        <ProductCarousel
-          key={category.id}
-          title={category.name}
-          products={activeFilters ? filteredProducts.filter(p => p.category_id === category.id) : products?.filter(p => p.category_id === category.id) || []}
-          category={category.name}
-          isSpecialCategory={false}
-        />
-      ))}
+          <ProductCarousel
+            title="NEW ARRIVALS"
+            products={activeFilters ? filteredProducts.filter(p => new Date(p.created_at) > new Date('2024-01-01')) : products?.filter(p => new Date(p.created_at) > new Date('2024-01-01')) || []}
+            category="new-arrivals"
+            isSpecialCategory={true}
+          />
+
+          {categories?.filter(category => 
+            products.some(product => product.category_id === category.id)
+          ).map(category => (
+            <ProductCarousel
+              key={category.id}
+              title={category.name}
+              products={activeFilters 
+                ? filteredProducts.filter(p => p.category_id === category.id) 
+                : products?.filter(p => p.category_id === category.id) || []
+              }
+              category={category.name}
+              isSpecialCategory={false}
+            />
+          ))}
+        </div>
+      </div>
 
       {isFilterModalOpen && (
         <FilterModal

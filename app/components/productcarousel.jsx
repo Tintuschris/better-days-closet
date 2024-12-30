@@ -35,12 +35,11 @@ export default function ProductCarousel({ title, products = [], category, isSpec
         breakpoints={{
           480: { slidesPerView: 3.4, spaceBetween: 10 },
           640: { slidesPerView: 4.4, spaceBetween: 12 },
-          768: { slidesPerView: 5.4, spaceBetween: 12 },
-          1024: { slidesPerView: 6.4, spaceBetween: 16 }
+          768: { slidesPerView: 4.4, spaceBetween: 12 },
+          1024: { slidesPerView: 5.4, spaceBetween: 16 }
         }}
         navigation={true}
-        autoplay={{
-          delay: 3000,
+        autoplay={{          delay: 3000,
           disableOnInteraction: false,
         }}
         loop={true}

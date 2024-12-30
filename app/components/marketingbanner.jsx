@@ -30,7 +30,7 @@ export default function MarketingBanner() {
   };
 
   return (
-    <div className="relative h-40 md:h-48 rounded-lg overflow-hidden">
+    <div className="relative h-40 md:h-[400px] lg:h-[500px] rounded-lg overflow-hidden max-w-[1400px] mx-auto">
       <div 
         className="flex transition-transform duration-500 ease-out h-full"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -47,10 +47,10 @@ export default function MarketingBanner() {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent flex items-center p-6">
-              <div className="text-white">
-                <h2 className="text-2xl font-bold mb-2">{banner.title}</h2>
-                <p className="text-sm">{banner.description}</p>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent flex items-center p-6 md:p-12">
+              <div className="text-white max-w-2xl">
+                <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4">{banner.title}</h2>
+                <p className="text-sm md:text-lg lg:text-xl md:leading-relaxed">{banner.description}</p>
               </div>
             </div>
           </div>
@@ -60,24 +60,24 @@ export default function MarketingBanner() {
       {/* Navigation Buttons */}
       <button 
         onClick={prevSlide}
-        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full hover:bg-white transition-colors"
+        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 p-1 md:p-3 rounded-full hover:bg-white transition-colors"
       >
-        <ChevronLeft className="w-5 h-5 text-primarycolor" />
+        <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-primarycolor" />
       </button>
       <button 
         onClick={nextSlide}
-        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full hover:bg-white transition-colors"
+        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 p-1 md:p-3 rounded-full hover:bg-white transition-colors"
       >
-        <ChevronRight className="w-5 h-5 text-primarycolor" />
+        <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-primarycolor" />
       </button>
 
       {/* Dots Indicator */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
         {banners.filter(banner => banner.is_active).map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-2 h-2 rounded-full transition-colors ${
+            className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors ${
               currentSlide === index ? 'bg-white' : 'bg-white/50'
             }`}
           />

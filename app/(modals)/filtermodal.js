@@ -1,14 +1,19 @@
-"use client"
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import Slider from 'rc-slider';
-import 'rc-slider/assets/index.css';
+"use client";
+import { useState, useEffect } from "react";
+import { X } from "lucide-react";
+import Slider from "rc-slider";
+import "rc-slider/assets/index.css";
 
-export default function FilterModal({ categories, onApplyFilters, closeModal, initialFilters }) {
+export default function FilterModal({
+  categories,
+  onApplyFilters,
+  closeModal,
+  initialFilters,
+}) {
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
-  const tags = ['Top Deals', 'New Arrivals'];
+  const tags = ["Top Deals", "New Arrivals"];
 
   useEffect(() => {
     if (initialFilters) {
@@ -19,18 +24,16 @@ export default function FilterModal({ categories, onApplyFilters, closeModal, in
   }, [initialFilters]);
 
   const handleCategoryToggle = (category) => {
-    setSelectedCategories(prev => 
+    setSelectedCategories((prev) =>
       prev.includes(category)
-        ? prev.filter(c => c !== category)
+        ? prev.filter((c) => c !== category)
         : [...prev, category]
     );
   };
 
   const handleTagToggle = (tag) => {
-    setSelectedTags(prev => 
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
@@ -38,7 +41,7 @@ export default function FilterModal({ categories, onApplyFilters, closeModal, in
     onApplyFilters({
       priceRange,
       categories: selectedCategories,
-      tags: selectedTags
+      tags: selectedTags,
     });
     closeModal();
   };
@@ -61,7 +64,9 @@ export default function FilterModal({ categories, onApplyFilters, closeModal, in
 
         {/* Price Range Section */}
         <div className="mb-8">
-          <h3 className="text-lg font-medium text-primarycolor mb-4">Price Range</h3>
+          <h3 className="text-lg font-medium text-primarycolor mb-4">
+            Price Range
+          </h3>
           <Slider
             range
             min={0}
@@ -69,12 +74,12 @@ export default function FilterModal({ categories, onApplyFilters, closeModal, in
             value={priceRange}
             onChange={setPriceRange}
             className="mb-4"
-            trackStyle={[{ backgroundColor: 'var(--primarycolor)' }]}
+            trackStyle={[{ backgroundColor: "var(--primarycolor)" }]}
             handleStyle={[
-              { borderColor: 'var(--primarycolor)', backgroundColor: 'white' },
-              { borderColor: 'var(--primarycolor)', backgroundColor: 'white' }
+              { borderColor: "var(--primarycolor)", backgroundColor: "white" },
+              { borderColor: "var(--primarycolor)", backgroundColor: "white" },
             ]}
-            railStyle={{ backgroundColor: '#E5E7EB' }}
+            railStyle={{ backgroundColor: "#E5E7EB" }}
           />
           <div className="flex justify-between text-sm text-primarycolor">
             <span>Ksh. {priceRange[0]}</span>
@@ -84,16 +89,18 @@ export default function FilterModal({ categories, onApplyFilters, closeModal, in
 
         {/* Categories Section */}
         <div className="mb-8">
-          <h3 className="text-lg font-medium text-primarycolor mb-4">Categories</h3>
+          <h3 className="text-lg font-medium text-primarycolor mb-4">
+            Categories
+          </h3>
           <div className="grid grid-cols-2 gap-2">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => handleCategoryToggle(category)}
-                className={`p-2 rounded-lg border text-sm transition-colors ${
+                className={`p-2 rounded-lg text-sm transition-colors ${
                   selectedCategories.includes(category)
-                    ? 'bg-primarycolor text-white border-primarycolor'
-                    : 'border-gray-300 text-primarycolor hover:border-primarycolor'
+                    ? "bg-primarycolor text-secondarycolor"
+                    : "bg-secondarycolor text-primarycolor hover:bg-primarycolor hover:text-secondarycolor"
                 }`}
               >
                 {category}
@@ -112,8 +119,8 @@ export default function FilterModal({ categories, onApplyFilters, closeModal, in
                 onClick={() => handleTagToggle(tag)}
                 className={`px-4 py-2 rounded-full text-sm transition-colors ${
                   selectedTags.includes(tag)
-                    ? 'bg-primarycolor text-white'
-                    : 'bg-gray-100 text-primarycolor hover:bg-gray-200'
+                    ? "bg-primarycolor text-secondarycolor"
+                    : "bg-secondarycolor text-primarycolor hover:bg-primarycolor hover:text-secondarycolor"
                 }`}
               >
                 {tag}
@@ -126,7 +133,9 @@ export default function FilterModal({ categories, onApplyFilters, closeModal, in
         {(selectedCategories.length > 0 || selectedTags.length > 0) && (
           <div className="mb-8">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-medium text-primarycolor">Active Filters</h3>
+              <h3 className="text-lg font-medium text-primarycolor">
+                Active Filters
+              </h3>
               <button
                 onClick={handleClearAll}
                 className="text-sm text-warningcolor hover:underline"

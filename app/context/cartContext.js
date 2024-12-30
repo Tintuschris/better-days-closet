@@ -9,22 +9,30 @@ const CartContext = createContext();
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [cartCount, setCartCount] = useState(0);
+  const [guestDeliveryDetails, setGuestDeliveryDetails] = useState(null);
   const { user } = useAuth();
   const [deliveryCost, setDeliveryCost] = useState(null);
-  
+
   useEffect(() => {
     const initializeCart = async () => {
-      // First check localStorage
       const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+      const guestDelivery = JSON.parse(localStorage.getItem('guestDeliveryDetails'));
       
-      // If user is logged in and localStorage is empty, fetch from DB
+      setCartItems(localCart);
+      setCartCount(localCart.reduce((acc, item) => acc + item.quantity, 0));
+      
+      if (guestDelivery) {
+        setGuestDeliveryDetails(guestDelivery);
+        setDeliveryCost(guestDelivery.cost);
+      }
+
       if (user && localCart.length === 0) {
         const { data: dbCart } = await supabase
           .from('cart')
           .select('*, products(*)')
           .eq('user_id', user.id);
           
-        if (dbCart && dbCart.length > 0) {
+        if (dbCart?.length > 0) {
           const formattedCart = dbCart.map(item => ({
             productId: item.product_id,
             quantity: item.quantity,
@@ -34,13 +42,8 @@ export const CartProvider = ({ children }) => {
           setCartItems(formattedCart);
           setCartCount(formattedCart.reduce((acc, item) => acc + item.quantity, 0));
           localStorage.setItem('cart', JSON.stringify(formattedCart));
-          return;
         }
       }
-      
-      // Use localStorage cart if DB fetch fails or user is not logged in
-      setCartItems(localCart);
-      setCartCount(localCart.reduce((acc, item) => acc + item.quantity, 0));
     };
 
     initializeCart();
@@ -83,17 +86,19 @@ export const CartProvider = ({ children }) => {
 
     window.dispatchEvent(new Event('cartUpdated'));
   };
+
   return (
     <CartContext.Provider value={{ 
       cartItems, 
       cartCount, 
-      updateCart, 
-      deliveryCost, 
-      setDeliveryCost 
+      updateCart,
+      deliveryCost,
+      setDeliveryCost,
+      guestDeliveryDetails,
+      setGuestDeliveryDetails
     }}>
       {children}
     </CartContext.Provider>
   );
 };
-
 export const useCart = () => useContext(CartContext);
