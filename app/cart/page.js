@@ -3,34 +3,36 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Trash2,
-  Plus,
-  Minus,
-  ShoppingCart,
-  ChevronLeft,
-  Save,
-  X,
+  Trash2, Plus, Minus, ShoppingCart, ChevronLeft, Save, X,
 } from "lucide-react";
 import Image from "next/image";
 import { useCart } from "../context/cartContext";
 import { useSupabaseContext } from "../context/supabaseContext";
 import { toast } from "sonner";
+import DeliveryModal from "../components/DeliveryModal";
 
 export default function CartPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const router = useRouter();
   const { cartItems, updateCart } = useCart();
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [cartWithDetails, setCartWithDetails] = useState([]);
-  const { user, deliveryAddressData, deliveryCost, setDeliveryCost } =
-    useSupabaseContext();
+  const { user, deliveryAddressData, deliveryCost, setDeliveryCost } = useSupabaseContext();
 
+  // Initialize delivery cost from saved data
   useEffect(() => {
-    if (deliveryAddressData?.cost) {
+    if (user && deliveryAddressData?.cost) {
       setDeliveryCost(Number(deliveryAddressData.cost));
+    } else {
+      const guestDeliveryDetails = localStorage.getItem('guestDeliveryDetails');
+      if (guestDeliveryDetails) {
+        const details = JSON.parse(guestDeliveryDetails);
+        setDeliveryCost(Number(details.cost));
+      }
     }
-  }, [deliveryAddressData, setDeliveryCost]);
+  }, [user, deliveryAddressData, setDeliveryCost]);
 
   useEffect(() => {
     setCartWithDetails(cartItems);
@@ -57,7 +59,6 @@ export default function CartPage() {
 
   const toggleItemSelection = (productId) => {
     if (!isSelectionMode) return;
-
     const newSelected = new Set(selectedItems);
     if (newSelected.has(productId)) {
       newSelected.delete(productId);
@@ -90,14 +91,21 @@ export default function CartPage() {
   };
 
   const handleAddDeliveryCost = () => {
-    router.push("/profile?tab=delivery");
+    if (user) {
+      router.push("/profile?tab=delivery");
+    } else {
+      setIsDeliveryModalOpen(true);
+    }
+  };
+
+  const handleDeliverySelection = (deliveryData) => {
+    setDeliveryCost(Number(deliveryData.cost));
   };
 
   const handleCheckout = () => {
     if (!deliveryCost) {
       toast.error("Add Delivery Cost to Continue", {
-        description:
-          "Please add your delivery address before proceeding to checkout",
+        description: "Please select a delivery option before proceeding to checkout",
         duration: 3000,
         position: "top-right",
         style: {
@@ -313,6 +321,12 @@ export default function CartPage() {
           </div>
         </div>
       </div>
+      {isDeliveryModalOpen && (
+        <DeliveryModal
+          onClose={() => setIsDeliveryModalOpen(false)}
+          onSelect={handleDeliverySelection}
+        />
+      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ export default function Footer() {
     <footer className="bg-primarycolor text-white px-8 py-12">
       {/* Location and Contact Section */}
       <div className="mb-8">
-        <h2 className="text-lg mb-4 font-bold text-secondarycolor text-center">Better Days Closet - Shop F64 - Left Wing -First Floor - RNG Towers</h2>
+        <h2 className="text-lg mb-4 font-bold text-secondarycolor text-center">Better Days Closet - Shop F61 - Left Wing -First Floor - RNG Towers</h2>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-center gap-2">
             <div className="w-4 h-4 text-secondarycolor fill-secondarycolor pr-8"><PinIcon /></div>
@@ -17,7 +17,7 @@ export default function Footer() {
           </div>
           <div className="flex items-center justify-center gap-2">
             <div className="w-4 h-4 text-secondarycolor fill-seconadrycolor pr-8"><Phone /></div>
-            <p>0712345678/ 0723456789</p>
+            <p>0720474319</p>
           </div>
         </div>
       </div>
