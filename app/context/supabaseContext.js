@@ -214,31 +214,55 @@ export const SupabaseProvider = ({ children }) => {
     setDeliveryCost(cost);
   };
   
-    const value = {
-      user,
-      signIn,
-      signOut,
-      isAuthenticated,
-      userDetails,
-      fetchUserDetails,
-      products,
-      categories,
-      cartItems,
-      wishlistItems,
-      orders,
-      deliveryAddress,
-      deliveryCost,
-      deliveryAddressData,
-      setDeliveryCost,
-      addToCart: addToCartMutation.mutate,
-      deleteFromCart: deleteFromCartMutation.mutate,
-      addToWishlist: addToWishlistMutation.mutate,
-      deleteFromWishlist: deleteFromWishlistMutation.mutate,
-      createOrder: createOrderMutation.mutate,
-      updateDeliveryDetails,
-      supabase,
-      createOrderItems: createOrderItemsMutation.mutate,
-    };
+  const createPendingOrderMutation = useMutation({
+    mutationFn: async ({ orderData, checkoutRequestId }) => {
+      const { data, error } = await supabase
+        .from('orders')
+        .insert([{
+          ...orderData,
+          status: 'PENDING',
+          checkout_request_id: checkoutRequestId,
+          mpesa_code: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['orders']);
+    },
+  });
+
+  const value = {
+    user,
+    signIn,
+    signOut,
+    isAuthenticated,
+    userDetails,
+    fetchUserDetails,
+    products,
+    categories,
+    cartItems,
+    wishlistItems,
+    orders,
+    deliveryAddress,
+    deliveryCost,
+    deliveryAddressData,
+    setDeliveryCost,
+    addToCart: addToCartMutation.mutate,
+    deleteFromCart: deleteFromCartMutation.mutate,
+    addToWishlist: addToWishlistMutation.mutate,
+    deleteFromWishlist: deleteFromWishlistMutation.mutate,
+    createOrder: createOrderMutation.mutate,
+    updateDeliveryDetails,
+    supabase,
+    createOrderItems: createOrderItemsMutation.mutate,
+    createPendingOrder: createPendingOrderMutation.mutate,
+  };
   return (
     <SupabaseContext.Provider value={value}>
       {children}

@@ -433,6 +433,24 @@ export const useSupabase = () => {
     if (error) throw error;
   };
 
+  const createPendingOrder = async (orderData, checkoutRequestId) => {
+    const { data, error } = await supabase
+      .from('orders')
+      .insert([{
+        ...orderData,
+        status: 'PENDING',
+        checkout_request_id: checkoutRequestId,
+        mpesa_code: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
   return {
     useProducts,
     useCategories,
@@ -476,5 +494,6 @@ export const useSupabase = () => {
     createOrderItems,
     subscribeToOrderStatus,
     clearUserCart,
+    createPendingOrder,
   };
 };

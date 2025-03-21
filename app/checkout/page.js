@@ -159,9 +159,17 @@ const DeliveryDetailsStep = memo(({ user, deliveryAddressData, deliveryCost, gue
 
 DeliveryDetailsStep.displayName = "DeliveryDetailsStep";
 
-const PaymentStep = memo(({ totalCost, setMpesaCode }) => {
+const PaymentStep = memo(({ 
+  totalCost, 
+  setMpesaCode, 
+  user, 
+  deliveryInfo, 
+  deliveryCost, 
+  cartItems 
+}) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const { createPendingOrder } = useSupabaseContext();
 
   // Function to format phone number to Safaricom API format
   const formatPhoneNumber = (phone) => {
@@ -223,28 +231,20 @@ const PaymentStep = memo(({ totalCost, setMpesaCode }) => {
 
     setIsProcessing(true);
     try {
-      // First create the order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          status: 'PENDING',
-          total_amount: totalCost,
-          user_id: user?.id || null,
-          delivery_option: deliveryInfo.delivery_option,
-          region: deliveryInfo.region || null,
-          area: deliveryInfo.area || null,
-          courier_service: deliveryInfo.courier_service || null,
-          pickup_point: deliveryInfo.pickup_point || null,
-          delivery_cost: deliveryCost,
-          cart_items: cartItems,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+      // Prepare order data
+      const orderData = {
+        user_id: user?.id,
+        total_amount: totalCost,
+        delivery_option: deliveryInfo?.delivery_option,
+        region: deliveryInfo?.region || null,
+        area: deliveryInfo?.area || null,
+        courier_service: deliveryInfo?.courier_service || null,
+        pickup_point: deliveryInfo?.pickup_point || null,
+        delivery_cost: deliveryCost,
+        cart_items: cartItems,
+      };
 
-      if (orderError) throw new Error('Failed to create order');
-
-      // Then initiate STK Push
+      // Initiate STK Push
       const response = await fetch('/api/mpesa/stkpush', {
         method: 'POST',
         headers: {
@@ -253,6 +253,7 @@ const PaymentStep = memo(({ totalCost, setMpesaCode }) => {
         body: JSON.stringify({
           phoneNumber: formattedPhoneNumber,
           amount: Math.round(totalCost),
+          orderData: orderData
         }),
       });
 
@@ -264,16 +265,16 @@ const PaymentStep = memo(({ totalCost, setMpesaCode }) => {
       const data = await response.json();
       
       if (data.ResponseCode === '0') {
-        // Update order with CheckoutRequestID
-        const { error: updateError } = await supabase
-          .from('orders')
-          .update({ checkout_request_id: data.CheckoutRequestID })
-          .eq('id', order.id);
-
-        if (updateError) throw new Error('Failed to update order');
+        // Store checkout request ID
+        localStorage.setItem('checkoutRequestId', data.CheckoutRequestID);
+        
+        // Create pending order using context mutation
+        await createPendingOrder({ 
+          orderData, 
+          checkoutRequestId: data.CheckoutRequestID 
+        });
 
         toast.success('Please check your phone for the STK push');
-        localStorage.setItem('checkoutRequestId', data.CheckoutRequestID);
       } else {
         toast.error(data.ResponseDescription || 'Failed to initiate payment');
       }
@@ -551,6 +552,11 @@ ProgressStepper.displayName = "ProgressStepper";export default function Checkout
                 totalCost={totalCost}
                 mpesaCode={mpesaCode}
                 setMpesaCode={setMpesaCode}
+                supabase={supabase}
+                user={user}
+                deliveryInfo={deliveryAddressData}
+                deliveryCost={deliveryCost}
+                cartItems={cartItems}
               />
             )}
 
