@@ -14,8 +14,23 @@ export const CartProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeCart = async () => {
-      // First check localStorage
-      const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+      // First check localStorage and ensure it's an array
+      let localCart = [];
+      try {
+        const storedCart = localStorage.getItem('cart');
+        localCart = storedCart ? JSON.parse(storedCart) : [];
+        
+        // Ensure localCart is always an array
+        if (!Array.isArray(localCart)) {
+          localCart = [];
+          localStorage.setItem('cart', JSON.stringify([]));
+        }
+      } catch (error) {
+        console.error('Error parsing cart from localStorage:', error);
+        localCart = [];
+        localStorage.setItem('cart', JSON.stringify([]));
+      }
+
       const guestDelivery = JSON.parse(localStorage.getItem('guestDeliveryDetails'));
       
       if (user) {

@@ -377,20 +377,19 @@ export const useSupabase = () => {
         user_id: orderData.user_id,
         status: 'PENDING',
         total_amount: orderData.total_amount,
-        mpesa_code: orderData.mpesa_code,
+        mpesa_code: null, // Will be filled by callback
+        checkout_request_id: orderData.checkout_request_id, // Add this
         delivery_option: orderData.delivery_option,
         region: orderData.region || null,
         area: orderData.area || null,
         courier_service: orderData.courier_service || null,
         pickup_point: orderData.pickup_point || null,
         delivery_cost: orderData.delivery_cost,
-        cart_items: orderData.cart_items, // Store cart items as JSON
+        cart_items: orderData.cart_items,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      }])
-      .select()
-      .single();
-  
+      }]);
+
     if (error) throw error;
     return data;
   };

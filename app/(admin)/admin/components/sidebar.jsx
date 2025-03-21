@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { 
   FiHome, FiBox, FiShoppingBag, FiList,
-  FiBarChart2, FiTruck, FiMenu, FiX, FiImage 
+  FiBarChart2, FiTruck, FiMenu, FiX, FiImage, FiSettings
 } from 'react-icons/fi';
 
 const menuItems = [
@@ -14,8 +14,8 @@ const menuItems = [
   { path: '/admin/orders', icon: FiShoppingBag, label: 'Orders' },
   { path: '/admin/reports', icon: FiBarChart2, label: 'Reports' },
   { path: '/admin/delivery-addresses', icon: FiTruck, label: 'Delivery' },
-  { path: '/admin/banners', icon: FiImage, label: 'Banners' }, // Add this line
-
+  { path: '/admin/banners', icon: FiImage, label: 'Banners' },
+  { path: '/admin#testing', icon: FiSettings, label: 'System Tests' },
 ];
 
 export default function Sidebar() {

@@ -1,6 +1,7 @@
 "use client";
 import { useSupabase } from "./hooks/useSupabase";
 import SalesGraph from "./components/salesgraph";
+import RealTimeDebugger from "./components/RealTimeDebugger";
 import {
   FiPackage,
   FiShoppingBag,
@@ -89,13 +90,12 @@ export default function AdminDashboard() {
         <h2 className="text-lg font-semibold mb-4 text-primarycolor">
           Sales Overview
         </h2>
-        <div className="h-[400px]">
-          {salesLoading ? (
-            <div className="animate-pulse h-full bg-gray-100 rounded-lg" />
-          ) : (
-            <SalesGraph data={salesData} />
-          )}
-        </div>
+        <SalesGraph data={salesData} isLoading={salesLoading} />
+      </div>
+
+      {/* Add System Testing Section */}
+      <div className="bg-white rounded-lg shadow-sm">
+        <RealTimeDebugger />
       </div>
     </div>
   );

@@ -159,51 +159,187 @@ const DeliveryDetailsStep = memo(({ user, deliveryAddressData, deliveryCost, gue
 
 DeliveryDetailsStep.displayName = "DeliveryDetailsStep";
 
-const PaymentStep = memo(({ totalCost, mpesaCode, setMpesaCode }) => (
-  <div className="p-4 pb-0">
-    <h2 className="text-4xl font-semibold text-primarycolor mb-4 w-[50%]">
-      PAYMENT METHOD
-    </h2>
+const PaymentStep = memo(({ totalCost, setMpesaCode }) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
 
-    <div className="mb-6">
-      <div className="mb-4">
-        <Image
-          src="/mpesa.png"
-          alt="Mpesa"
-          width={64}
-          height={64}
-          className="ml-0"
-          priority
-        />
+  // Function to format phone number to Safaricom API format
+  const formatPhoneNumber = (phone) => {
+    // Remove any spaces, hyphens or other special characters
+    let cleaned = phone.replace(/[^\d+]/g, '');
+    
+    // Remove the plus sign if it exists
+    cleaned = cleaned.replace('+', '');
+    
+    // If number starts with 254, keep it as is
+    if (cleaned.startsWith('254')) {
+      return cleaned;
+    }
+    
+    // If number starts with 0, replace 0 with 254
+    if (cleaned.startsWith('0')) {
+      return `254${cleaned.slice(1)}`;
+    }
+    
+    // If number starts with 7 or 1, add 254 prefix
+    if (cleaned.startsWith('7') || cleaned.startsWith('1')) {
+      return `254${cleaned}`;
+    }
+    
+    return cleaned;
+  };
+
+  // Function to validate phone number
+  const validatePhoneNumber = (phone) => {
+    const formattedNumber = formatPhoneNumber(phone);
+    
+    // Check if the formatted number is valid
+    if (formattedNumber.length !== 12) {
+      return false;
+    }
+    
+    // Check if the number starts with 254 and follows with valid prefixes
+    if (!formattedNumber.startsWith('254')) {
+      return false;
+    }
+    
+    // Check if the number after 254 starts with valid prefixes
+    const prefix = formattedNumber.slice(3, 4);
+    return ['7', '1'].includes(prefix);
+  };
+
+  const handleSTKPush = async () => {
+    if (!phoneNumber) {
+      toast.error('Please enter phone number');
+      return;
+    }
+
+    if (!validatePhoneNumber(phoneNumber)) {
+      toast.error('Please enter a valid Kenyan phone number');
+      return;
+    }
+
+    const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
+
+    setIsProcessing(true);
+    try {
+      // First create the order
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          status: 'PENDING',
+          total_amount: totalCost,
+          user_id: user?.id || null,
+          delivery_option: deliveryInfo.delivery_option,
+          region: deliveryInfo.region || null,
+          area: deliveryInfo.area || null,
+          courier_service: deliveryInfo.courier_service || null,
+          pickup_point: deliveryInfo.pickup_point || null,
+          delivery_cost: deliveryCost,
+          cart_items: cartItems,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (orderError) throw new Error('Failed to create order');
+
+      // Then initiate STK Push
+      const response = await fetch('/api/mpesa/stkpush', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: formattedPhoneNumber,
+          amount: Math.round(totalCost),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to initiate payment');
+      }
+
+      const data = await response.json();
+      
+      if (data.ResponseCode === '0') {
+        // Update order with CheckoutRequestID
+        const { error: updateError } = await supabase
+          .from('orders')
+          .update({ checkout_request_id: data.CheckoutRequestID })
+          .eq('id', order.id);
+
+        if (updateError) throw new Error('Failed to update order');
+
+        toast.success('Please check your phone for the STK push');
+        localStorage.setItem('checkoutRequestId', data.CheckoutRequestID);
+      } else {
+        toast.error(data.ResponseDescription || 'Failed to initiate payment');
+      }
+    } catch (error) {
+      console.error('Payment Error:', error);
+      toast.error(error.message || 'Failed to process payment');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Function to format display phone number as user types
+  const handlePhoneNumberChange = (e) => {
+    let value = e.target.value;
+    // Only allow digits, plus sign, and specific special characters
+    value = value.replace(/[^\d+]/g, '');
+    setPhoneNumber(value);
+  };
+
+  return (
+    <div className="p-4 pb-0">
+      <h2 className="text-4xl font-semibold text-primarycolor mb-4 w-[50%]">
+        PAYMENT METHOD
+      </h2>
+
+      <div className="mb-6">
+        <div className="mb-4">
+          <Image
+            src="/mpesa.png"
+            alt="Mpesa"
+            width={64}
+            height={64}
+            className="ml-0"
+            priority
+          />
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <input
+              type="tel"
+              className="w-full p-4 border border-primarycolor text-center text-primarycolor rounded-full focus:outline-none"
+              placeholder="Enter Phone Number (e.g., 0712345678)"
+              value={phoneNumber}
+              onChange={handlePhoneNumberChange}
+              maxLength={13} // Allow for +254 format
+            />
+            <p className="text-sm text-gray-500 mt-1 text-center">
+              Format: 0712345678 or 254712345678 or +254712345678
+            </p>
+          </div>
+          
+          <button
+            className={`w-full py-4 rounded-full ${
+              isProcessing ? 'bg-primarycolor/50' : 'bg-primarycolor'
+            } text-white`}
+            onClick={handleSTKPush}
+            disabled={isProcessing}
+          >
+            {isProcessing ? 'Processing...' : 'Pay with M-Pesa'}
+          </button>
+        </div>
       </div>
-
-      <ol className="text-sm space-y-2 text-primarycolor">
-        <li>1. Go to <strong>Mpesa</strong> menu</li>
-        <li>2. Click on <strong>Lipa na Mpesa</strong></li>
-        <li>3. Click on <strong>Pay Bill</strong></li>
-        <li>4. Enter <strong>Business No. 714888</strong></li>
-        <li>5. Enter <strong>Account No. 100345</strong></li>
-        <li>6. Enter <strong>Ksh. {totalCost.toFixed(2)}</strong></li>
-        <li>7. Click <strong>Ok</strong></li>
-        <li>8. Enter the <strong>Mpesa Code</strong> below</li>
-        <li>9. <strong>Confirm order</strong></li>
-      </ol>
     </div>
-
-    <div className="bg-secondarycolor rounded-t-[2rem] mt-6 -mx-4 px-6 pt-6 pb-28">
-      <h3 className="text-lg font-semibold text-primarycolor text-center mb-4">
-        Confirm Your Order
-      </h3>
-      <input
-        type="text"
-        className="w-full p-4 border border-primarycolor text-center text-primarycolor rounded-full mb-4 focus:outline-none"
-        placeholder="Enter Mpesa code"
-        defaultValue={mpesaCode}
-        onChange={(e) => setMpesaCode(e.target.value.toUpperCase())}
-      />
-    </div>
-  </div>
-));
+  );
+});
 
 PaymentStep.displayName = "PaymentStep";
 
