@@ -34,7 +34,7 @@ export default function RealTimeDebugger() {
             const dbTest = await testDatabaseConnection();
             setTestResults([dbTest]);
             
-            // 2. Test STK Push
+            // 2. Test STK Push with real payment
             const stkTest = await testSTKPush();
             setTestResults(prev => [...prev, stkTest]);
             
@@ -42,36 +42,45 @@ export default function RealTimeDebugger() {
             if (stkTest.status === 'success' && stkTest.data) {
                 const requestId = stkTest.data.CheckoutRequestID;
                 setCheckoutRequestId(requestId);
-                                  // Subscribe to changes for this specific CheckoutRequestID
-                                  const channel = supabase
-                                      .channel(`order-${requestId}`)
-                                      .on(
-                                          'postgres_changes',
-                                          {
-                                              event: 'UPDATE',
-                                              schema: 'public',
-                                              table: 'orders',
-                                              filter: `checkout_request_id=eq.${requestId}`
-                                          },
-                                          (payload) => {
-                                              console.log('Received update for requestId:', requestId);
-                                              console.log('Payload:', payload);
-                                              if (payload.new.status === 'CONFIRMED') {
-                                                  setTestResults(prev => [...prev, {
-                                                      name: 'Payment Status',
-                                                      status: 'success',
-                                                      data: {
-                                                          message: 'Payment confirmed successfully',
-                                                          mpesaCode: payload.new.mpesa_code,
-                                                          amount: payload.new.confirmed_amount
-                                                      }
-                                                  }]);
-                                              }
-                                          }
-                                      )
-                                      .subscribe((status) => {
-                                          console.log(`Subscription status for ${requestId}:`, status);
-                                      });
+                
+                // Subscribe to changes for this specific CheckoutRequestID
+                const channel = supabase
+                    .channel(`order-${requestId}`)
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'UPDATE',
+                            schema: 'public',
+                            table: 'orders',
+                            filter: `checkout_request_id=eq.${requestId}`
+                        },
+                        (payload) => {
+                            console.log('Received update for requestId:', requestId);
+                            console.log('Payload:', payload);
+                            if (payload.new.status === 'CONFIRMED') {
+                                setTestResults(prev => [...prev, {
+                                    name: 'Payment Status',
+                                    status: 'success',
+                                    data: {
+                                        message: 'Payment confirmed successfully',
+                                        mpesaCode: payload.new.mpesa_code,
+                                        amount: payload.new.confirmed_amount,
+                                        timestamp: payload.new.transaction_date
+                                    }
+                                }]);
+                            } else if (payload.new.status === 'FAILED') {
+                                setTestResults(prev => [...prev, {
+                                    name: 'Payment Status',
+                                    status: 'failed',
+                                    error: payload.new.failure_reason || 'Payment failed'
+                                }]);
+                            }
+                        }
+                    )
+                    .subscribe((status) => {
+                        console.log(`Subscription status for ${requestId}:`, status);
+                    });
+                
                 // Set a timeout to unsubscribe and show timeout message if no confirmation received
                 setTimeout(() => {
                     channel.unsubscribe();
@@ -86,7 +95,7 @@ export default function RealTimeDebugger() {
                         }
                         return prev;
                     });
-                }, 60000); // 60 seconds timeout
+                }, 120000); // 2 minutes timeout
             }
         } catch (err) {
             console.error('Test error:', err);
@@ -147,7 +156,16 @@ export default function RealTimeDebugger() {
                 },
                 body: JSON.stringify({
                     phoneNumber: formattedPhone,
-                    amount: 1
+                    amount: 1,
+                    orderData: {
+                        user_id: '90a3bed7-2b2c-4113-96f8-d352d4cf0d15',
+                        total_amount: 1,
+                        delivery_option: 'test',
+                        region: 'test',
+                        area: 'test',
+                        delivery_cost: 0,
+                        cart_items: []
+                    }
                 }),
             });
 
@@ -164,14 +182,13 @@ export default function RealTimeDebugger() {
             // Add console.log to debug
             console.log('STK Push Response:', data);
 
-            // Simulate successful callback after 5 seconds for testing
+            // Create a record with this checkout_request_id if it doesn't exist
             if (data.ResponseCode === '0') {
                 const checkoutRequestId = data.CheckoutRequestID;
                 
                 // Add console.log to debug
-                console.log('Setting up simulation for CheckoutRequestID:', checkoutRequestId);
+                console.log('Creating order record for CheckoutRequestID:', checkoutRequestId);
 
-                // First create a record with this checkout_request_id if it doesn't exist
                 const { error: createError } = await supabase
                     .from('orders')
                     .upsert({ 
@@ -186,35 +203,19 @@ export default function RealTimeDebugger() {
                 if (createError) {
                     console.error('Error creating order record:', createError);
                 }
-
-                // Then simulate the callback
-                setTimeout(async () => {
-                    // Add console.log to debug
-                    console.log('Simulating callback for CheckoutRequestID:', checkoutRequestId);
-                    
-                    const { error } = await supabase
-                        .from('orders')
-                        .update({ 
-                            status: 'CONFIRMED',
-                            mpesa_code: 'TEST' + Date.now(),
-                            transaction_date: new Date().toISOString(),
-                            confirmed_amount: 1,
-                            updated_at: new Date().toISOString()
-                        })
-                        .eq('checkout_request_id', checkoutRequestId);
-
-                    if (error) {
-                        console.error('Error simulating callback:', error);
-                    } else {
-                        console.log('Successfully simulated callback');
-                    }
-                }, 5000);
+                
+                // Now we wait for the actual M-Pesa callback to update this record
+                // No simulation here - we'll rely on the real callback
             }
+            
             return {
                 name: 'STK Push',
                 status: data.ResponseCode === '0' ? 'success' : 'failed',
                 error: data.ResponseDescription,
-                data
+                data,
+                message: data.ResponseCode === '0' ? 
+                    'STK Push sent successfully. Please check your phone and complete the payment.' : 
+                    'Failed to send STK Push'
             };
         } catch (err) {
             return {
@@ -227,7 +228,7 @@ export default function RealTimeDebugger() {
 
     return (
         <div className="p-4">
-            <h2 className="text-2xl font-bold mb-4 text-primarycolor">System Tests</h2>
+            <h2 className="text-2xl font-bold mb-4 text-primarycolor">M-Pesa Integration Test</h2>
             
             <div className="mb-4">
                 <input
@@ -240,6 +241,9 @@ export default function RealTimeDebugger() {
                 <p className="text-sm text-gray-500 mt-1">
                     Format: 0712345678 or 254712345678 or +254712345678
                 </p>
+                <p className="text-sm text-yellow-600 mt-1">
+                    Note: This will initiate a real Ksh 1 payment from the provided phone number.
+                </p>
             </div>
 
             <button
@@ -251,7 +255,7 @@ export default function RealTimeDebugger() {
                     : 'bg-primarycolor hover:bg-primarycolor/90'
                 } text-white`}
             >
-                {isLoading ? 'Testing...' : 'Run Tests'}
+                {isLoading ? 'Testing...' : 'Run Live Payment Test'}
             </button>
 
             <div className="mt-4 space-y-4">
@@ -270,6 +274,9 @@ export default function RealTimeDebugger() {
                                 {result.status}
                             </span>
                         </p>
+                        {result.message && (
+                            <p className="text-sm mt-1">{result.message}</p>
+                        )}
                         {result.error && (
                             <p className="text-sm text-red-600 mt-1">Error: {result.error}</p>
                         )}
@@ -281,6 +288,21 @@ export default function RealTimeDebugger() {
                     </div>
                 ))}
             </div>
+            
+            {checkoutRequestId && (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded">
+                    <h3 className="font-semibold">Waiting for M-Pesa Callback</h3>
+                    <p className="text-sm mt-1">
+                        CheckoutRequestID: {checkoutRequestId}
+                    </p>
+                    <p className="text-sm mt-1">
+                        Waiting for the actual M-Pesa callback to update the payment status...
+                    </p>
+                    <p className="text-sm text-yellow-600 mt-1">
+                        This may take up to 2 minutes. Please complete the payment on your phone.
+                    </p>
+                </div>
+            )}
         </div>
     );
 }
