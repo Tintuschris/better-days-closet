@@ -74,11 +74,11 @@ export async function POST(req) {
       PartyA: phoneNumber,
       PartyB: tillNumber,
       PhoneNumber: phoneNumber,
-      CallBackURL: `${process.env.NEXT_PUBLIC_BASE_URL}/api/mpesa/callback`,
+      CallBackURL: "https://hkdk.events/8ypxlbxbvv5obt",
       AccountReference: 'Better Days Closet',
       TransactionDesc: 'Purchase from Better Days Closet'
     };
-// Add this before making the STK push request
+// Add this before making the STK push request 31 july 1995
 console.log('STK Push request body:', {
   BusinessShortCode: requestBody.BusinessShortCode,
   Password: requestBody.Password.substring(0, 10) + '...',  // Don't log the full password
