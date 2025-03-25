@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
 
 export async function POST(req) {
-  console.log('M-Pesa callback endpoint hit at:', new Date().toISOString());
+  console.log('M-Pesa callback received at:', new Date().toISOString());
   
   try {
-    // Log the raw request
+    // Get the raw request body
     const rawBody = await req.text();
     console.log('Raw callback body:', rawBody);
     
@@ -17,7 +17,6 @@ export async function POST(req) {
     const { ResultCode, ResultDesc, CallbackMetadata, CheckoutRequestID } = stkCallback;
     
     console.log('Processing callback for CheckoutRequestID:', CheckoutRequestID);
-    console.log('Result Code:', ResultCode, 'Result Description:', ResultDesc);
     
     // Update order status in database
     if (ResultCode === 0 && CallbackMetadata) {
@@ -28,20 +27,14 @@ export async function POST(req) {
       const amount = items.find(item => item.Name === 'Amount')?.Value;
       const phoneNumber = items.find(item => item.Name === 'PhoneNumber')?.Value;
 
-      console.log('Payment details:', {
-        mpesaCode,
-        transactionDate,
-        amount,
-        phoneNumber
-      });
+      console.log('Payment details:', { mpesaCode, amount, phoneNumber });
 
       if (!mpesaCode || !amount) {
         throw new Error('Missing required callback data');
       }
 
       // Update order with payment details
-      console.log('Updating order in database...');
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('orders')
         .update({ 
           status: 'CONFIRMED',
@@ -50,8 +43,7 @@ export async function POST(req) {
           confirmed_amount: amount,
           updated_at: new Date().toISOString()
         })
-        .eq('checkout_request_id', CheckoutRequestID)
-        .select();
+        .eq('checkout_request_id', CheckoutRequestID);
 
       if (error) {
         console.error('Database update error:', error);
@@ -61,12 +53,10 @@ export async function POST(req) {
       console.log('Successfully processed payment:', {
         checkoutRequestId: CheckoutRequestID,
         mpesaCode,
-        amount,
-        updatedRecord: data
+        amount
       });
     } else {
       // Handle failed payment
-      console.log('Payment failed, updating database...');
       const { error } = await supabase
         .from('orders')
         .update({ 
@@ -81,7 +71,7 @@ export async function POST(req) {
         throw error;
       }
 
-      console.log('Payment failure recorded:', {
+      console.log('Payment failed:', {
         checkoutRequestId: CheckoutRequestID,
         resultCode: ResultCode,
         resultDesc: ResultDesc

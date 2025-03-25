@@ -74,19 +74,10 @@ export async function POST(req) {
       PartyA: phoneNumber,
       PartyB: tillNumber,
       PhoneNumber: phoneNumber,
-      CallBackURL: "https://hkdk.events/8ypxlbxbvv5obt",
+      CallBackURL: process.env.MPESA_CALLBACK_URL,
       AccountReference: 'Better Days Closet',
       TransactionDesc: 'Purchase from Better Days Closet'
     };
-// Add this before making the STK push request 31 july 1995
-console.log('STK Push request body:', {
-  BusinessShortCode: requestBody.BusinessShortCode,
-  Password: requestBody.Password.substring(0, 10) + '...',  // Don't log the full password
-  Timestamp: requestBody.Timestamp,
-  Amount: requestBody.Amount,
-  PartyA: requestBody.PartyA,
-  CallBackURL: requestBody.CallBackURL
-});
 
     const response = await fetch('https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest', {
       method: 'POST',
