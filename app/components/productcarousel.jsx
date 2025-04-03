@@ -4,6 +4,7 @@ import { Navigation, Autoplay } from 'swiper/modules';
 import ProductCard from './productcard';
 import Link from 'next/link';
 import { useSupabaseContext } from '../context/supabaseContext';
+import { ChevronRight } from 'lucide-react';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -21,11 +22,18 @@ export default function ProductCarousel({ title, products = [], category, isSpec
 
   return (
     <div className="py-3 relative product-carousel">
-      <div className="flex justify-between items-center mb-2 px-3">
-        <h2 className="text-sm md:text-base font-semibold text-primarycolor">{title}</h2>
-        <Link href={getViewMoreLink()} className="text-xs md:text-sm text-primarycolor hover:text-secondarycolor">
-          View More
-        </Link>
+      {/* Enhanced header with background and better spacing */}
+      <div className="bg-gray-50 rounded-t-lg border-b border-gray-100 mb-4">
+        <div className="flex justify-between items-center px-4 py-3">
+          <h2 className="text-sm md:text-base font-semibold text-primarycolor">{title}</h2>
+          <Link 
+            href={getViewMoreLink()} 
+            className="flex items-center text-xs md:text-sm text-primarycolor hover:text-secondarycolor transition-colors group"
+          >
+            <span>View More</span>
+            <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
       </div>
       
       <Swiper
@@ -39,7 +47,8 @@ export default function ProductCarousel({ title, products = [], category, isSpec
           1024: { slidesPerView: 5.4, spaceBetween: 16 }
         }}
         navigation={true}
-        autoplay={{          delay: 3000,
+        autoplay={{
+          delay: 3000,
           disableOnInteraction: false,
         }}
         loop={true}

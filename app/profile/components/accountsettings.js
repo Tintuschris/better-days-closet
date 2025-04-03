@@ -117,246 +117,245 @@ export default function AccountSettings() {
   };
 
   return (
-    <div className="p-4">
-      <div className="flex items-center mb-6">
-        <button
-          onClick={handleBack}
-          className="p-3 rounded-[50px] hover:bg-primarycolor/20 transition-all duration-200"
-        >
-          <ChevronLeft className="w-6 h-6 text-primarycolor" />
+    <div className="min-h-screen bg-white">
+      {/* Header - Matching Orders component style */}
+      <div className="sticky top-0 z-10 bg-white p-4 border-b flex items-center">
+        <button onClick={() => router.push('/profile')} className="text-primarycolor">
+          <ChevronLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-semibold text-primarycolor text-center flex-1">
-          Account Settings
-        </h1>
+        <h1 className="text-xl font-semibold text-primarycolor mx-auto">ACCOUNT SETTINGS</h1>
+        <div className="w-5"></div> {/* Empty div for alignment */}
       </div>
 
-      <div className="flex flex-col items-center mb-6">
-        <div className="relative mb-2">
-          <div className="w-20 h-20 rounded-full bg-primarycolor flex items-center justify-center">
-            {profileImage ? (
-              <Image
-                src={profileImage}
-                alt="Profile"
-                width={80}
-                height={80}
-                className="rounded-full"
+      <div className="p-4">
+        <div className="flex flex-col items-center mb-6">
+          <div className="relative mb-2">
+            <div className="w-20 h-20 rounded-full bg-primarycolor flex items-center justify-center">
+              {profileImage ? (
+                <Image
+                  src={profileImage}
+                  alt="Profile"
+                  width={80}
+                  height={80}
+                  className="rounded-full"
+                />
+              ) : (
+                <User size={40} className="text-white" />
+              )}
+            </div>
+            <label className="absolute bottom-0 right-0 p-2 bg-primarycolor/10 border border-white rounded-full cursor-pointer hover:bg-primarycolor/20 transition-all duration-200">
+              <Pencil size={14} className="text-white" />
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageUpload}
               />
-            ) : (
-              <User size={40} className="text-white" />
-            )}
+            </label>
           </div>
-          <label className="absolute bottom-0 right-0 p-2 bg-primarycolor/10 border border-white rounded-full cursor-pointer hover:bg-primarycolor/20 transition-all duration-200">
-            <Pencil size={14} className="text-white" />
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleImageUpload}
-            />
-          </label>
+          <h2 className="font-medium text-primarycolor">{formData.name}</h2>
+          <p className="text-primarycolor/80">{formData.email}</p>
         </div>
-        <h2 className="font-medium text-primarycolor">{formData.name}</h2>
-        <p className="text-primarycolor/80">{formData.email}</p>
-      </div>
 
-      <div className="border-t border-secondarycolor mb-6" />
+        <div className="border-t border-secondarycolor mb-6" />
 
-      <form onSubmit={updateProfile} className="space-y-4">
-        <AnimatePresence>
-          {/* Edit Profile Section */}
-          <div key="profile-section" className="overflow-hidden">
-            <button
-              type="button"
-              onClick={() => toggleSection("profile")}
-              className={`w-full flex justify-between items-center p-4 rounded-2xl transition-all duration-200 ${
-                activeSection === "profile"
-                  ? "bg-primarycolor"
-                  : "text-primarycolor hover:bg-primarycolor/5"
-              }`}
-            >
-              <span className="font-medium">Edit Profile</span>
-              {activeSection === "profile" ? (
-                <ChevronUp className="text-secondarycolor" />
-              ) : (
-                <ChevronDown className="text-primarycolor" />
-              )}
-            </button>
-
-            {activeSection === "profile" && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="overflow-hidden"
+        <form onSubmit={updateProfile} className="space-y-4">
+          <AnimatePresence>
+            {/* Edit Profile Section */}
+            <div key="profile-section" className="overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleSection("profile")}
+                className={`w-full flex justify-between items-center p-4 rounded-2xl transition-all duration-200 ${
+                  activeSection === "profile"
+                    ? "bg-primarycolor"
+                    : "text-primarycolor hover:bg-primarycolor/5"
+                }`}
               >
-                <div className="p-4 space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-primarycolor">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      placeholder="Enter your name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-primarycolor">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      disabled
-                      className="w-full p-3 border-2 border-primarycolor/20 rounded-xl bg-gray-50"
-                    />
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </div>
+                <span className="font-medium">Edit Profile</span>
+                {activeSection === "profile" ? (
+                  <ChevronUp className="text-secondarycolor" />
+                ) : (
+                  <ChevronDown className="text-primarycolor" />
+                )}
+              </button>
 
-          {/* Password & Security Section */}
-          <div key="password-section" className="overflow-hidden">
-            <button
-              type="button"
-              onClick={() => toggleSection("password")}
-              className={`w-full flex justify-between items-center p-4 rounded-2xl transition-all duration-200 ${
-                activeSection === "password"
-                  ? "bg-primarycolor"
-                  : "text-primarycolor hover:bg-primarycolor/5"
-              }`}
-            >
-              <span className="font-medium">Password & Security</span>
-              {activeSection === "password" ? (
-                <ChevronUp className="text-secondarycolor" />
-              ) : (
-                <ChevronDown className="text-primarycolor" />
-              )}
-            </button>
-            {activeSection === "password" && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="overflow-hidden"
-              >
-                <div className="p-4 space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-primarycolor">
-                      Current Password
-                    </label>
-                    <input
-                      type="password"
-                      name="currentPassword"
-                      placeholder="Enter current password"
-                      value={formData.currentPassword}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-primarycolor">
-                      New Password
-                    </label>
-                    <input
-                      type="password"
-                      name="newPassword"
-                      placeholder="Enter new password"
-                      value={formData.newPassword}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-primarycolor">
-                      Confirm Password
-                    </label>
-                    <input
-                      type="password"
-                      name="confirmPassword"
-                      placeholder="Confirm new password"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
-                    />
-                  </div>
-                  {formData.newPassword && (
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Check
-                        className={`${
-                          passwordsMatch ? "text-green-500" : "text-gray-300"
-                        }`}
-                        size={20}
+              {activeSection === "profile" && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-4 space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primarycolor">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        placeholder="Enter your name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
                       />
-                      <span
-                        className={`text-sm ${
-                          passwordsMatch ? "text-green-500" : "text-gray-500"
-                        }`}
-                      >
-                        Passwords match
-                      </span>
                     </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Notifications & Preferences Section */}
-          <div key="notifications-section" className="overflow-hidden">
-            <button
-              type="button"
-              onClick={() => toggleSection("notifications")}
-              className={`w-full flex justify-between items-center p-4 rounded-2xl transition-all duration-200 ${
-                activeSection === "notifications"
-                  ? "bg-primarycolor"
-                  : "text-primarycolor hover:bg-primarycolor/5"
-              }`}
-            >
-              <span className="font-medium">Notifications & Preferences</span>
-              {activeSection === "notifications" ? (
-                <ChevronUp className="text-secondarycolor" />
-              ) : (
-                <ChevronDown className="text-primarycolor" />
-              )}
-            </button>
-            {activeSection === "notifications" && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="overflow-hidden"
-              >
-                <div className="p-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-primarycolor">
-                      Email Notifications
-                    </span>
-                    <Toggle
-                      checked={emailNotifications}
-                      onChange={setEmailNotifications}
-                    />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primarycolor">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        disabled
+                        className="w-full p-3 border-2 border-primarycolor/20 rounded-xl bg-gray-50"
+                      />
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
-          </div>
-        </AnimatePresence>
-        <button
-          type="submit"
-          className="w-full bg-primarycolor text-white py-3 px-4 rounded-full mt-6 hover:bg-primarycolor/90 transition-all duration-200"
-        >
-          Save Changes
-        </button>
-      </form>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Password & Security Section */}
+            <div key="password-section" className="overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleSection("password")}
+                className={`w-full flex justify-between items-center p-4 rounded-2xl transition-all duration-200 ${
+                  activeSection === "password"
+                    ? "bg-primarycolor"
+                    : "text-primarycolor hover:bg-primarycolor/5"
+                }`}
+              >
+                <span className="font-medium">Password & Security</span>
+                {activeSection === "password" ? (
+                  <ChevronUp className="text-secondarycolor" />
+                ) : (
+                  <ChevronDown className="text-primarycolor" />
+                )}
+              </button>
+              {activeSection === "password" && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-4 space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primarycolor">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        name="currentPassword"
+                        placeholder="Enter current password"
+                        value={formData.currentPassword}
+                        onChange={handleInputChange}
+                        className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primarycolor">
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        name="newPassword"
+                        placeholder="Enter new password"
+                        value={formData.newPassword}
+                        onChange={handleInputChange}
+                        className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primarycolor">
+                        Confirm Password
+                      </label>
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        placeholder="Confirm new password"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
+                      />
+                    </div>
+                    {formData.newPassword && (
+                      <div className="flex items-center space-x-2 mt-2">
+                        <Check
+                          className={`${
+                            passwordsMatch ? "text-green-500" : "text-gray-300"
+                          }`}
+                          size={20}
+                        />
+                        <span
+                          className={`text-sm ${
+                            passwordsMatch ? "text-green-500" : "text-gray-500"
+                          }`}
+                        >
+                          Passwords match
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Notifications & Preferences Section */}
+            <div key="notifications-section" className="overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleSection("notifications")}
+                className={`w-full flex justify-between items-center p-4 rounded-2xl transition-all duration-200 ${
+                  activeSection === "notifications"
+                    ? "bg-primarycolor"
+                    : "text-primarycolor hover:bg-primarycolor/5"
+                }`}
+              >
+                <span className="font-medium">Notifications & Preferences</span>
+                {activeSection === "notifications" ? (
+                  <ChevronUp className="text-secondarycolor" />
+                ) : (
+                  <ChevronDown className="text-primarycolor" />
+                )}
+              </button>
+              {activeSection === "notifications" && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-primarycolor">
+                        Email Notifications
+                      </span>
+                      <Toggle
+                        checked={emailNotifications}
+                        onChange={setEmailNotifications}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </AnimatePresence>
+          <button
+            type="submit"
+            className="w-full bg-primarycolor text-white py-3 px-4 rounded-full mt-6 hover:bg-primarycolor/90 transition-all duration-200"
+          >
+            Save Changes
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

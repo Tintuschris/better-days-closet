@@ -114,66 +114,147 @@ function HomePageContent() {
 
   if (!products) {
     return (
-      <div className="p-4 md:flex md:gap-8 max-w-[1400px] mx-auto">
-        <div className="hidden md:block md:w-64 space-y-6">
-          <div className="h-12 bg-gray-200 rounded animate-pulse" />
+      <div className="p-4 max-w-[1400px] mx-auto">
+        {/* Desktop Skeleton */}
+        <div className="hidden md:flex md:gap-8">
+          <div className="hidden md:block md:w-64 space-y-6">
+            <div className="h-12 bg-gray-200 rounded animate-pulse" />
+            <div className="h-64 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="space-y-8 md:flex-1">
+            <div className="h-[300px] bg-gray-200 rounded-lg animate-pulse" />
+            <SkeletonCarousel />
+            <SkeletonCarousel />
+          </div>
         </div>
-        <div className="space-y-8 md:flex-1">
-          <div className="h-40 md:h-[400px] bg-gray-200 rounded-lg animate-pulse" />
-          <SkeletonCarousel />
-          <SkeletonCarousel />
-          <SkeletonCarousel />
+        
+        {/* Mobile Skeleton */}
+        <div className="md:hidden space-y-6">
+          <div className="h-12 bg-gray-200 rounded animate-pulse" />
+          <div className="h-40 bg-gray-200 rounded-lg animate-pulse" />
+          <SkeletonCarousel count={2} />
         </div>
       </div>
     );
   }
 
+  // Prepare product carousels for both mobile and desktop
+  const productCarousels = (
+    <>
+      <ProductCarousel
+        title="TOP DEALS"
+        products={activeFilters ? filteredProducts.filter(p => p.discount) : products?.filter(p => p.discount) || []}
+        category="top-deals"
+        isSpecialCategory={true}
+      />
+
+      <ProductCarousel
+        title="NEW ARRIVALS"
+        products={activeFilters ? filteredProducts.filter(p => new Date(p.created_at) > new Date('2024-01-01')) : products?.filter(p => new Date(p.created_at) > new Date('2024-01-01')) || []}
+        category="new-arrivals"
+        isSpecialCategory={true}
+      />
+
+      {categories?.filter(category => 
+        products.some(product => product.category_id === category.id)
+      ).map(category => (
+        <ProductCarousel
+          key={category.id}
+          title={category.name}
+          products={activeFilters 
+            ? filteredProducts.filter(p => p.category_id === category.id) 
+            : products?.filter(p => p.category_id === category.id) || []
+          }
+          category={category.name}
+          isSpecialCategory={false}
+        />
+      ))}
+    </>
+  );
+
   return (
-    <div className="max-w-[1400px] mx-auto pt-8">
-      {/* Marketing Banner - Desktop Only */}
-      <div className="hidden md:block w-full mb-8 px-4">
-        <MarketingBanner />
+    <div className="max-w-[1400px] mx-auto pt-4 px-4">
+      {/* Mobile Layout */}
+      <div className="md:hidden space-y-6">
+        <div className="relative">
+          <CategoryListing />
+          <button
+            onClick={() => setIsFilterModalOpen(true)}
+            className="absolute top-[50%] right-0 z-10 bg-white p-2 rounded shadow-lg text-purple-800 hover:text-purple-600"
+          >
+            <Filter size={24} />
+          </button>
+        </div>
+        <MarketingBanner isMobile={true} />
+        
+        {/* Active Filters Display - Mobile */}
+        {activeFilters && (
+          <div className="flex flex-wrap gap-2 items-center">
+            {activeFilters.categories.map(category => (
+              <span key={category} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor">
+                {category}
+                <button onClick={() => removeFilter('category', category)} className="ml-2">
+                  <X size={14} />
+                </button>
+              </span>
+            ))}
+            {activeFilters.tags.map(tag => (
+              <span key={tag} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor">
+                {tag}
+                <button onClick={() => removeFilter('tag', tag)} className="ml-2">
+                  <X size={14} />
+                </button>
+              </span>
+            ))}
+            <button 
+              onClick={clearFilters}
+              className="text-sm text-warningcolor hover:underline"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
+        
+        {/* Mobile Product Carousels */}
+        <div className="space-y-8">
+          {productCarousels}
+        </div>
       </div>
 
-      <div className="md:flex md:gap-8">
-        {/* Desktop Left Sidebar */}
-        <div className="hidden md:block md:w-64 min-w-[256px]">
-          <div className="sticky top-0">
-            <div className="bg-gray-50 p-6 space-y-6 rounded-lg border border-gray-100 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
-              <div className="space-y-6">
-                <CategoryListing />
-                {/* Elegant divider */}
-                <div className="h-px bg-gradient-to-r from-transparent via-primarycolor/20 to-transparent" />
-                <DesktopFilter
-                  categories={categories?.map(cat => cat.name) || []}
-                  onApplyFilters={applyFilters}
-                  initialFilters={activeFilters}
-                />
-              </div>
+      {/* Desktop Layout */}
+      <div className="hidden md:flex md:gap-8">
+        {/* Left Sidebar - Sticky */}
+        <div className="w-64 min-w-[256px]">
+          <div className="sticky top-[72px] space-y-8 max-h-[calc(100vh-80px)] overflow-y-auto pb-8">
+            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
+              <CategoryListing />
+            </div>
+            
+            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
+              <DesktopFilter
+                categories={categories?.map(cat => cat.name) || []}
+                onApplyFilters={applyFilters}
+                initialFilters={activeFilters}
+              />
             </div>
           </div>
         </div>
+        
         {/* Main Content Area */}
-        <div className="flex-1 p-4 space-y-8">
-          {/* Mobile Layout */}
-          <div className="md:hidden space-y-8">
-            <div className="relative">
-              <CategoryListing />
-              <button
-                onClick={() => setIsFilterModalOpen(true)}
-                className="absolute top-[50%] right-0 z-10 bg-white p-2 rounded shadow-lg text-purple-800 hover:text-purple-600"
-              >
-                <Filter size={24} />
-              </button>
+        <div className="flex-1 space-y-8">
+          {/* Marketing Banner with reduced height */}
+          <div className="w-full">
+            <div className="h-[280px] overflow-hidden rounded-lg">
+              <MarketingBanner isDesktop={true} reducedHeight={true} />
             </div>
-            <MarketingBanner />
           </div>
-
-          {/* Active Filters Display */}
+          
+          {/* Active Filters Display - Desktop */}
           {activeFilters && (
-            <div className="flex flex-wrap gap-2 items-center">
+            <div className="flex flex-wrap gap-2 items-center bg-gray-50 p-3 rounded-lg">
+              <span className="text-sm font-medium text-gray-500 mr-2">Active Filters:</span>
               {activeFilters.categories.map(category => (
-                <span key={category} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor">
+                <span key={category} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor text-sm">
                   {category}
                   <button onClick={() => removeFilter('category', category)} className="ml-2">
                     <X size={14} />
@@ -181,7 +262,7 @@ function HomePageContent() {
                 </span>
               ))}
               {activeFilters.tags.map(tag => (
-                <span key={tag} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor">
+                <span key={tag} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor text-sm">
                   {tag}
                   <button onClick={() => removeFilter('tag', tag)} className="ml-2">
                     <X size={14} />
@@ -190,41 +271,17 @@ function HomePageContent() {
               ))}
               <button 
                 onClick={clearFilters}
-                className="text-sm text-warningcolor hover:underline"
+                className="text-sm text-warningcolor hover:underline ml-auto"
               >
                 Clear All
               </button>
             </div>
           )}
 
-          <ProductCarousel
-            title="TOP DEALS"
-            products={activeFilters ? filteredProducts.filter(p => p.discount) : products?.filter(p => p.discount) || []}
-            category="top-deals"
-            isSpecialCategory={true}
-          />
-
-          <ProductCarousel
-            title="NEW ARRIVALS"
-            products={activeFilters ? filteredProducts.filter(p => new Date(p.created_at) > new Date('2024-01-01')) : products?.filter(p => new Date(p.created_at) > new Date('2024-01-01')) || []}
-            category="new-arrivals"
-            isSpecialCategory={true}
-          />
-
-          {categories?.filter(category => 
-            products.some(product => product.category_id === category.id)
-          ).map(category => (
-            <ProductCarousel
-              key={category.id}
-              title={category.name}
-              products={activeFilters 
-                ? filteredProducts.filter(p => p.category_id === category.id) 
-                : products?.filter(p => p.category_id === category.id) || []
-              }
-              category={category.name}
-              isSpecialCategory={false}
-            />
-          ))}
+          {/* Desktop Product Carousels */}
+          <div className="space-y-8">
+            {productCarousels}
+          </div>
         </div>
       </div>
 

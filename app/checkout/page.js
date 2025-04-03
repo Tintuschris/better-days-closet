@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { CheckCircle, ChevronLeft, Loader2 } from "lucide-react";
+import { CheckCircle, ChevronLeft, Loader2, AlertCircle } from "lucide-react";
 import { useCart } from "../context/cartContext";
 import { useSupabaseContext } from "../context/supabaseContext";
 import { toast } from "sonner";
@@ -10,14 +10,55 @@ import { toast } from "sonner";
 const OrderSummaryStep = memo(({ cartItems, subtotal, deliveryCost }) => {
   const totalCost = subtotal + (deliveryCost || 0);
 
+  // Helper function to safely format prices
+  const formatPrice = (price) => {
+    return typeof price === 'number' 
+      ? price.toFixed(2) 
+      : Number(price).toFixed(2);
+  };
+
   return (
-    <div className="p-4">
-      <div className="space-y-4">
-        {cartItems.map((item) => (
-          <div
-            key={item.productId}
-            className="bg-secondaryvariant rounded-lg p-4 flex items-center"
-          >
+    <div className="space-y-4 px-4 md:px-0">
+      {cartItems.map((item) => (
+        <div
+          key={item.productId}
+          className="bg-secondaryvariant rounded-lg p-4 relative"
+        >
+          {/* Mobile Layout - 2-column with better spacing */}
+          <div className="flex md:hidden">
+            {/* Product Image */}
+            <div className="w-24 h-24 flex-shrink-0">
+              <Image
+                src={item.product.image_url}
+                alt={item.product.name}
+                width={96}
+                height={96}
+                className="object-cover rounded-lg w-full h-full"
+                priority
+              />
+            </div>
+            
+            {/* Product Details */}
+            <div className="ml-4 flex-1 flex flex-col">
+              {/* Product Name */}
+              <h3 className="font-semibold text-primarycolor text-base mb-1 line-clamp-2">
+                {item.product.name}
+              </h3>
+              
+              {/* Price */}
+              <p className="font-bold text-purple-900 text-lg">
+                Ksh. {formatPrice(item.product.price * item.quantity)}
+              </p>
+              
+              {/* Quantity */}
+              <p className="text-primarycolor text-sm mt-1">
+                Quantity: {item.quantity}
+              </p>
+            </div>
+          </div>
+
+          {/* Desktop Layout */}
+          <div className="hidden md:flex md:items-center">
             <Image
               src={item.product.image_url}
               alt={item.product.name}
@@ -27,30 +68,37 @@ const OrderSummaryStep = memo(({ cartItems, subtotal, deliveryCost }) => {
               priority
             />
             <div className="flex-grow">
-              <p className="font-semibold text-primarycolor">{item.product.name}</p>
-              <p className="text-primarycolor">Quantity: {item.quantity}</p>
+              <p className="font-semibold text-primarycolor">
+                {item.product.name}
+              </p>
+              <p className="text-primarycolor">
+                Quantity: {item.quantity}
+              </p>
             </div>
-            <p className="font-bold text-purple-900">
-              Ksh. {(item.product.price * item.quantity).toFixed(2)}
-            </p>
+            <div className="flex flex-col items-end min-w-[100px]">
+              <p className="font-bold text-purple-900 whitespace-nowrap">
+                Ksh. {formatPrice(item.product.price * item.quantity)}
+              </p>
+            </div>
           </div>
-        ))}
+        </div>
+      ))}
 
-        <div className="mt-6 space-y-2">
-          <div className="flex justify-between">
-            <span className="text-primarycolor">Subtotal:</span>
-            <span className="text-primarycolor">Ksh. {subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-primarycolor">Delivery Cost:</span>
-            <span className="text-primarycolor">
-              Ksh. {deliveryCost?.toFixed(2) || "0.00"}
-            </span>
-          </div>
-          <div className="flex justify-between font-bold">
-            <span className="text-primarycolor">Total:</span>
-            <span className="text-primarycolor">Ksh. {totalCost.toFixed(2)}</span>
-          </div>
+      <div className="mt-6 bg-gray-50 p-4 rounded-lg space-y-3">
+        <div className="flex justify-between">
+          <span className="text-primarycolor">Subtotal:</span>
+          <span className="text-primarycolor">Ksh. {formatPrice(subtotal)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-primarycolor">Delivery Cost:</span>
+          <span className="text-primarycolor">
+            Ksh. {deliveryCost ? formatPrice(deliveryCost) : "0.00"}
+          </span>
+        </div>
+        <div className="h-px bg-gray-200 my-2"></div>
+        <div className="flex justify-between font-bold">
+          <span className="text-primarycolor">Total:</span>
+          <span className="text-primarycolor">Ksh. {formatPrice(totalCost)}</span>
         </div>
       </div>
     </div>
@@ -58,45 +106,46 @@ const OrderSummaryStep = memo(({ cartItems, subtotal, deliveryCost }) => {
 });
 
 OrderSummaryStep.displayName = "OrderSummaryStep";
-  const GuestInfoForm = memo(({ formData, onFormChange }) => {
-    return (
-      <div className="mb-8 space-y-4">
-        <h4 className="text-xl font-semibold text-primarycolor">Guest Information</h4>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-lg text-primarycolor mb-2">Full Name</label>
-            <input
-              type="text"
-              defaultValue={formData.name}
-              onChange={(e) => onFormChange('name', e.target.value)}
-              className="w-full p-3 border border-primarycolor rounded-lg text-primarycolor"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-lg text-primarycolor mb-2">Email</label>
-            <input
-              type="email"
-              defaultValue={formData.email}
-              onChange={(e) => onFormChange('email', e.target.value)}
-              className="w-full p-3 border border-primarycolor rounded-lg text-primarycolor"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-lg text-primarycolor mb-2">Phone Number</label>
-            <input
-              type="tel"
-              defaultValue={formData.phone}
-              onChange={(e) => onFormChange('phone', e.target.value)}
-              className="w-full p-3 border border-primarycolor rounded-lg text-primarycolor"
-              required
-            />
-          </div>
+
+const GuestInfoForm = memo(({ formData, onFormChange }) => {
+  return (
+    <div className="mb-8 space-y-4">
+      <h4 className="text-xl font-semibold text-primarycolor">Guest Information</h4>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-primarycolor mb-2">Full Name</label>
+          <input
+            type="text"
+            defaultValue={formData.name}
+            onChange={(e) => onFormChange('name', e.target.value)}
+            className="w-full p-3 border border-primarycolor/30 focus:border-primarycolor rounded-lg text-primarycolor focus:outline-none transition-all"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-primarycolor mb-2">Email</label>
+          <input
+            type="email"
+            defaultValue={formData.email}
+            onChange={(e) => onFormChange('email', e.target.value)}
+            className="w-full p-3 border border-primarycolor/30 focus:border-primarycolor rounded-lg text-primarycolor focus:outline-none transition-all"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-primarycolor mb-2">Phone Number</label>
+          <input
+            type="tel"
+            defaultValue={formData.phone}
+            onChange={(e) => onFormChange('phone', e.target.value)}
+            className="w-full p-3 border border-primarycolor/30 focus:border-primarycolor rounded-lg text-primarycolor focus:outline-none transition-all"
+            required
+          />
         </div>
       </div>
-    );
-  });
+    </div>
+  );
+});
 
 GuestInfoForm.displayName = "GuestInfoForm";
 
@@ -104,7 +153,7 @@ const DeliveryDetailsStep = memo(({ user, deliveryAddressData, deliveryCost, gue
   const deliveryInfo = user ? deliveryAddressData : JSON.parse(localStorage.getItem('guestDeliveryDetails'));
 
   return (
-    <div className="my-8 p-6 border-2 border-primarycolor rounded-lg">
+    <div className="my-8 px-4 md:px-0">
       <h3 className="text-2xl font-semibold text-primarycolor mb-6">
         DELIVERY DETAILS
       </h3>
@@ -114,43 +163,43 @@ const DeliveryDetailsStep = memo(({ user, deliveryAddressData, deliveryCost, gue
       )}
 
       {deliveryInfo && (
-        <div className="space-y-4">
-          <p className="text-lg">
-            <span className="font-medium text-primarycolor">Delivery Option: </span>
-            <span className="text-secondarycolor">{deliveryInfo.delivery_option}</span>
-          </p>
+        <div className="space-y-4 bg-gray-50 p-5 rounded-lg">
+          <div className="flex flex-col md:flex-row md:items-center border-b border-gray-200 pb-3">
+            <div className="font-medium text-primarycolor md:w-1/3">Delivery Option:</div>
+            <div className="text-secondarycolor md:w-2/3">{deliveryInfo.delivery_option}</div>
+          </div>
 
           {deliveryInfo.delivery_option === "Nairobi Delivery" && (
-            <p className="text-lg">
-              <span className="font-medium text-primarycolor">Area: </span>
-              <span className="text-secondarycolor">{deliveryInfo.area}</span>
-            </p>
+            <div className="flex flex-col md:flex-row md:items-center border-b border-gray-200 pb-3">
+              <div className="font-medium text-primarycolor md:w-1/3">Area:</div>
+              <div className="text-secondarycolor md:w-2/3">{deliveryInfo.area}</div>
+            </div>
           )}
 
           {deliveryInfo.delivery_option === "CBD Pickup Point" && (
-            <p className="text-lg">
-              <span className="font-medium text-primarycolor">Pickup Point: </span>
-              <span className="text-secondarycolor">{deliveryInfo.pickup_point}</span>
-            </p>
+            <div className="flex flex-col md:flex-row md:items-center border-b border-gray-200 pb-3">
+              <div className="font-medium text-primarycolor md:w-1/3">Pickup Point:</div>
+              <div className="text-secondarycolor md:w-2/3">{deliveryInfo.pickup_point}</div>
+            </div>
           )}
 
           {deliveryInfo.delivery_option === "Rest of Kenya" && (
             <>
-              <p className="text-lg">
-                <span className="font-medium text-primarycolor">Area: </span>
-                <span className="text-secondarycolor">{deliveryInfo.area}</span>
-              </p>
-              <p className="text-lg">
-                <span className="font-medium text-primarycolor">Courier Service: </span>
-                <span className="text-secondarycolor">{deliveryInfo.courier_service}</span>
-              </p>
+              <div className="flex flex-col md:flex-row md:items-center border-b border-gray-200 pb-3">
+                <div className="font-medium text-primarycolor md:w-1/3">Area:</div>
+                <div className="text-secondarycolor md:w-2/3">{deliveryInfo.area}</div>
+              </div>
+              <div className="flex flex-col md:flex-row md:items-center border-b border-gray-200 pb-3">
+                <div className="font-medium text-primarycolor md:w-1/3">Courier Service:</div>
+                <div className="text-secondarycolor md:w-2/3">{deliveryInfo.courier_service}</div>
+              </div>
             </>
           )}
 
-          <p className="text-lg">
-            <span className="font-medium text-primarycolor">Delivery Cost: </span>
-            <span className="text-secondarycolor">Ksh. {deliveryCost}</span>
-          </p>
+          <div className="flex flex-col md:flex-row md:items-center pt-2">
+            <div className="font-medium text-primarycolor md:w-1/3">Delivery Cost:</div>
+            <div className="text-secondarycolor font-semibold md:w-2/3">Ksh. {deliveryCost}</div>
+          </div>
         </div>
       )}
     </div>
@@ -295,29 +344,30 @@ const PaymentStep = memo(({
   };
 
   return (
-    <div className="p-4 pb-0">
-      <h2 className="text-4xl font-semibold text-primarycolor mb-4 w-[50%]">
+    <div className="p-4 pb-0 md:px-0">
+      <h2 className="text-2xl font-semibold text-primarycolor mb-6">
         PAYMENT METHOD
       </h2>
 
-      <div className="mb-6">
-        <div className="mb-4">
+      <div className="bg-gray-50 p-6 rounded-lg">
+        <div className="mb-6 flex justify-center">
           <Image
             src="/mpesa.png"
             alt="Mpesa"
-            width={64}
-            height={64}
+            width={80}
+            height={80}
             className="ml-0"
             priority
           />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
+            <label className="block text-primarycolor mb-2 text-center">Enter M-Pesa Phone Number</label>
             <input
               type="tel"
-              className="w-full p-4 border border-primarycolor text-center text-primarycolor rounded-full focus:outline-none"
-              placeholder="Enter Phone Number (e.g., 0712345678)"
+              className="w-full p-4 border border-primarycolor/30 text-center text-primarycolor rounded-lg focus:outline-none focus:border-primarycolor transition-all"
+              placeholder="e.g., 0712345678"
               value={phoneNumber}
               onChange={handlePhoneNumberChange}
               maxLength={13} // Allow for +254 format
@@ -330,11 +380,18 @@ const PaymentStep = memo(({
           <button
             className={`w-full py-4 rounded-full ${
               isProcessing ? 'bg-primarycolor/50' : 'bg-primarycolor'
-            } text-white`}
+            } text-white flex items-center justify-center transition-all`}
             onClick={handleSTKPush}
             disabled={isProcessing}
           >
-            {isProcessing ? 'Processing...' : 'Pay with M-Pesa'}
+            {isProcessing ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                <span className="text-center">Processing...</span>
+              </>
+            ) : (
+              <span className="text-center">Pay with M-Pesa</span>
+            )}
           </button>
         </div>
       </div>
@@ -355,45 +412,57 @@ const ProgressStepper = memo(({ currentStep, setCurrentStep }) => {
   }, [currentIndex, setCurrentStep, steps]);
 
   return (
-    <div className="sticky top-16 bg-white py-6 px-4 border-b lg:top-[72px]">
-      <div className="max-w-md mx-auto flex justify-between items-center">
+    <div className="sticky top-16 bg-white py-6 px-4 border-b z-10 lg:top-[72px]">
+      <div className="max-w-md mx-auto flex items-center justify-between">
         {steps.map((step, index) => (
-          <div key={step} className="flex flex-col items-center">
-            <div className="flex items-center">
+          <React.Fragment key={step}>
+            <div className="flex flex-col items-center">
               <div
-                className={`w-6 h-6 rounded-full border-2 transition-all duration-300 cursor-pointer ${
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 cursor-pointer ${
                   currentIndex >= index
                     ? "bg-primarycolor border-primarycolor"
                     : "border-gray-300"
                 }`}
                 onClick={() => handleStepClick(index)}
-              />
-              {index < steps.length - 1 && (
-                <div className="w-24 h-0.5 mx-4">
-                  <div 
-                    className={`h-full border-t-2 transition-all duration-500 ease-in-out ${
-                      currentIndex > index 
-                        ? "border-primarycolor border-solid" 
-                        : "border-gray-300 border-dashed"
-                    }`}
-                  />
-                </div>
-              )}
+              >
+                {currentIndex > index ? (
+                  <CheckCircle className="w-5 h-5 text-white" />
+                ) : (
+                  <span className={`text-sm font-medium ${currentIndex >= index ? "text-white" : "text-gray-500"}`}>
+                    {index + 1}
+                  </span>
+                )}
+              </div>
+              <span
+                className={`text-sm mt-2 transition-colors duration-300 ${
+                  currentIndex >= index ? "text-primarycolor" : "text-gray-500"
+                }`}
+              >
+                {step.charAt(0).toUpperCase() + step.slice(1)}
+              </span>
             </div>
-            <span
-              className={`text-sm mt-2 transition-colors duration-300 ${
-                currentIndex >= index ? "text-primarycolor" : "text-gray-500"
-              }`}
-            >
-              {step.charAt(0).toUpperCase() + step.slice(1)}
-            </span>
-          </div>
+            
+            {index < steps.length - 1 && (
+              <div className="w-1/4 h-0.5">
+                <div 
+                  className={`h-full transition-all duration-500 ease-in-out ${
+                    currentIndex > index 
+                      ? "bg-primarycolor" 
+                      : "bg-gray-300"
+                  }`}
+                />
+              </div>
+            )}
+          </React.Fragment>
         ))}
       </div>
     </div>
   );
 });
-ProgressStepper.displayName = "ProgressStepper";export default function Checkout() {
+
+ProgressStepper.displayName = "ProgressStepper";
+
+export default function Checkout() {
   const router = useRouter();
   const { cartItems, updateCart } = useCart();
   const { user, deliveryAddressData, deliveryCost, setDeliveryCost, supabase } = useSupabaseContext();
@@ -427,7 +496,7 @@ ProgressStepper.displayName = "ProgressStepper";export default function Checkout
       return;
     }
 
-    setIsLoading(true); // Add this line
+    setIsLoading(true);
     setCurrentStep("processing");
     try {
       const deliveryInfo = user ? deliveryAddressData : JSON.parse(localStorage.getItem('guestDeliveryDetails'));
@@ -452,57 +521,59 @@ ProgressStepper.displayName = "ProgressStepper";export default function Checkout
         created_at: new Date().toISOString()
       };
 
-        const { data: createdOrder, error: supabaseError } = await supabase
-          .from('orders')
-          .insert([orderData])
-          .select()
-          .single();
+      const { data: createdOrder, error: supabaseError } = await supabase
+        .from('orders')
+        .insert([orderData])
+        .select()
+        .single();
 
-        if (supabaseError) throw supabaseError;
+      if (supabaseError) throw supabaseError;
 
-        const subscription = supabase
-          .channel(`order-${createdOrder.id}`)
-          .on('postgres_changes', {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'orders',
-            filter: `id=eq.${createdOrder.id}`
-          }, async (payload) => {
-            if (payload.new.status === 'CONFIRMED') {
-              setCurrentStep("success");
-              localStorage.removeItem("cart");
-              updateCart([]);
-              
-              if (user) {
-                toast.success(
-                  <div>
-                    Order confirmed successfully!
-                    <div className="mt-2 cursor-pointer text-white hover:text-primarycolorvariant"
-                      onClick={() => router.push("/profile?tab=orders")}>
-                      View Orders
-                    </div>
+      const subscription = supabase
+        .channel(`order-${createdOrder.id}`)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${createdOrder.id}`
+        }, async (payload) => {
+          if (payload.new.status === 'CONFIRMED') {
+            setCurrentStep("success");
+            localStorage.removeItem("cart");
+            updateCart([]);
+            
+            if (user) {
+              toast.success(
+                <div>
+                  Order confirmed successfully!
+                  <div className="mt-2 cursor-pointer text-white hover:text-primarycolorvariant"
+                    onClick={() => router.push("/profile?tab=orders")}>
+                    View Orders
                   </div>
-                );
-              } else {
-                toast.success("Order confirmed successfully! Order details will be sent to your email.");
-              }
-
-              subscription.unsubscribe();
-              
-              setTimeout(() => {
-                router.push(user ? "/profile?tab=orders" : "/");
-              }, 3000);
+                </div>
+              );
+            } else {
+              toast.success("Order confirmed successfully! Order details will be sent to your email.");
             }
-          })
-          .subscribe();
-          toast.info("Order placed. Waiting for confirmation..."); // Add this line
 
-      } catch (error) {
-        console.error('Error creating order:', error);
-        toast.error("Failed to process order");
-        setCurrentStep("payment");
-      }
-    };
+            subscription.unsubscribe();
+            
+            setTimeout(() => {
+              router.push(user ? "/profile?tab=orders" : "/");
+            }, 3000);
+          }
+        })
+        .subscribe();
+        
+      toast.info("Order placed. Waiting for confirmation...");
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error("Failed to process order");
+      setCurrentStep("payment");
+      setIsLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center">
@@ -511,101 +582,139 @@ ProgressStepper.displayName = "ProgressStepper";export default function Checkout
       </div>
     );
   }
-    return (
-      <div className="min-h-screen bg-white lg:bg-gray-50">
-        <div className="w-full max-w-3xl mx-auto lg:my-8 lg:shadow-lg lg:bg-white lg:rounded-xl lg:pb-24">
-          <div className="sticky top-0 bg-white p-4 flex items-center border-b text-primarycolor z-50 lg:rounded-t-xl">
-            <button onClick={() => router.back()} className="text-primarycolor">
-              <ChevronLeft size={24} />
-            </button>
-            <h1 className="text-xl font-semibold mx-auto">CHECKOUT</h1>
+
+  return (
+    <div className="min-h-screen bg-white lg:bg-gray-50">
+      {/* Header with 3-column layout matching cart page */}
+      <div className="sticky top-0 bg-white p-4 flex items-center justify-between border-b text-primarycolor z-50">
+        <div className="w-10">
+          <button 
+            onClick={() => router.back()} 
+            className="text-primarycolor flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <ChevronLeft size={24} />
+          </button>
+        </div>
+        <div className="flex-1 text-center">
+          <h1 className="text-xl font-bold text-primarycolor">CHECKOUT</h1>
+        </div>
+        <div className="w-10"></div>
+      </div>
+
+      <ProgressStepper currentStep={currentStep} setCurrentStep={setCurrentStep} />
+
+      {/* Desktop Layout - Special layout for summary step */}
+      <div className="max-w-6xl mx-auto lg:my-8 lg:px-4">
+        {currentStep === "summary" ? (
+          // Special layout for summary step on desktop
+          <div className="lg:bg-white lg:rounded-lg lg:shadow-sm lg:p-6">
+            <h2 className="text-xl font-bold text-primarycolor mb-6 px-4 lg:px-0">Order Summary</h2>
+            <OrderSummaryStep
+              cartItems={cartItems}
+              subtotal={subtotal}
+              deliveryCost={deliveryCost}
+            />
+            
+            {/* Only show this button on desktop, mobile has fixed button at bottom */}
+            <div className="mt-8 max-w-md mx-auto px-4 lg:px-0 hidden lg:block">
+              <button
+                className="w-full py-4 rounded-full bg-primarycolor text-white hover:bg-primarycolor/90"
+                onClick={() => setCurrentStep("delivery")}
+              >
+                Continue to Delivery
+              </button>
+            </div>
           </div>
-
-          <ProgressStepper currentStep={currentStep} setCurrentStep={setCurrentStep} />
-
-          <div className="w-full max-w-2xl mx-auto px-4 lg:px-8">
-            {currentStep === "summary" && (
+        ) : (
+          // Two-column layout for delivery and payment steps
+          <div className="lg:grid lg:grid-cols-5 lg:gap-8">
+            {/* Left Column - Order Summary (Desktop Only) */}
+            <div className="hidden lg:block lg:col-span-2 bg-white rounded-lg shadow-sm p-6 h-fit">
+              <h2 className="text-xl font-bold text-primarycolor mb-6">Order Summary</h2>
               <OrderSummaryStep
                 cartItems={cartItems}
                 subtotal={subtotal}
                 deliveryCost={deliveryCost}
               />
-            )}
+            </div>
 
-            {currentStep === "delivery" && (
-              <DeliveryDetailsStep
-                user={user}
-                deliveryAddressData={deliveryAddressData}
-                deliveryCost={deliveryCost}
-                guestInfo={guestInfo}
-                setGuestInfo={(field, value) => {
-                  setGuestInfo(prev => ({
-                    ...prev,
-                    [field]: value
-                  }));
-                }}
-              />
-            )}
-
-            {currentStep === "payment" && (
-              <PaymentStep
-                totalCost={totalCost}
-                mpesaCode={mpesaCode}
-                setMpesaCode={setMpesaCode}
-                supabase={supabase}
-                user={user}
-                deliveryInfo={deliveryAddressData}
-                deliveryCost={deliveryCost}
-                cartItems={cartItems}
-              />
-            )}
-
-            {currentStep === "success" && (
-              <div className="fixed inset-0 bg-white flex flex-col items-center justify-center">
-                <CheckCircle className="w-16 h-16 text-green-500" />
-                <h2 className="text-xl font-semibold text-primarycolor mt-4">
-                  Order Confirmed!
-                </h2>
-                <p className="text-primarycolor mt-2">Thank you for your purchase</p>
-              </div>
-            )}
-          </div>
-
-          <div className="fixed bottom-6 left-0 right-0 px-6 lg:relative lg:bottom-0 lg:mt-8 lg:mb-8">
-            <div className="max-w-2xl mx-auto">
-              {!isLoading && (currentStep === "summary" || currentStep === "delivery" || currentStep === "payment") && (
-                <button
-                  className={`w-full py-4 rounded-full ${
-                    currentStep === "payment" && !mpesaCode
-                      ? "bg-primarycolor/50 text-white"
-                      : "bg-primarycolor text-white hover:bg-primarycolor"
-                  }`}
-                  onClick={() => {
-                    if (currentStep === "summary") {
-                      setCurrentStep("delivery");
-                    } else if (currentStep === "delivery") {
-                      console.log('Current guestInfo:', guestInfo);
-                      if (!user && (!guestInfo?.name?.trim() || !guestInfo?.email?.trim() || !guestInfo?.phone?.trim())) {
-                        toast.error("Please complete guest information");
-                        return;
-                      }
-                      setCurrentStep("payment");
-                    } else if (currentStep === "payment") {
-                      handleOrderConfirmation();
-                    }
+            {/* Right Column - Checkout Steps */}
+            <div className="lg:col-span-3 bg-white lg:rounded-lg lg:shadow-sm lg:p-6">
+              {currentStep === "delivery" && (
+                <DeliveryDetailsStep
+                  user={user}
+                  deliveryAddressData={deliveryAddressData}
+                  deliveryCost={deliveryCost}
+                  guestInfo={guestInfo}
+                  setGuestInfo={(field, value) => {
+                    setGuestInfo(prev => ({
+                      ...prev,
+                      [field]: value
+                    }));
                   }}
-                  disabled={currentStep === "payment" && !mpesaCode}
-                >
-                  {currentStep === "summary"
-                    ? "Continue to Delivery"
-                    : currentStep === "delivery"
-                    ? "Proceed to Payment"
-                    : "Confirm Order"}
-                </button>
+                />
+              )}
+
+              {currentStep === "payment" && (
+                <PaymentStep
+                  totalCost={totalCost}
+                  mpesaCode={mpesaCode}
+                  setMpesaCode={setMpesaCode}
+                  supabase={supabase}
+                  user={user}
+                  deliveryInfo={deliveryAddressData}
+                  deliveryCost={deliveryCost}
+                  cartItems={cartItems}
+                />
+              )}
+
+              {currentStep === "success" && (
+                <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
+                  <CheckCircle className="w-16 h-16 text-green-500" />
+                  <h2 className="text-xl font-semibold text-primarycolor mt-4">
+                    Order Confirmed!
+                  </h2>
+                  <p className="text-primarycolor mt-2">Thank you for your purchase</p>
+                </div>
+              )}
+
+              {/* Next Step Button - Only for delivery step */}
+              {currentStep === "delivery" && (
+                <div className="fixed bottom-6 left-0 right-0 px-6 lg:static lg:mt-8">
+                  <div className="max-w-md mx-auto">
+                    <button
+                      className="w-full py-4 rounded-full bg-primarycolor text-white hover:bg-primarycolor/90"
+                      onClick={() => {
+                        if (!user && (!guestInfo?.name?.trim() || !guestInfo?.email?.trim() || !guestInfo?.phone?.trim())) {
+                          toast.error("Please complete guest information");
+                          return;
+                        }
+                        setCurrentStep("payment");
+                      }}
+                    >
+                      Proceed to Payment
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
-        </div>
+        )}
       </div>
-    );
-  }
+
+      {/* Mobile Next Step Button - Only for summary step */}
+      {currentStep === "summary" && (
+        <div className="fixed bottom-6 left-0 right-0 px-6 lg:hidden">
+          <div className="max-w-md mx-auto">
+            <button
+              className="w-full py-4 rounded-full bg-primarycolor text-white hover:bg-primarycolor/90"
+              onClick={() => setCurrentStep("delivery")}
+            >
+              Continue to Delivery
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
