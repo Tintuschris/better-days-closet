@@ -18,15 +18,15 @@ function DashboardCard({ title, value, icon: Icon, trend, color = "primary" }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-primarycolor-500 text-sm">{title}</p>
-          <h3 className="text-2xl font-bold mt-1">{value}</h3>
+          <p className="text-gray-700 font-medium text-sm">{title}</p>
+          <h3 className="text-2xl font-bold mt-1 text-gray-900">{value}</h3>
           {trend && (
             <p
-              className={`text-sm ${
-                trend > 0 ? "text-green-500" : "text-red-500"
+              className={`text-sm font-medium ${
+                trend > 0 ? "text-green-600" : "text-red-600"
               }`}
             >
               {trend > 0 ? "+" : ""}
@@ -59,7 +59,9 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-gray-50">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Dashboard</h1>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <DashboardCard
           title="Total Orders"
@@ -86,15 +88,18 @@ export default function AdminDashboard() {
         />
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold mb-4 text-primarycolor">
+      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">
           Sales Overview
         </h2>
         <SalesGraph data={salesData} isLoading={salesLoading} />
       </div>
 
       {/* Add System Testing Section */}
-      <div className="bg-white rounded-lg shadow-sm">
+      <div className="bg-white rounded-lg shadow-md border border-gray-100">
+        <div className="p-4 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800">System Status</h2>
+        </div>
         <RealTimeDebugger />
       </div>
     </div>

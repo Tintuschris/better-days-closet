@@ -1,27 +1,38 @@
 "use client"
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { 
   FiHome, FiBox, FiShoppingBag, FiList,
   FiBarChart2, FiTruck, FiMenu, FiX, FiImage, FiSettings
 } from 'react-icons/fi';
+import { useQueryClient } from '@tanstack/react-query';
+import { useSupabase } from '../hooks/useSupabase';
 
 const menuItems = [
-  { path: '/admin', icon: FiHome, label: 'Dashboard' },
-  { path: '/admin/products', icon: FiBox, label: 'Products' },
-  { path: '/admin/categories', icon: FiList, label: 'Categories' },
-  { path: '/admin/orders', icon: FiShoppingBag, label: 'Orders' },
-  { path: '/admin/reports', icon: FiBarChart2, label: 'Reports' },
-  { path: '/admin/delivery-addresses', icon: FiTruck, label: 'Delivery' },
-  { path: '/admin/banners', icon: FiImage, label: 'Banners' },
-  { path: '/admin#testing', icon: FiSettings, label: 'System Tests' },
+  { path: '/admin', icon: FiHome, label: 'Dashboard', prefetchKeys: ['dashboardStats'] },
+  { path: '/admin/products', icon: FiBox, label: 'Products', prefetchKeys: ['products', 'categories'] },
+  { path: '/admin/categories', icon: FiList, label: 'Categories', prefetchKeys: ['categories'] },
+  { path: '/admin/orders', icon: FiShoppingBag, label: 'Orders', prefetchKeys: ['orders'] },
+  { path: '/admin/reports', icon: FiBarChart2, label: 'Reports', prefetchKeys: ['salesData'] },
+  { path: '/admin/delivery-addresses', icon: FiTruck, label: 'Delivery', prefetchKeys: ['deliveryAddresses'] },
+  { path: '/admin/banners', icon: FiImage, label: 'Banners', prefetchKeys: ['banners'] },
+  { path: '/admin#testing', icon: FiSettings, label: 'System Tests', prefetchKeys: [] },
 ];
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
+  const queryClient = useQueryClient();
+  const { 
+    fetchProducts, 
+    fetchCategories, 
+    fetchOrders, 
+    fetchSalesData,
+    fetchBanners,
+    fetchDeliveryAddresses
+  } = useSupabase();
 
   useEffect(() => {
     const handleResize = () => {
@@ -32,6 +43,33 @@ export default function Sidebar() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const prefetchData = (prefetchKeys) => {
+    prefetchKeys.forEach(key => {
+      switch(key) {
+        case 'products':
+          queryClient.prefetchQuery(['products'], fetchProducts);
+          break;
+        case 'categories':
+          queryClient.prefetchQuery(['categories'], fetchCategories);
+          break;
+        case 'orders':
+          queryClient.prefetchQuery(['orders'], fetchOrders);
+          break;
+        case 'salesData':
+          queryClient.prefetchQuery(['salesData'], fetchSalesData);
+          break;
+        case 'banners':
+          queryClient.prefetchQuery(['banners'], fetchBanners);
+          break;
+        case 'deliveryAddresses':
+          queryClient.prefetchQuery(['deliveryAddresses'], fetchDeliveryAddresses);
+          break;
+        default:
+          break;
+      }
+    });
+  };
 
   return (
     <>
@@ -65,6 +103,7 @@ export default function Sidebar() {
                   ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}
                   transition-colors duration-200
                 `}
+                onMouseEnter={() => prefetchData(item.prefetchKeys)}
               >
                 <item.icon className="w-5 h-5 mr-3" />
                 {item.label}

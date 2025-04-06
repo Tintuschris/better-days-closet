@@ -6,9 +6,10 @@ import { useSupabase } from '../hooks/useSupabase';
 
 function LoadingSkeleton() {
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-6 space-y-6">
       <div className="h-8 bg-gray-200 rounded w-48 animate-pulse" />
       <div className="h-64 bg-gray-200 rounded animate-pulse" />
+      <div className="h-96 bg-gray-200 rounded animate-pulse" />
     </div>
   );
 }
@@ -21,10 +22,21 @@ function ProductsContent() {
   if (productsLoading || categoriesLoading) return <LoadingSkeleton />;
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4 text-primarycolor">Manage Products</h1>
-      <ProductForm categories={categories} />
-      <ProductTable products={products} />
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Manage Products</h1>
+      <div className="bg-white rounded-lg shadow-md border border-gray-100 mb-8">
+        <div className="p-4 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800">Add New Product</h2>
+        </div>
+        <ProductForm categories={categories} />
+      </div>
+      
+      <div className="bg-white rounded-lg shadow-md border border-gray-100">
+        <div className="p-4 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800">Product Inventory</h2>
+        </div>
+        <ProductTable products={products} />
+      </div>
     </div>
   );
 }

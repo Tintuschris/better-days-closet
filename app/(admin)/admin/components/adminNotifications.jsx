@@ -14,7 +14,7 @@ export default function AdminNotifications() {
     return (
         <div className="relative">
             {/* Notification Bell */}
-            <button 
+            <button
                 className="relative p-2"
                 onClick={() => document.getElementById('notifications-panel').classList.toggle('hidden')}
             >
@@ -27,20 +27,20 @@ export default function AdminNotifications() {
             </button>
 
             {/* Notifications Panel */}
-            <div 
+            <div
                 id="notifications-panel"
                 className="hidden absolute right-0 mt-2 w-[450px] bg-white rounded-lg shadow-lg border border-gray-200 max-h-[80vh] overflow-y-auto"
             >
                 <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                     <h3 className="font-semibold">Order Notifications</h3>
                     <div className="space-x-2">
-                        <button 
+                        <button
                             onClick={markAllAsRead}
                             className="text-sm text-blue-600 hover:text-blue-800"
                         >
                             Mark all as read
                         </button>
-                        <button 
+                        <button
                             onClick={clearNotifications}
                             className="text-sm text-gray-600 hover:text-gray-800"
                         >

@@ -52,7 +52,7 @@ export default function BannerForm({ banner, onClose }) {
     e.preventDefault();
     try {
       let imageUrl = formData.image_url;
-      
+
       if (formData.imageFile) {
         imageUrl = await uploadMutation.mutateAsync(formData.imageFile);
       }

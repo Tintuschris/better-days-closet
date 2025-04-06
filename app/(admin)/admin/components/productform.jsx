@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { useSupabase } from "../hooks/useSupabase";
 import { toast } from "sonner";
-import { FiUpload, FiX } from "react-icons/fi";
+import { FiUpload, FiX, FiDollarSign, FiPackage, FiPercent } from "react-icons/fi";
 import Image from "next/image";
 
 export default function ProductForm({ categories }) {
@@ -28,7 +28,7 @@ export default function ProductForm({ categories }) {
     e.preventDefault();
     fileInputRef.current?.click();
   };
-  // Default to the existing image URL if editing, or empty string if adding new product
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -91,18 +91,17 @@ export default function ProductForm({ categories }) {
       fileInputRef.current.value = "";
     }
   };
+  
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="p-6">
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-lg shadow-md p-6 space-y-6"
+        className="space-y-6"
       >
-        <h2 className="text-xl font-semibold text-gray-800">Add New Product</h2>
-
         <div className="grid md:grid-cols-2 gap-6">
           {/* Product Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-primarycolor/80 mb-1">
               Product Name
             </label>
             <input
@@ -110,21 +109,22 @@ export default function ProductForm({ categories }) {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+              className="w-full p-2.5 border border-primarycolor/20 rounded-md focus:ring-2 focus:ring-primarycolor/50 focus:border-primarycolor/50 text-primarycolor/90 bg-white/50"
+              placeholder="Enter product name"
               required
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-primarycolor/80 mb-1">
               Category
             </label>
             <select
               name="category_id"
               value={formData.category_id}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+              className="w-full p-2.5 border border-primarycolor/20 rounded-md focus:ring-2 focus:ring-primarycolor/50 focus:border-primarycolor/50 text-primarycolor/90 bg-white/50"
               required
             >
               <option value="">Select Category</option>
@@ -138,55 +138,73 @@ export default function ProductForm({ categories }) {
 
           {/* Price */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price
+            <label className="block text-sm font-medium text-primarycolor/80 mb-1">
+              Price (KES)
             </label>
-            <input
-              type="number"
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              step="0.01"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
-              required
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FiDollarSign className="h-5 w-5 text-primarycolor/40" />
+              </div>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                step="0.01"
+                className="w-full pl-10 p-2.5 border border-primarycolor/20 rounded-md focus:ring-2 focus:ring-primarycolor/50 focus:border-primarycolor/50 text-primarycolor/90 bg-white/50"
+                placeholder="0.00"
+                required
+              />
+            </div>
           </div>
 
           {/* Quantity */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-primarycolor/80 mb-1">
               Quantity
             </label>
-            <input
-              type="number"
-              name="quantity"
-              value={formData.quantity}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
-              required
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FiPackage className="h-5 w-5 text-primarycolor/40" />
+              </div>
+              <input
+                type="number"
+                name="quantity"
+                value={formData.quantity}
+                onChange={handleChange}
+                className="w-full pl-10 p-2.5 border border-primarycolor/20 rounded-md focus:ring-2 focus:ring-primarycolor/50 focus:border-primarycolor/50 text-primarycolor/90 bg-white/50"
+                placeholder="0"
+                required
+              />
+            </div>
           </div>
 
           {/* Discount */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-primarycolor/80 mb-1">
               Discount (%)
             </label>
-            <input
-              type="number"
-              name="discount"
-              value={formData.discount}
-              onChange={handleChange}
-              min="0"
-              max="100"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FiPercent className="h-5 w-5 text-primarycolor/40" />
+              </div>
+              <input
+                type="number"
+                name="discount"
+                value={formData.discount}
+                onChange={handleChange}
+                min="0"
+                max="100"
+                className="w-full pl-10 p-2.5 border border-primarycolor/20 rounded-md focus:ring-2 focus:ring-primarycolor/50 focus:border-primarycolor/50 text-primarycolor/90 bg-white/50"
+                placeholder="0"
+              />
+            </div>
           </div>
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-primarycolor/80 mb-1">
             Description
           </label>
           <textarea
@@ -194,16 +212,20 @@ export default function ProductForm({ categories }) {
             value={formData.description}
             onChange={handleChange}
             rows="4"
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+            className="w-full p-2.5 border border-primarycolor/20 rounded-md focus:ring-2 focus:ring-primarycolor/50 focus:border-primarycolor/50 text-primarycolor/90 bg-white/50"
+            placeholder="Enter product description"
             required
           />
         </div>
 
         {/* Image Upload */}
-        <div className="relative">
+        <div>
+          <label className="block text-sm font-medium text-primarycolor/80 mb-1">
+            Product Image
+          </label>
           <div
             onClick={handleImageClick}
-            className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md cursor-pointer hover:border-primarycolor transition-colors"
+            className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-primarycolor/20 border-dashed rounded-md cursor-pointer hover:border-primarycolor/50 transition-colors"
           >
             <div className="space-y-1 text-center">
               {imagePreview ? (
@@ -230,11 +252,11 @@ export default function ProductForm({ categories }) {
                 </div>
               ) : (
                 <div className="flex flex-col items-center">
-                  <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-600">
+                  <FiUpload className="mx-auto h-12 w-12 text-primarycolor/40" />
+                  <p className="mt-2 text-sm text-primarycolor/60">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-primarycolor/50">
                     PNG, JPG, GIF up to 10MB
                   </p>
                 </div>
@@ -251,23 +273,32 @@ export default function ProductForm({ categories }) {
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end space-x-3">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-primarycolor/10">
           <button
             type="button"
             onClick={resetForm}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2.5 border border-primarycolor/30 rounded-md text-primarycolor/70 bg-white hover:bg-primarycolor/5 font-medium transition-colors"
           >
             Reset
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-4 py-2 bg-primarycolor text-white rounded-md hover:bg-primarycolor/90 disabled:opacity-50"
+            className="px-6 py-2.5 bg-primarycolor text-white rounded-md hover:bg-primarycolor/70 font-medium disabled:opacity-50 transition-colors flex items-center gap-2"
           >
-            {isSubmitting ? "Adding..." : "Add Product"}
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Adding...
+              </>
+            ) : (
+              "Add Product"
+            )}
           </button>
         </div>
       </form>
     </div>
-  );
-}
+  );}
