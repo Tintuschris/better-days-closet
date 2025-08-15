@@ -1,7 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Search, X, Clock, ArrowRight } from "lucide-react";
+import {
+  MagnifyingGlassIcon as Search,
+  XMarkIcon as X,
+  ClockIcon as Clock,
+  ArrowRightIcon as ArrowRight
+} from "@heroicons/react/24/outline";
 import { useSupabaseContext } from "../context/supabaseContext";
 import Link from "next/link";
 

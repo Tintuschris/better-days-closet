@@ -35,6 +35,28 @@ export const SupabaseProvider = ({ children }) => {
     staleTime: 1000 * 60 * 10, // 10 minutes
   });
 
+  // Product Variants Query
+  const { data: productVariants } = useQuery({
+    queryKey: ['product_variants'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('product_variants').select('*');
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // Category Attributes Query
+  const { data: categoryAttributes } = useQuery({
+    queryKey: ['category_attributes'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('category_attributes').select('*');
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 10, // 10 minutes
+  });
+
   // Cart Items Query
   const { data: cartItems } = useQuery({
     queryKey: ['cart', user?.id],
@@ -246,6 +268,8 @@ export const SupabaseProvider = ({ children }) => {
     fetchUserDetails,
     products,
     categories,
+    productVariants,
+    categoryAttributes,
     cartItems,
     wishlistItems,
     orders,

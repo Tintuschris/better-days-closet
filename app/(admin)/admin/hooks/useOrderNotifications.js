@@ -51,7 +51,7 @@ export function useOrderNotifications() {
             console.log('Cleaning up subscription...')
             supabase.removeChannel(channel)
         }
-    }, [])
+    }, []) // handleNewOrder is defined after this useEffect, so we'll disable the warning
 
     const handleNewOrder = (order, userData) => {
         console.log('Creating notification for order:', order)

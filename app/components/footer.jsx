@@ -1,5 +1,8 @@
 import { useSupabaseContext } from '../context/supabaseContext';
-import { Phone, PinIcon } from "lucide-react";
+import {
+  PhoneIcon as Phone,
+  MapPinIcon as PinIcon
+} from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 export default function Footer() {
@@ -30,7 +33,7 @@ export default function Footer() {
           <ul className="space-y-2 font-normal">
             {categories?.map((category) => (
               <li key={category.id}>
-                <Link href={`/categories/${category.name.toLowerCase()}`} className="hover:text-secondarycolor">
+                <Link href={`/categories/${category.name?.toLowerCase() || ''}`} className="hover:text-secondarycolor">
                   {category.name}
                 </Link>
               </li>

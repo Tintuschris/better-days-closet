@@ -5,7 +5,10 @@ import { useSupabaseContext } from './context/supabaseContext';
 import ProductCarousel from './components/productcarousel';
 import CategoryListing from './components/categorylisting';
 import MarketingBanner from './components/marketingbanner';
-import { Filter, X } from 'lucide-react';
+import {
+  AdjustmentsHorizontalIcon as Filter,
+  XMarkIcon as X
+} from '@heroicons/react/24/outline';
 import FilterModal from './(modals)/filtermodal';
 import DesktopFilter from './components/DesktopFilter';
 
@@ -175,113 +178,101 @@ function HomePageContent() {
   return (
     <div className="max-w-[1400px] mx-auto pt-4 px-4">
       {/* Mobile Layout */}
-      <div className="md:hidden space-y-6">
+      <div className="md:hidden space-y-6 px-4">
+        {/* Marketing Banner */}
+        <MarketingBanner isMobile={true} />
+
+        {/* Categories Section */}
         <div className="relative">
           <CategoryListing />
           <button
             onClick={() => setIsFilterModalOpen(true)}
-            className="absolute top-[50%] right-0 z-10 bg-white p-2 rounded shadow-lg text-purple-800 hover:text-purple-600"
+            className="absolute top-0 right-0 z-10 bg-white p-2 rounded-full shadow-sm text-gray-600 hover:text-gray-900 hover:shadow-md transition-all duration-200"
           >
-            <Filter size={24} />
+            <Filter size={20} />
           </button>
         </div>
-        <MarketingBanner isMobile={true} />
-        
+
         {/* Active Filters Display - Mobile */}
         {activeFilters && (
-          <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex flex-wrap gap-2 items-center px-1">
             {activeFilters.categories.map(category => (
-              <span key={category} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor">
+              <span key={category} className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm">
                 {category}
-                <button onClick={() => removeFilter('category', category)} className="ml-2">
+                <button onClick={() => removeFilter('category', category)} className="ml-2 text-gray-500 hover:text-gray-700">
                   <X size={14} />
                 </button>
               </span>
             ))}
             {activeFilters.tags.map(tag => (
-              <span key={tag} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor">
+              <span key={tag} className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm">
                 {tag}
-                <button onClick={() => removeFilter('tag', tag)} className="ml-2">
+                <button onClick={() => removeFilter('tag', tag)} className="ml-2 text-gray-500 hover:text-gray-700">
                   <X size={14} />
                 </button>
               </span>
             ))}
-            <button 
+            <button
               onClick={clearFilters}
-              className="text-sm text-warningcolor hover:underline"
+              className="text-sm text-red-500 hover:text-red-600 font-medium"
             >
               Clear All
             </button>
           </div>
         )}
-        
+
         {/* Mobile Product Carousels */}
-        <div className="space-y-8">
-          {productCarousels}
+        <div className="space-y-8 -mx-4">
+          <div className="px-4">
+            {productCarousels}
+          </div>
         </div>
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden md:flex md:gap-8">
-        {/* Left Sidebar - Sticky */}
-        <div className="w-64 min-w-[256px]">
-          <div className="sticky top-[72px] space-y-8 max-h-[calc(100vh-80px)] overflow-y-auto pb-8">
-            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
-              <CategoryListing />
-            </div>
-            
-            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
-              <DesktopFilter
-                categories={categories?.map(cat => cat.name) || []}
-                onApplyFilters={applyFilters}
-                initialFilters={activeFilters}
-              />
-            </div>
+      <div className="hidden md:block px-4 space-y-8">
+        {/* Marketing Banner */}
+        <div className="w-full">
+          <div className="h-[320px] overflow-hidden rounded-2xl">
+            <MarketingBanner isDesktop={true} reducedHeight={true} />
           </div>
         </div>
-        
-        {/* Main Content Area */}
-        <div className="flex-1 space-y-8">
-          {/* Marketing Banner with reduced height */}
-          <div className="w-full">
-            <div className="h-[280px] overflow-hidden rounded-lg">
-              <MarketingBanner isDesktop={true} reducedHeight={true} />
-            </div>
-          </div>
-          
-          {/* Active Filters Display - Desktop */}
-          {activeFilters && (
-            <div className="flex flex-wrap gap-2 items-center bg-gray-50 p-3 rounded-lg">
-              <span className="text-sm font-medium text-gray-500 mr-2">Active Filters:</span>
-              {activeFilters.categories.map(category => (
-                <span key={category} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor text-sm">
-                  {category}
-                  <button onClick={() => removeFilter('category', category)} className="ml-2">
-                    <X size={14} />
-                  </button>
-                </span>
-              ))}
-              {activeFilters.tags.map(tag => (
-                <span key={tag} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor text-sm">
-                  {tag}
-                  <button onClick={() => removeFilter('tag', tag)} className="ml-2">
-                    <X size={14} />
-                  </button>
-                </span>
-              ))}
-              <button 
-                onClick={clearFilters}
-                className="text-sm text-warningcolor hover:underline ml-auto"
-              >
-                Clear All
-              </button>
-            </div>
-          )}
 
-          {/* Desktop Product Carousels */}
-          <div className="space-y-8">
-            {productCarousels}
+        {/* Categories Section */}
+        <CategoryListing />
+
+        {/* Active Filters Display - Desktop */}
+        {activeFilters && (
+          <div className="flex flex-wrap gap-2 items-center bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+            <span className="text-sm font-medium text-primarycolor mr-2">Active Filters:</span>
+            {activeFilters.categories.map(category => (
+              <span key={category} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor text-sm">
+                {category}
+                <button onClick={() => removeFilter('category', category)} className="ml-2 text-secondarycolor hover:text-white">
+                  <X size={14} />
+                </button>
+              </span>
+            ))}
+            {activeFilters.tags.map(tag => (
+              <span key={tag} className="inline-flex items-center px-3 py-1 rounded-full bg-primarycolor text-secondarycolor text-sm">
+                {tag}
+                <button onClick={() => removeFilter('tag', tag)} className="ml-2 text-secondarycolor hover:text-white">
+                  <X size={14} />
+                </button>
+              </span>
+            ))}
+            <button
+              onClick={clearFilters}
+              className="text-sm text-red-500 hover:text-red-600 font-medium ml-auto"
+            >
+              Clear All
+            </button>
           </div>
+        )}
+
+        {/* Desktop Product Carousels */}
+        <div className="space-y-8">
+          {productCarousels}
         </div>
       </div>
 

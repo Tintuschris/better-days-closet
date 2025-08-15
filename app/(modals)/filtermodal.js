@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { XMarkIcon as X } from "@heroicons/react/24/outline";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
 

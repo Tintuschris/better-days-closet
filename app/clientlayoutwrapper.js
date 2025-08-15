@@ -42,6 +42,21 @@ export default function ClientLayoutWrapper({ children }) {
   const [showNavBar, setShowNavBar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
+  // Set active icon based on current pathname
+  useEffect(() => {
+    if (pathname === '/') {
+      setActiveIcon('home');
+    } else if (pathname === '/wishlist') {
+      setActiveIcon('wishlist');
+    } else if (pathname === '/track-order') {
+      setActiveIcon('track');
+    } else if (pathname.startsWith('/profile')) {
+      setActiveIcon('profile');
+    } else {
+      setActiveIcon('home'); // Default fallback
+    }
+  }, [pathname]);
+
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;

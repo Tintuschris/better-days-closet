@@ -1,0 +1,72 @@
+{
+  "timestamp": "2025-07-12T12:17:13.698Z",
+  "cart": null,
+  "wishlist": null,
+  "products": [
+    {
+      "id": 18,
+      "created_at": "2024-10-08T00:30:58.054449+00:00",
+      "name": "Boubou Lace Ankara Gown",
+      "price": "2000",
+      "description": "Best of African Ankara",
+      "discount": "10",
+      "quantity": 20,
+      "wishlist_count": 0,
+      "category_id": 2,
+      "category_name": "Women",
+      "image_url": "https://hlygryxopxrkvfvsppvm.supabase.co/storage/v1/object/public/product_images/1805635b-2a55-4632-a422-dd09890e360f-WhatsApp%20Image%202024-08-27%20at%2018.18.37%202.png"
+    },
+    {
+      "id": 19,
+      "created_at": "2024-10-11T21:08:32.811058+00:00",
+      "name": "Jeans Short",
+      "price": "1500",
+      "description": "This is a short for kids",
+      "discount": "8",
+      "quantity": 10,
+      "wishlist_count": 0,
+      "category_id": 3,
+      "category_name": "Kids",
+      "image_url": "https://hlygryxopxrkvfvsppvm.supabase.co/storage/v1/object/public/product_images/4d6f74c7-7359-44fc-8aa7-31ccbc42c78c-WhatsApp%20Image%202024-08-27%20at%2018.20.08.jpeg"
+    },
+    {
+      "id": 20,
+      "created_at": "2024-10-11T21:10:05.366761+00:00",
+      "name": "Kid Medium Sweatshirt",
+      "price": "1200",
+      "description": "Kids sweatshirts",
+      "discount": "10",
+      "quantity": 10,
+      "wishlist_count": 0,
+      "category_id": 3,
+      "category_name": "Kids",
+      "image_url": "https://hlygryxopxrkvfvsppvm.supabase.co/storage/v1/object/public/product_images/f716cc57-0b96-4899-a6a9-fad5997890f1-WhatsApp%20Image%202024-08-27%20at%2018.19.59%20(1).jpeg"
+    },
+    {
+      "id": 21,
+      "created_at": "2024-10-11T21:11:38.380893+00:00",
+      "name": "Female Kids Tops",
+      "price": "2000",
+      "description": "Female Kids Tops of different colors",
+      "discount": "15",
+      "quantity": 10,
+      "wishlist_count": 0,
+      "category_id": 3,
+      "category_name": "Kids",
+      "image_url": "https://hlygryxopxrkvfvsppvm.supabase.co/storage/v1/object/public/product_images/0cd8d06d-b684-42be-b025-0e879f27de69-WhatsApp%20Image%202024-08-27%20at%2018.20.14.jpeg"
+    },
+    {
+      "id": 22,
+      "created_at": "2025-07-12T10:21:39.021099+00:00",
+      "name": null,
+      "price": null,
+      "description": null,
+      "discount": null,
+      "quantity": null,
+      "wishlist_count": null,
+      "category_id": null,
+      "category_name": null,
+      "image_url": null
+    }
+  ]
+}

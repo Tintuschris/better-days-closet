@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@iconify-icons/arcticons": "^1.2.77",
     "@iconify/react": "^5.0.2",
     "@supabase/supabase-js": "^2.45.4",
@@ -19,7 +20,7 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^11.11.9",
     "lucide-react": "^0.446.0",
-    "next": "^14.2.20",
+    "next": "^15.4.5",
     "rc-slider": "^11.1.7",
     "react": "^18",
     "react-chartjs-2": "^5.2.0",

@@ -21,14 +21,14 @@ export default function ProductCarousel({ title, products = [], category, isSpec
   };
 
   return (
-    <div className="py-3 relative product-carousel">
-      {/* Enhanced header with background and better spacing */}
-      <div className="bg-gray-50 rounded-t-lg border-b border-gray-100 mb-4">
-        <div className="flex justify-between items-center px-4 py-3">
-          <h2 className="text-sm md:text-base font-semibold text-primarycolor">{title}</h2>
-          <Link 
-            href={getViewMoreLink()} 
-            className="flex items-center text-xs md:text-sm text-primarycolor hover:text-secondarycolor transition-colors group"
+    <div className="py-4 relative product-carousel">
+      {/* Clean header with modern styling */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center px-1">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-900">{title}</h2>
+          <Link
+            href={getViewMoreLink()}
+            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors group"
           >
             <span>View More</span>
             <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
@@ -38,21 +38,21 @@ export default function ProductCarousel({ title, products = [], category, isSpec
       
       <Swiper
         modules={[Navigation, Autoplay]}
-        spaceBetween={8}
-        slidesPerView={2.4}
+        spaceBetween={12}
+        slidesPerView={2.2}
         breakpoints={{
-          480: { slidesPerView: 3.4, spaceBetween: 10 },
-          640: { slidesPerView: 4.4, spaceBetween: 12 },
-          768: { slidesPerView: 4.4, spaceBetween: 12 },
-          1024: { slidesPerView: 5.4, spaceBetween: 16 }
+          480: { slidesPerView: 2.8, spaceBetween: 16 },
+          640: { slidesPerView: 3.5, spaceBetween: 16 },
+          768: { slidesPerView: 4.2, spaceBetween: 20 },
+          1024: { slidesPerView: 5.2, spaceBetween: 20 }
         }}
         navigation={true}
         autoplay={{
-          delay: 3000,
+          delay: 4000,
           disableOnInteraction: false,
         }}
-        loop={true}
-        className="px-3"
+        loop={limitedProducts.length > 3}
+        className="px-1"
       >
         {limitedProducts.map(product => (
           <SwiperSlide key={product.id}>
