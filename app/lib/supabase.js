@@ -1,13 +1,13 @@
 // lib/supabase.js
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    realtime: {
-        params: {
-            eventsPerSecond: 10
-        }
-    }
-})
+// Client-side Supabase client
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
+
+// For server-side usage, create server client in the component/route where needed
+export function createClient() {
+  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+}

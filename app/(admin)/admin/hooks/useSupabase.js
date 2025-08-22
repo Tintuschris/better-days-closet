@@ -67,17 +67,64 @@ export const useSupabase = () => {
     });
   };
 
-  // Categories Queries and Mutations
+  // Categories Queries and Mutations with real product counts and attributes
   const useCategories = () => {
     return useQuery({
       queryKey: ["admin-categories"],
       queryFn: async () => {
-        const { data, error } = await supabase.from("categories").select("*");
-        if (error) throw error;
-        return data;
+        // Get categories with their attributes and actual product counts
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('categories')
+          .select(`
+            *,
+            category_attributes (
+              has_sizes,
+              has_colors,
+              available_sizes,
+              available_colors
+            )
+          `)
+          .order('created_at', { ascending: false });
+
+        if (categoriesError) {
+          console.error('Categories Error:', categoriesError);
+          throw categoriesError;
+        }
+
+        // Get actual product counts for each category
+        const { data: productCounts, error: countsError } = await supabase
+          .from('products')
+          .select('category_id')
+          .not('category_id', 'is', null);
+
+        if (countsError) {
+          console.error('Product counts error:', countsError);
+          throw countsError;
+        }
+
+        // Count products by category
+        const countsByCategory = productCounts.reduce((acc, product) => {
+          acc[product.category_id] = (acc[product.category_id] || 0) + 1;
+          return acc;
+        }, {});
+
+        // Merge categories with real product counts and attributes
+        const categoriesWithCounts = categoriesData.map(category => ({
+          ...category,
+          actual_product_count: countsByCategory[category.id] || 0,
+          attributes: category.category_attributes?.[0] || {
+            has_sizes: false,
+            has_colors: false,
+            available_sizes: [],
+            available_colors: []
+          }
+        }));
+
+        console.log('Categories with counts:', categoriesWithCounts);
+        return categoriesWithCounts;
       },
-      staleTime: 1000 * 60 * 10, // 10 minutes
-      cacheTime: 1000 * 60 * 60, // 1 hour
+      staleTime: 1000 * 60 * 5, // 5 minutes - shorter since product counts change more frequently
+      cacheTime: 1000 * 60 * 30, // 30 minutes
     });
   };
 
@@ -358,6 +405,105 @@ const useDeleteBanner = () => {
 };
 
 
+  // Customers Queries
+  const useCustomers = () => {
+    return useQuery({
+      queryKey: ["admin-customers"],
+      queryFn: async () => {
+        // Get users with their order statistics
+        const { data: users, error: usersError } = await supabase
+          .from("users")
+          .select(`
+            id,
+            name,
+            email,
+            phone,
+            created_at,
+            orders (
+              id,
+              total_amount,
+              status
+            )
+          `);
+
+        if (usersError) throw usersError;
+
+        // Calculate order statistics for each user
+        const customersWithStats = users.map(user => ({
+          ...user,
+          order_count: user.orders?.length || 0,
+          total_spent: user.orders?.reduce((sum, order) => sum + (parseFloat(order.total_amount) || 0), 0) || 0,
+          last_order_date: user.orders?.length > 0
+            ? Math.max(...user.orders.map(order => new Date(order.created_at).getTime()))
+            : null
+        }));
+
+        return customersWithStats;
+      },
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      cacheTime: 1000 * 60 * 30, // 30 minutes
+    });
+  };
+
+  // Upload product image function
+  const uploadProductImage = async (file) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `products/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  // Category Attributes Mutations
+  const useCreateCategoryAttributes = () => {
+    return useMutation({
+      mutationFn: async (attributeData) => {
+        const { data, error } = await supabase
+          .from('category_attributes')
+          .insert([attributeData])
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries(['admin-categories']);
+      }
+    });
+  };
+
+  const useUpdateCategoryAttributes = () => {
+    return useMutation({
+      mutationFn: async ({ id, ...attributeData }) => {
+        const { data, error } = await supabase
+          .from('category_attributes')
+          .update(attributeData)
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries(['admin-categories']);
+      }
+    });
+  };
+
   return {
     useProducts,
     useAddProduct,
@@ -365,19 +511,23 @@ const useDeleteBanner = () => {
     useDeleteProduct,
     useCategories,
     useAddCategory,
-    useUpdateCategory, 
+    useUpdateCategory,
     useDeleteCategory,
     useOrders,
     useUpdateOrderStatus,
+    useCustomers,
     useDeliveryAddresses,
     useAddDeliveryAddress,
     useUpdateDeliveryAddress,
     useDeleteDeliveryAddress,
     useUploadImage,
+    uploadProductImage,
     useSalesData,
     useBanners,
     useAddBanner,
     useUpdateBanner,
-    useDeleteBanner
+    useDeleteBanner,
+    useCreateCategoryAttributes,
+    useUpdateCategoryAttributes
   };
 };

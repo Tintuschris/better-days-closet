@@ -49,7 +49,7 @@ export default function ClientLayoutWrapper({ children }) {
     } else if (pathname === '/wishlist') {
       setActiveIcon('wishlist');
     } else if (pathname === '/track-order') {
-      setActiveIcon('track');
+      setActiveIcon('orders');
     } else if (pathname.startsWith('/profile')) {
       setActiveIcon('profile');
     } else {

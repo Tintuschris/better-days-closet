@@ -46,6 +46,63 @@ body {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Enhanced button styles for better touch targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Color swatch specific styles */
+  .color-swatch {
+    position: relative;
+    border-radius: 50%;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .color-swatch:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .color-swatch.selected {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(70, 0, 102, 0.3);
+  }
+
+  /* Size button animations */
+  .size-button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .size-button:active {
+    transform: scale(0.95);
+  }
+
+  .size-button.selected {
+    transform: scale(1.05);
+  }
+
+  /* Responsive grid for variant selection */
+  .variant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .variant-grid {
+      grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
+      gap: 0.75rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .variant-grid {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  }
 }
 
 @keyframes shrink {

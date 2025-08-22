@@ -1,199 +1,359 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 import { toast } from 'sonner';
-import { FiEdit2, FiTrash2, FiPlus, FiSave, FiX } from 'react-icons/fi';
+import { FiList, FiSave, FiX, FiRotateCcw, FiPlus, FiTrash2, FiTag } from 'react-icons/fi';
+import { PremiumCard, Button, Input, FormGroup, Label, GradientText } from '../../../components/ui';
 
-export default function CategoryForm() {
-  const { useCategories, useAddCategory, useUpdateCategory, useDeleteCategory } = useSupabase();
-  const { data: categories, isLoading } = useCategories();
-  const addMutation = useAddCategory();
-  const updateMutation = useUpdateCategory();
-  const deleteMutation = useDeleteCategory();
+export default function CategoryForm({ category, onClose, onSuccess }) {
+  const { useAddCategory, useUpdateCategory } = useSupabase();
+  const addCategory = useAddCategory();
+  const updateCategory = useUpdateCategory();
 
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    quantity: 0
+    description: ''
   });
+
+  const [attributeData, setAttributeData] = useState({
+    has_sizes: false,
+    has_colors: false,
+    available_sizes: [],
+    available_colors: []
+  });
+
+  const [newSize, setNewSize] = useState('');
+  const [newColor, setNewColor] = useState('');
+
+  // Initialize form with category data if editing
+  useEffect(() => {
+    if (category) {
+      setFormData({
+        name: category.name || '',
+        description: category.description || ''
+      });
+
+      // Load category attributes if they exist
+      if (category.category_attributes) {
+        setAttributeData({
+          has_sizes: category.category_attributes.has_sizes || false,
+          has_colors: category.category_attributes.has_colors || false,
+          available_sizes: category.category_attributes.available_sizes || [],
+          available_colors: category.category_attributes.available_colors || []
+        });
+      }
+    } else {
+      setFormData({
+        name: '',
+        description: ''
+      });
+      setAttributeData({
+        has_sizes: false,
+        has_colors: false,
+        available_sizes: [],
+        available_colors: []
+      });
+    }
+  }, [category]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Basic validation
+    if (!formData.name.trim()) {
+      toast.error('Category name is required');
+      return;
+    }
+
     try {
-      if (selectedCategory) {
-        await updateMutation.mutateAsync({
-          id: selectedCategory.id,
-          category: formData
+      const categoryData = {
+        ...formData,
+        attributes: attributeData
+      };
+
+      if (category) {
+        await updateCategory.mutateAsync({
+          id: category.id,
+          category: categoryData
         });
         toast.success('Category updated successfully');
       } else {
-        await addMutation.mutateAsync(formData);
-        toast.success('Category added successfully');
+        await addCategory.mutateAsync(categoryData);
+        toast.success('Category created successfully');
       }
-      resetForm();
-    } catch (error) {
-      toast.error(selectedCategory ? 'Failed to update category' : 'Failed to add category');
-    }
-  };
 
-  const handleDelete = async (id) => {
-    try {
-      await deleteMutation.mutateAsync(id);
-      toast.success('Category deleted successfully');
+      // Reset form and call success callback
+      resetForm();
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
-      toast.error('Failed to delete category');
+      toast.error(`Failed to save category: ${error.message}`);
     }
   };
 
   const resetForm = () => {
-    setSelectedCategory(null);
-    setFormData({ name: '', quantity: 0 });
+    setFormData({ name: '', description: '' });
+    setAttributeData({
+      has_sizes: false,
+      has_colors: false,
+      available_sizes: [],
+      available_colors: []
+    });
+    setNewSize('');
+    setNewColor('');
   };
 
-  if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="h-8 bg-primarycolor/20 rounded w-48 animate-pulse mb-6" />
-          <div className="grid md:grid-cols-2 gap-4 mb-6">
-            <div className="h-10 bg-primarycolor/20 rounded animate-pulse" />
-            <div className="h-10 bg-primarycolor/20 rounded animate-pulse" />
-          </div>
-          <div className="h-10 bg-primarycolor/20 rounded w-40 ml-auto animate-pulse" />
-        </div>
-      </div>
-    );
-  }
+  // Handle adding new size
+  const handleAddSize = () => {
+    if (newSize.trim() && !attributeData.available_sizes.includes(newSize.trim())) {
+      setAttributeData(prev => ({
+        ...prev,
+        available_sizes: [...prev.available_sizes, newSize.trim()]
+      }));
+      setNewSize('');
+    }
+  };
+
+  // Handle removing size
+  const handleRemoveSize = (sizeToRemove) => {
+    setAttributeData(prev => ({
+      ...prev,
+      available_sizes: prev.available_sizes.filter(size => size !== sizeToRemove)
+    }));
+  };
+
+  // Handle adding new color
+  const handleAddColor = () => {
+    if (newColor.trim() && !attributeData.available_colors.includes(newColor.trim())) {
+      setAttributeData(prev => ({
+        ...prev,
+        available_colors: [...prev.available_colors, newColor.trim()]
+      }));
+      setNewColor('');
+    }
+  };
+
+  // Handle removing color
+  const handleRemoveColor = (colorToRemove) => {
+    setAttributeData(prev => ({
+      ...prev,
+      available_colors: prev.available_colors.filter(color => color !== colorToRemove)
+    }));
+  };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-md p-6 border border-primarycolor/10">
-        <h2 className="text-xl font-semibold mb-6 text-primarycolor flex items-center">
-          {selectedCategory ? (
-            <>
-              <FiEdit2 className="mr-2 text-primarycolor" />
-              Edit Category
-            </>
-          ) : (
-            <>
-              <FiPlus className="mr-2 text-primarycolor" />
-              Add New Category
-            </>
-          )}
-        </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-primarycolor mb-1">
-                Category Name
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full p-2.5 border border-primarycolor/30 rounded-md focus:ring-2 focus:ring-primarycolor focus:border-primarycolor text-primarycolor/90 bg-white/50"
-                placeholder="Enter category name"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-primarycolor mb-1">
-                Quantity
-              </label>
-              <input
-                type="number"
-                value={formData.quantity}
-                onChange={(e) => setFormData(prev => ({ ...prev, quantity: parseInt(e.target.value) }))}
-                className="w-full p-2.5 border border-primarycolor/30 rounded-md focus:ring-2 focus:ring-primarycolor focus:border-primarycolor text-primarycolor/90 bg-white/50"
-                placeholder="0"
-                required
-              />
-            </div>
+    <PremiumCard className="overflow-hidden">
+      {/* Form Header */}
+      <div className="bg-gradient-to-r from-primarycolor to-primarycolor/90 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <GradientText className="text-lg font-semibold text-white flex items-center gap-2">
+              <FiList className="w-5 h-5" />
+              {category ? 'Edit Category' : 'Add New Category'}
+            </GradientText>
+            <p className="text-white/80 text-sm mt-1">
+              {category ? 'Update category information' : 'Create a new product category'}
+            </p>
           </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            {selectedCategory && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="px-4 py-2.5 border border-primarycolor/30 rounded-md text-primarycolor hover:bg-primarycolor/5 font-medium transition-colors flex items-center"
-              >
-                <FiX className="mr-2" />
-                Cancel
-              </button>
-            )}
+          {onClose && (
             <button
-              type="submit"
-              className={`px-4 py-2.5 text-white rounded-md font-medium transition-colors flex items-center ${
-                selectedCategory 
-                  ? 'bg-secondarycolor hover:bg-secondarycolor/90' 
-                  : 'bg-primarycolor hover:bg-primarycolor/90'
-              }`}
+              onClick={onClose}
+              className="text-white/80 hover:text-white transition-colors"
+              type="button"
             >
-              {selectedCategory ? (
-                <>
-                  <FiSave className="mr-2" />
-                  Update Category
-                </>
-              ) : (
-                <>
-                  <FiPlus className="mr-2" />
-                  Add Category
-                </>
-              )}
+              <FiX className="w-6 h-6" />
             </button>
-          </div>
-        </form>
-      </div>
-
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold mb-4 text-primarycolor flex items-center">
-          <span className="mr-2">Categories List</span>
-          <span className="bg-primarycolor/10 text-primarycolor text-xs py-1 px-2 rounded-full">
-            {categories?.length || 0}
-          </span>
-        </h3>
-        <div className="bg-white rounded-lg shadow-md border border-primarycolor/10">
-          {categories?.length === 0 ? (
-            <div className="p-8 text-center text-primarycolor/60">
-              No categories found. Add your first category above.
-            </div>
-          ) : (
-            categories?.map((category) => (
-              <div
-                key={category.id}
-                className="flex items-center justify-between p-4 border-b border-primarycolor/10 last:border-b-0 hover:bg-primarycolor/5 transition-colors"
-              >
-                <div>
-                  <h4 className="font-medium text-primarycolor">{category.name}</h4>
-                  <p className="text-sm text-primarycolor/70">Quantity: {category.quantity}</p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => {
-                      setSelectedCategory(category);
-                      setFormData({ name: category.name, quantity: category.quantity });
-                      document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="p-2 text-primarycolor hover:text-secondarycolor hover:bg-secondarycolor/10 rounded-full transition-colors"
-                    title="Edit Category"
-                  >
-                    <FiEdit2 size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(category.id)}
-                    className="p-2 text-primarycolor hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                    title="Delete Category"
-                  >
-                    <FiTrash2 size={18} />
-                  </button>
-                </div>
-              </div>
-            ))
           )}
         </div>
       </div>
-    </div>
+
+      <form onSubmit={handleSubmit} className="p-6">
+        <div className="space-y-6">
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-primarycolor mb-4 flex items-center gap-2">
+              <FiList className="w-4 h-4" />
+              Category Information
+            </h4>
+
+            <div className="space-y-4">
+              <FormGroup>
+                <Label required>Category Name</Label>
+                <Input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter category name"
+                  required
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Description</Label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Enter category description (optional)"
+                  rows={3}
+                  className="w-full px-4 py-3 border-2 border-primarycolor/30 rounded-xl focus:border-primarycolor focus:outline-none transition-colors resize-none text-primarycolor"
+                />
+              </FormGroup>
+            </div>
+          </div>
+
+          {/* Category Attributes Section */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-primarycolor mb-4 flex items-center gap-2">
+              <FiTag className="w-4 h-4" />
+              Product Attributes
+            </h4>
+
+            <div className="space-y-4">
+              {/* Size Attributes */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={attributeData.has_sizes}
+                    onChange={(e) => setAttributeData(prev => ({ ...prev, has_sizes: e.target.checked }))}
+                    className="w-4 h-4 text-primarycolor border-primarycolor/30 rounded focus:ring-primarycolor/20"
+                  />
+                  <span className="text-sm font-medium text-primarycolor">Products in this category have sizes</span>
+                </label>
+
+                {attributeData.has_sizes && (
+                  <div className="ml-6 space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newSize}
+                        onChange={(e) => setNewSize(e.target.value)}
+                        placeholder="Add size (e.g., S, M, L, XL)"
+                        className="flex-1 px-3 py-2 border border-primarycolor/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primarycolor/20 text-primarycolor text-sm"
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddSize()}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddSize}
+                        className="px-3 py-2 bg-primarycolor text-white rounded-lg hover:bg-primarycolor/90 transition-colors"
+                      >
+                        <FiPlus className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {attributeData.available_sizes.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {attributeData.available_sizes.map((size, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-primarycolor/10 text-primarycolor text-xs rounded-full"
+                          >
+                            {size}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSize(size)}
+                              className="text-primarycolor/60 hover:text-red-500 transition-colors"
+                            >
+                              <FiX className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Color Attributes */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={attributeData.has_colors}
+                    onChange={(e) => setAttributeData(prev => ({ ...prev, has_colors: e.target.checked }))}
+                    className="w-4 h-4 text-primarycolor border-primarycolor/30 rounded focus:ring-primarycolor/20"
+                  />
+                  <span className="text-sm font-medium text-primarycolor">Products in this category have colors</span>
+                </label>
+
+                {attributeData.has_colors && (
+                  <div className="ml-6 space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newColor}
+                        onChange={(e) => setNewColor(e.target.value)}
+                        placeholder="Add color (e.g., Red, Blue, Black)"
+                        className="flex-1 px-3 py-2 border border-primarycolor/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primarycolor/20 text-primarycolor text-sm"
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddColor()}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddColor}
+                        className="px-3 py-2 bg-primarycolor text-white rounded-lg hover:bg-primarycolor/90 transition-colors"
+                      >
+                        <FiPlus className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {attributeData.available_colors.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {attributeData.available_colors.map((color, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-primarycolor/10 text-primarycolor text-xs rounded-full"
+                          >
+                            {color}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveColor(color)}
+                              className="text-primarycolor/60 hover:text-red-500 transition-colors"
+                            >
+                              <FiX className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Form Actions */}
+        <div className="flex items-center justify-end gap-4 pt-6 border-t border-primarycolor/10">
+          <Button
+            type="button"
+            onClick={resetForm}
+            variant="outline"
+            disabled={addCategory.isLoading || updateCategory.isLoading}
+          >
+            <FiRotateCcw className="w-4 h-4 mr-2" />
+            Reset
+          </Button>
+
+          <Button
+            type="submit"
+            disabled={addCategory.isLoading || updateCategory.isLoading}
+            variant="primary"
+            className="shadow-lg shadow-primarycolor/30"
+          >
+            {addCategory.isLoading || updateCategory.isLoading ? (
+              <>
+                <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <FiSave className="w-4 h-4 mr-2" />
+                {category ? "Update Category" : "Create Category"}
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+    </PremiumCard>
   );
 }

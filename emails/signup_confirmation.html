@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <!-- Better Days Closet - Signup Confirmation Email -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <title>Confirm Your Email</title>
+  <style>
+    table { border-collapse: collapse; }
+    a { text-decoration: none; }
+    @media screen and (max-width:600px){ .container { width:100% !important; } .p-sm { padding:24px !important; } }
+  </style>
+</head>
+<body style="margin:0; padding:0; background:#f5f5f7; font-family:Arial,Helvetica,sans-serif; -webkit-font-smoothing:antialiased;">
+  <center role="article" aria-roledescription="email" lang="en" style="width:100%; background:#f5f5f7;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f5f5f7;">
+      <tr>
+        <td align="center" style="padding:40px 12px;">
+          <table class="container" role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px; max-width:600px; background:#ffffff; border-radius:24px; overflow:hidden; box-shadow:0 4px 20px rgba(70,0,102,0.08);">
+            <tr>
+              <td style="background:linear-gradient(135deg,#460066,#6d008f,#FC9AE7); padding:48px 40px; text-align:center;">
+                <h1 style="margin:0; font-size:28px; line-height:1.2; color:#ffffff; font-weight:700;">Welcome to Better Days Closet</h1>
+                <p style="margin:16px 0 0; font-size:16px; color:#FFD6F6; font-weight:500;">Your style journey starts here</p>
+              </td>
+            </tr>
+            <tr>
+              <td class="p-sm" style="padding:40px 48px;">
+                <p style="margin:0 0 24px; font-size:16px; line-height:1.5; color:#2d0c3a;">Hi there,</p>
+                <p style="margin:0 0 24px; font-size:16px; line-height:1.55; color:#3d164c;">Welcome to <strong>Better Days Closet</strong>! We're excited to have you join our fashion community. Please confirm your email address to unlock exclusive collections, early access to sales, and personalized style recommendations.</p>
+                <table role="presentation" width="100%" style="margin:32px 0 40px;">
+                  <tr>
+                    <td align="center">
+                      <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block; background:#460066; background:linear-gradient(135deg,#460066,#6d008f,#FC9AE7); color:#ffffff; padding:18px 36px; font-size:16px; font-weight:600; border-radius:14px; text-decoration:none; letter-spacing:.5px;">Confirm Email</a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:0 0 16px; font-size:14px; line-height:1.55; color:#5d2a70;">If the button doesn’t work, copy and paste this link into your browser:</p>
+                <p style="margin:0 0 32px; font-size:12px; line-height:1.5; word-break:break-all; color:#7a3c94;">{{ .ConfirmationURL }}</p>
+                <p style="margin:0 0 8px; font-size:14px; color:#5d2a70;">This link will expire for your security.</p>
+                <p style="margin:0 0 0; font-size:14px; color:#5d2a70;">If you didn’t create an account, you can safely ignore this email.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#faf7fb; padding:28px 40px; text-align:center; border-top:1px solid #f0e5f5;">
+                <p style="margin:0 0 6px; font-size:12px; letter-spacing:.5px; color:#7a3c94; font-weight:600; text-transform:uppercase;">Better Days Closet</p>
+                <p style="margin:0; font-size:12px; color:#9d68b0;">Where every day is a fashion statement.</p>
+                <p style="margin:16px 0 0; font-size:11px; color:#b589c4;">&copy; 2025 Better Days Closet. All rights reserved.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </center>
+</body>
+</html>

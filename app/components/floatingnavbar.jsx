@@ -5,7 +5,7 @@ import {
   HomeIcon as Home,
   HeartIcon as Heart,
   UserIcon as User,
-  ClockIcon as Clock
+  ClipboardDocumentListIcon as Orders
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 
@@ -59,8 +59,8 @@ function FloatingNavBarContent({ activeIcon, setActiveIcon, isVisible }) {
 
       <Link href="/track-order" prefetch className="flex-1">
         <div className="text-center p-2 rounded-xl transition-all duration-200 hover:bg-gray-50 active:scale-95">
-          <Clock className={`h-5 w-5 mx-auto transition-colors duration-200 ${activeIcon === 'track' ? 'text-secondarycolor' : 'text-primarycolor'}`} />
-          <p className={`text-xs mt-1 font-medium transition-colors duration-200 ${activeIcon === 'track' ? 'text-secondarycolor' : 'text-primarycolor'}`}>Track</p>
+          <Orders className={`h-5 w-5 mx-auto transition-colors duration-200 ${activeIcon === 'orders' ? 'text-secondarycolor' : 'text-primarycolor'}`} />
+          <p className={`text-xs mt-1 font-medium transition-colors duration-200 ${activeIcon === 'orders' ? 'text-secondarycolor' : 'text-primarycolor'}`}>Orders</p>
         </div>
       </Link>
 

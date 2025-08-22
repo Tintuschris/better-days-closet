@@ -7,10 +7,24 @@ import {
   HeartIcon as Heart,
   MagnifyingGlassIcon as Search,
   XMarkIcon as X,
-  ClockIcon as Clock,
+  ClipboardDocumentListIcon as Orders,
   ArrowRightIcon as ArrowRight,
   PhoneIcon as Phone,
+  // Quick actions - Keep from Heroicons
+  StarIcon as Popular,
+  TagIcon as Sale,
+  RocketLaunchIcon as New,
 } from "@heroicons/react/24/outline";
+// Lucide React for specific product icons
+import {
+  Shirt as WomenIcon,      // Better for women's clothing/dresses
+  Shirt as MenIcon,        // Better for men's clothing/shirts/trousers  
+  Baby as KidsIcon,        // Perfect for kids/baby items
+  Footprints as ShoesIcon, // Perfect for shoes/footwear
+  ShoppingBag as HandbagsIcon, // Perfect for handbags/purses
+  Tv as ElectronicsIcon,   // Perfect for electronics/TV
+  ChefHat as KitchenwareIcon, // Perfect for kitchen/cooking
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -47,6 +61,21 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
   const [isLoading, setIsLoading] = useState(false);
   const searchRef = useRef(null);
 
+  // Smart icon mapping for your specific categories using Lucide icons
+  const getCategoryIcon = (categoryName) => {
+    const name = categoryName.toLowerCase();
+    const iconMap = {
+      'women': WomenIcon,        // 👗 Shirt - perfect for women's clothing/dresses
+      'men': MenIcon,            // 👔 Shirt - perfect for men's clothing/trousers
+      'kids': KidsIcon,          // 👶 Baby - perfect for kids/baby items
+      'shoes': ShoesIcon,        // 👟 Footprints - perfect for shoes/footwear
+      'handbags': HandbagsIcon,  // 👜 ShoppingBag - perfect for handbags/purses
+      'electronics': ElectronicsIcon, // 📺 TV - perfect for electronics/tech
+      'kitchenware': KitchenwareIcon, // 👨‍🍳 ChefHat - perfect for kitchen/cooking items
+    };
+    return iconMap[name] || ShoppingCart; // Default fallback to Heroicon
+  };
+
   const isCartActive = pathname === "/cart";
   const isProfileActive =
     pathname === "/profile" || pathname.startsWith("/profile/");
@@ -54,61 +83,84 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
 
   useEffect(() => {
     const saved = localStorage.getItem("recentSearches");
-    if (saved) setRecentSearches(JSON.parse(saved));
+    if (saved) {
+      setRecentSearches(JSON.parse(saved));
+    }
   }, []);
 
   useEffect(() => {
     // Handle clicks outside of search area to close suggestions
     function handleClickOutside(event) {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setShowSuggestions(false);
+      // Check if we're on mobile (window width check)
+      const isMobile = window.innerWidth < 768;
+      
+      if (isMobile) {
+        // For mobile, only close if clicking outside the entire mobile search overlay
+        const mobileSearchOverlay = event.target.closest('[data-mobile-search="true"]');
+        const searchButton = event.target.closest('button[data-search-trigger="true"]');
+        
+        if (!mobileSearchOverlay && !searchButton) {
+          setShowSuggestions(false);
+        }
+      } else {
+        // For desktop, use the existing logic
+        if (searchRef.current && !searchRef.current.contains(event.target)) {
+          setShowSuggestions(false);
+        }
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    // Only add listener when suggestions are shown
+    if (showSuggestions) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [showSuggestions]);
 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    setIsLoading(true);
-
+    
     if (value.trim()) {
-      const filtered =
-        products?.filter(
-          (product) =>
-            product.name.toLowerCase().includes(value.toLowerCase()) ||
-            product.category_name.toLowerCase().includes(value.toLowerCase())
-        ) || [];
-      setSuggestions(filtered.slice(0, 5));
-      setShowSuggestions(true);
+      setIsLoading(true);
+      // Add a small delay to improve UX
+      setTimeout(() => {
+        const filtered =
+          products?.filter(
+            (product) =>
+              product.name.toLowerCase().includes(value.toLowerCase()) ||
+              product.category_name.toLowerCase().includes(value.toLowerCase()) ||
+              product.description?.toLowerCase().includes(value.toLowerCase())
+          ) || [];
+        setSuggestions(filtered.slice(0, 5));
+        setShowSuggestions(true);
+        setIsLoading(false);
+      }, 200);
     } else {
       setSuggestions([]);
       setShowSuggestions(true);
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleSearch = (term = searchTerm) => {
-    // Save to recent searches
-    const updatedSearches = [
-      term,
-      ...recentSearches.filter((s) => s !== term),
-    ].slice(0, 5);
-    setRecentSearches(updatedSearches);
-    localStorage.setItem("recentSearches", JSON.stringify(updatedSearches));
-    setShowSuggestions(false);
+    if (term.trim()) {
+      const newSearches = [term, ...recentSearches.filter(s => s !== term)].slice(0, 5);
+      setRecentSearches(newSearches);
+      localStorage.setItem("recentSearches", JSON.stringify(newSearches));
+      window.location.href = `/search?q=${encodeURIComponent(term)}`;
+    }
   };
 
   return (
     <>
-      {/* Top Bar with Social Icons and Marketing Marquee - Desktop Only */}
+      {/* Top bar - Desktop only */}
       <div className="hidden md:block bg-primarycolor text-white py-2 px-4">
         <div className="max-w-[1400px] mx-auto flex justify-between items-center">
-          {/* Social Icons and Track Order */}
+          {/* Contact Info & Social Links */}
           <div className="flex items-center space-x-6 z-10 bg-primarycolor pr-4 w-1/3">
             <a
               href="https://facebook.com"
@@ -139,18 +191,18 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
               <Phone className="w-[18px] h-[18px]" />
             </a>
 
-            {/* Track Order Link */}
+            {/* Divider */}
             <div className="h-4 w-px bg-white/30 mx-2"></div>
             <Link
               href="/track-order"
               className="flex items-center space-x-1 hover:text-secondarycolor transition-colors text-sm font-medium"
             >
-              <Clock className="w-4 h-4" />
-              <span>Track Order</span>
+              <Orders className="w-4 h-4" />
+              <span>Orders</span>
             </Link>
           </div>
 
-          {/* Marketing Marquee */}
+          {/* Marquee Banner */}
           <div className="overflow-hidden flex-1 relative">
             <div className="whitespace-nowrap animate-marquee">
               🌟 Free shipping on orders over Ksh. 5,000! Shop now and enjoy
@@ -163,7 +215,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
       <header className="relative z-40 px-4 py-3 bg-white shadow-sm border-b border-gray-100">
         {/* Mobile Header */}
         <div className="md:hidden flex justify-between items-center">
-          {/* Left: Hamburger Menu */}
+          {/* Hamburger Menu */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="p-2 -ml-2 rounded-lg transition-all duration-200 ease-in-out hover:bg-gray-50 active:scale-95"
@@ -187,7 +239,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
             </div>
           </button>
 
-          {/* Center: Logo */}
+          {/* Logo */}
           <div className="flex-1 flex justify-center">
             <Link href="/" prefetch>
               <Image
@@ -201,7 +253,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
             </Link>
           </div>
 
-          {/* Right: Cart and Search Icons */}
+          {/* Cart & Search Icons */}
           <div className="flex items-center space-x-1">
             <Link href="/cart" prefetch className="relative p-2 rounded-full transition-all duration-200 hover:bg-secondarycolor/10 active:scale-95">
               <ShoppingCart
@@ -218,6 +270,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
 
             <button
               onClick={() => setShowSuggestions(true)}
+              data-search-trigger="true"
               className="p-2 rounded-full transition-all duration-200 hover:bg-secondarycolor/10 active:scale-95"
             >
               <Search className="h-5 w-5 text-primarycolor" />
@@ -227,7 +280,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
 
         {/* Desktop Header */}
         <div className="hidden md:flex items-center justify-between py-2">
-          {/* Left: Logo and User Greeting */}
+          {/* Logo & Welcome Message */}
           <div className="flex items-center space-x-6">
             <Link href="/" prefetch className="flex-shrink-0">
               <Image
@@ -251,7 +304,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
           </div>
 
           <div className="flex items-center justify-end flex-1 ml-8 space-x-6">
-            {/* Search Bar - Cleaner Design */}
+            {/* Search Bar */}
             <div className="relative flex items-center w-1/2 max-w-md" ref={searchRef}>
               <div className="relative flex items-center w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-50 focus-within:bg-white focus-within:border-primarycolor transition-all duration-200">
                 <input
@@ -260,6 +313,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
                   value={searchTerm}
                   onChange={handleInputChange}
                   onFocus={() => setShowSuggestions(true)}
+                  onClick={(e) => e.stopPropagation()}
                   className="w-full py-3 pl-4 pr-12 text-sm bg-transparent border-0 focus:outline-none placeholder-gray-400"
                 />
                 <button
@@ -275,7 +329,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
                 )}
               </div>
 
-              {/* Enhanced Desktop Search Dropdown */}
+              {/* Desktop Search Suggestions */}
               {showSuggestions && (
                 <div className="absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-md border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden">
                   <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
@@ -301,7 +355,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
                           }}
                           className="flex items-center w-full p-3 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
                         >
-                          <Clock className="w-4 h-4 text-gray-400 mr-3 group-hover:text-primarycolor transition-colors" />
+                          <Orders className="w-4 h-4 text-gray-400 mr-3 group-hover:text-primarycolor transition-colors" />
                           <span className="text-gray-700 font-medium group-hover:text-primarycolor transition-colors">{term}</span>
                           <ArrowRight className="w-4 h-4 text-gray-300 ml-auto group-hover:text-primarycolor transition-colors" />
                         </button>
@@ -309,7 +363,17 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
                     </div>
                   )}
 
-                  {suggestions.length > 0 && (
+                  {/* Loading state for desktop search */}
+                  {isLoading && searchTerm && (
+                    <div className="p-6 text-center">
+                      <div className="w-12 h-12 mx-auto mb-4 bg-primarycolor/10 rounded-full flex items-center justify-center">
+                        <div className="animate-spin h-6 w-6 border-2 border-primarycolor border-t-transparent rounded-full" />
+                      </div>
+                      <p className="text-gray-600 font-medium">Searching for "{searchTerm}"...</p>
+                    </div>
+                  )}
+
+                  {suggestions.length > 0 && !isLoading && (
                     <>
                       <div className="max-h-[320px] overflow-y-auto">
                         {suggestions.slice(0, 4).map((suggestion, index) => (
@@ -318,8 +382,8 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
                             href={`/product/${suggestion.id}`}
                             className="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition-all duration-200 border-b border-gray-50 last:border-b-0 group"
                             onClick={() => {
-                              handleSearch(suggestion.name);
                               setShowSuggestions(false);
+                              handleSearch(searchTerm);
                             }}
                           >
                             <div className="relative">
@@ -344,7 +408,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
                         ))}
                       </div>
 
-                      {/* Enhanced View All Results Button */}
+                      {/* View All Results Button */}
                       <div className="p-4 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white">
                         <Link
                           href={`/search?q=${encodeURIComponent(searchTerm)}`}
@@ -379,7 +443,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
               )}
             </div>
 
-            {/* Action Icons - Cleaner Design */}
+            {/* Navigation Links */}
             <div className="flex items-center space-x-2">
               <Link
                 href="/cart"
@@ -446,7 +510,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
         </div>
       </header>
 
-      {/* Enhanced Mobile Menu */}
+      {/* Mobile Menu Overlay */}
       <div
         className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-in-out z-30 md:hidden
           ${menuOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
@@ -459,97 +523,135 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
           ${menuOpen ? "top-[72px]" : "-top-[100%]"}
           max-h-[calc(100vh-72px)] overflow-y-auto`}
       >
-        {/* Menu Header */}
-        <div className="p-4 border-b border-gray-100 bg-gray-50">
-          <h3 className="text-lg font-semibold text-primarycolor">Categories</h3>
+        {/* Search Section */}
+        <div className="p-4 border-b border-gray-100">
+          <button
+            onClick={() => {
+              setMenuOpen(false);
+              setShowSuggestions(true);
+            }}
+            className="w-full flex items-center px-4 py-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200"
+          >
+            <Search className="w-5 h-5 text-gray-500 mr-3" />
+            <span className="text-gray-500 font-medium">Search products...</span>
+          </button>
         </div>
 
-        {/* Categories List */}
-        <ul className="py-2">
-          {categories?.map((category, index) => (
-            <li key={category.id}>
-              <Link
-                href={`/categories/${category.name}`}
-                className="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100 last:border-b-0"
-                onClick={() => setMenuOpen(false)}
-                prefetch
-              >
-                <span className="text-primarycolor font-medium">{category.name}</span>
-                <ArrowRight className="w-4 h-4 text-gray-400 ml-auto" />
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {/* Quick Actions */}
+        <div className="p-4 border-b border-gray-100">
+          <h3 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">Quick Access</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href="/new-arrivals"
+              className="flex items-center px-3 py-2 bg-gradient-to-r from-primarycolor/5 to-secondarycolor/5 rounded-xl hover:from-primarycolor/10 hover:to-secondarycolor/10 transition-all duration-200"
+              onClick={() => setMenuOpen(false)}
+            >
+              <New className="w-4 h-4 text-primarycolor mr-2" />
+              <span className="text-sm font-medium text-primarycolor">New Arrivals</span>
+            </Link>
+            <Link
+              href="/top-deals"
+              className="flex items-center px-3 py-2 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl hover:from-orange-100 hover:to-red-100 transition-all duration-200"
+              onClick={() => setMenuOpen(false)}
+            >
+              <Sale className="w-4 h-4 text-orange-600 mr-2" />
+              <span className="text-sm font-medium text-orange-600">Top Deals</span>
+            </Link>
+          </div>
+        </div>
 
-        {/* Menu Footer */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50">
-          <div className="space-y-2">
-            <Link
-              href="/track-order"
-              className="flex items-center text-primarycolor hover:text-secondarycolor transition-colors"
-              onClick={() => setMenuOpen(false)}
+        {/* Categories Section */}
+        <div className="p-4 border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-primarycolor mb-3">Shop by Category</h3>
+          <div className="grid grid-cols-1 gap-1">
+            {categories?.map((category) => {
+              const IconComponent = getCategoryIcon(category.name);
+              return (
+                <Link
+                  key={category.id}
+                  href={`/categories/${category.name}`}
+                  className="flex items-center px-4 py-3 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
+                  onClick={() => setMenuOpen(false)}
+                  prefetch
+                >
+                  <IconComponent className="w-5 h-5 text-primarycolor mr-3 group-hover:text-secondarycolor transition-colors" />
+                  <span className="text-primarycolor font-medium group-hover:text-secondarycolor transition-colors capitalize">{category.name}</span>
+                  <ArrowRight className="w-4 h-4 text-gray-400 ml-auto group-hover:text-secondarycolor transition-colors" />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Help & Support Section */}
+        <div className="p-4">
+          <h3 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">Support</h3>
+          <div className="space-y-1">
+            <a
+              href="tel:+254700000000"
+              className="flex items-center px-4 py-2 hover:bg-gray-50 rounded-xl transition-colors duration-200"
             >
-              <Clock className="w-4 h-4 mr-2" />
-              <span className="font-medium">Track Order</span>
-            </Link>
-            <Link
-              href="/wishlist"
-              className="flex items-center text-primarycolor hover:text-secondarycolor transition-colors"
-              onClick={() => setMenuOpen(false)}
-            >
-              <Heart className="w-4 h-4 mr-2" />
-              <span className="font-medium">Wishlist</span>
-              {wishlistItems?.length > 0 && (
-                <span className="ml-auto bg-warningcolor text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {wishlistItems.length}
-                </span>
-              )}
-            </Link>
-            <Link
-              href={user ? "/profile" : "/auth/login"}
-              className="flex items-center text-primarycolor hover:text-secondarycolor transition-colors"
-              onClick={() => setMenuOpen(false)}
-            >
-              <User className="w-4 h-4 mr-2" />
-              <span className="font-medium">{user ? "Profile" : "Login"}</span>
-            </Link>
+              <Phone className="w-4 h-4 text-primarycolor mr-3" />
+              <span className="text-primarycolor font-medium">Contact Us</span>
+            </a>
           </div>
         </div>
       </nav>
 
-      {/* Enhanced Mobile Search - Slides down below header */}
-      <div className={`md:hidden fixed left-0 right-0 bg-white shadow-lg border-b border-gray-100 z-40 transition-all duration-300 ease-in-out ${
-        showSuggestions ? 'top-[72px] opacity-100' : '-top-full opacity-0'
-      }`}>
-        {/* Search Input Section */}
-        <div className="p-4 bg-gradient-to-r from-gray-50 to-white">
+      {/* Enhanced Mobile Search - Slides down below header with prominent input */}
+      <div 
+        data-mobile-search="true"
+        onClick={(e) => e.stopPropagation()}
+        className={`md:hidden fixed left-0 right-0 bg-white shadow-lg border-b border-gray-100 z-40 transition-all duration-300 ease-in-out ${
+          showSuggestions ? 'top-[72px] opacity-100' : '-top-full opacity-0'
+        }`}
+      >
+        {/* Search Input Section - More Prominent */}
+        <div className="p-4 bg-gradient-to-r from-primarycolor/5 to-secondarycolor/5 border-b border-gray-100">
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setShowSuggestions(false)}
-              className="p-2 rounded-xl hover:bg-gray-100 transition-colors duration-200"
+              className="p-2 rounded-xl hover:bg-white/50 transition-colors duration-200 flex-shrink-0"
             >
               <X className="w-5 h-5 text-primarycolor" />
             </button>
             <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="What are you looking for?"
-                value={searchTerm}
-                onChange={handleInputChange}
-                className="w-full py-3 px-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:border-primarycolor focus:ring-2 focus:ring-primarycolor/10 transition-all duration-200 text-gray-900 placeholder-gray-500"
-                autoFocus
-              />
-              {isLoading && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <div className="animate-spin h-4 w-4 border-2 border-primarycolor border-t-transparent rounded-full" />
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search for products, categories..."
+                  value={searchTerm}
+                  onChange={handleInputChange}
+                  onFocus={() => setShowSuggestions(true)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full py-4 pl-5 pr-12 bg-white border-2 border-primarycolor/20 rounded-2xl focus:outline-none focus:border-primarycolor focus:ring-4 focus:ring-primarycolor/10 transition-all duration-200 text-gray-900 placeholder-gray-500 text-base font-medium shadow-sm"
+                  autoFocus
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {isLoading ? (
+                    <div className="animate-spin h-5 w-5 border-2 border-primarycolor border-t-transparent rounded-full" />
+                  ) : (
+                    <Search className="w-5 h-5 text-gray-400" />
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Results Section */}
+        {/* Results Section - Improved styling and UX */}
         <div className="max-h-[60vh] overflow-y-auto bg-white">
+          {/* Show helpful hint when search is empty */}
+          {searchTerm === "" && recentSearches.length === 0 && (
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primarycolor/10 to-secondarycolor/10 rounded-full flex items-center justify-center">
+                <Search className="w-6 h-6 text-primarycolor" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Start searching</h3>
+              <p className="text-gray-500">Type to find products, categories, and more</p>
+            </div>
+          )}
+
           {searchTerm === "" && recentSearches.length > 0 && (
             <div className="p-4">
               <h3 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">Recent Searches</h3>
@@ -560,11 +662,10 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
                     onClick={() => {
                       setSearchTerm(term);
                       handleSearch(term);
-                      setShowSuggestions(false);
                     }}
                     className="flex items-center w-full p-3 hover:bg-gray-50 rounded-xl transition-colors duration-200 group"
                   >
-                    <Clock className="w-4 h-4 text-gray-400 mr-3 group-hover:text-primarycolor transition-colors" />
+                    <Orders className="w-4 h-4 text-gray-400 mr-3 group-hover:text-primarycolor transition-colors" />
                     <span className="text-gray-700 group-hover:text-primarycolor transition-colors">{term}</span>
                     <ArrowRight className="w-4 h-4 text-gray-300 ml-auto group-hover:text-primarycolor transition-colors" />
                   </button>
@@ -573,7 +674,17 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
             </div>
           )}
 
-          {suggestions.length > 0 && (
+          {/* Loading state while searching */}
+          {isLoading && searchTerm && (
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 mx-auto mb-4 bg-primarycolor/10 rounded-full flex items-center justify-center">
+                <div className="animate-spin h-6 w-6 border-2 border-primarycolor border-t-transparent rounded-full" />
+              </div>
+              <p className="text-gray-600 font-medium">Searching for "{searchTerm}"...</p>
+            </div>
+          )}
+
+          {suggestions.length > 0 && !isLoading && (
             <div className="p-4">
               <h3 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">Products</h3>
               <div className="space-y-2">
@@ -583,8 +694,8 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
                     href={`/product/${suggestion.id}`}
                     className="flex items-center p-3 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
                     onClick={() => {
-                      handleSearch(suggestion.name);
                       setShowSuggestions(false);
+                      handleSearch(searchTerm);
                     }}
                   >
                     <div className="relative">
@@ -623,27 +734,28 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
             </div>
           )}
 
-          {searchTerm && suggestions.length === 0 && (
+          {searchTerm && suggestions.length === 0 && !isLoading && (
             <div className="p-8 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
                 <Search className="w-6 h-6 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
               <p className="text-gray-500 mb-4">We couldn&apos;t find anything for &quot;{searchTerm}&quot;</p>
+              <p className="text-sm text-gray-400 mb-4">Try searching for different keywords or browse our categories</p>
               <Link
                 href={`/search?q=${encodeURIComponent(searchTerm)}`}
-                className="inline-flex items-center px-6 py-3 bg-primarycolor text-white rounded-xl hover:bg-primarycolor/90 transition-colors duration-200"
+                className="inline-flex items-center px-6 py-3 bg-primarycolor text-white rounded-xl hover:bg-primarycolor/90 transition-colors duration-200 font-medium"
                 onClick={() => setShowSuggestions(false)}
               >
                 <Search className="w-4 h-4 mr-2" />
-                Search all products
+                Search all products anyway
               </Link>
             </div>
           )}
         </div>
       </div>
 
-      {/* Add CSS for the marquee animation */}
+      {/* Marquee Animation Styles */}
       <style jsx global>{`
         @keyframes marquee {
           0% {

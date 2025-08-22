@@ -72,28 +72,23 @@ export const useAuth = () => {
         email,
         password
       });
-  
+
       if (error) {
         throw error;
       }
-  
+
       const userId = data?.user?.id;
-  
+
       if (!userId) {
         throw new Error('User ID not found after signup');
       }
-  
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert([{ id: userId, name, email }]);
-  
-      if (insertError) {
-        throw insertError;
-      }
-  
+
+      // The trigger will automatically handle user creation in public.users table
+      // No need to manually insert here as the trigger handles it
+
       await queryClient.invalidateQueries(['userDetails', userId]);
       await refetchSession();
-      
+
       return true;
     } catch (err) {
       console.error('Error during signup:', err);
@@ -102,10 +97,15 @@ export const useAuth = () => {
   };
 
   const resetPasswordForEmail = async (email) => {
+    const redirectUrl = `${window.location.origin}/auth/callback`;
+    console.log('Sending password reset email with redirect URL:', redirectUrl);
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      redirectTo: redirectUrl,
     });
     if (error) throw error;
+
+    console.log('Password reset email sent successfully');
   };
 
   const resetPassword = async (newPassword) => {
@@ -113,9 +113,8 @@ export const useAuth = () => {
       password: newPassword,
     });
     if (error) throw error;
-    
-    // After password reset, redirect to login
-    router.push('/auth/login');
+  // Return success – caller decides when / where to redirect so user can see a success state first
+  return true;
   };
 
   return { 

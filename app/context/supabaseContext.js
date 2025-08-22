@@ -170,19 +170,22 @@ export const SupabaseProvider = ({ children }) => {
           .select('*')
           .eq('user_id', user.id)
           .single();
-        console.log('Fetched Address Data:', data); // Add this log
+        console.log('Fetched Address Data:', data);
         if (error && error.code !== 'PGRST116') throw error;
         return data;
       },
       enabled: !!user?.id,
-      onSuccess: (data) => {
-        if (data) {
-          console.log('Setting Address Data:', data); // Add this log
-          setDeliveryAddress(data);
-          setDeliveryCost(Number(data.cost));
-        }
-      },
     });
+
+    // Update delivery address and cost when data changes
+    useEffect(() => {
+      if (deliveryAddressData) {
+        console.log('Setting Address Data:', deliveryAddressData);
+        console.log('Setting Delivery Cost:', deliveryAddressData.cost, 'Converted:', Number(deliveryAddressData.cost));
+        setDeliveryAddress(deliveryAddressData);
+        setDeliveryCost(Number(deliveryAddressData.cost));
+      }
+    }, [deliveryAddressData]);
   // Create Order Mutation
   const createOrderMutation = useMutation({
     mutationFn: async (orderData) => {

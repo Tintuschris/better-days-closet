@@ -6,6 +6,7 @@ import { Plus, Minus, ChevronLeft, X } from "lucide-react";
 import Image from "next/image";
 import { useCart } from "../context/cartContext";
 import { toast } from "sonner";
+import { Button, QuantitySelector, GlassContainer } from "../components/ui";
 
 export default function CartPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -81,33 +82,41 @@ export default function CartPage() {
         <p className="text-gray-600 mb-6 text-center">
           Browse our categories and discover our best deals!
         </p>
-        <button
+        <Button
           onClick={() => router.push("/")}
-          className="bg-primarycolor text-white px-6 py-3 rounded-full hover:bg-primarycolor/90 transition-colors"
+          size="md"
+          variant="primary"
+          radius="full"
         >
           Start Shopping
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Clean Header */}
-      <div className="sticky top-0 bg-white z-10 border-b border-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-pink-50/30">
+      {/* Premium Header with glass morphism */}
+      <div className="sticky top-0 backdrop-blur-xl bg-white/80 border-b border-white/20 z-10 shadow-lg shadow-primarycolor/5">
         <div className="flex items-center justify-between p-4">
           <button
             onClick={() => router.back()}
-            className="text-primarycolor flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
+            className="text-primarycolor flex items-center justify-center w-10 h-10 rounded-full hover:bg-gradient-to-r hover:from-primarycolor/10 hover:to-secondarycolor/10 transition-all duration-300 backdrop-blur-sm"
           >
             <ChevronLeft size={24} />
           </button>
 
-          <h1 className="text-lg font-semibold text-primarycolor">
+          <h1 className="text-lg font-semibold bg-gradient-to-r from-primarycolor to-primarycolor/80 bg-clip-text text-transparent">
             Shopping Cart
           </h1>
 
-          <div className="w-10"></div>
+          <div className="w-10 flex justify-end">
+            <div className="relative">
+              <div className="w-6 h-6 bg-gradient-to-r from-primarycolor to-primarycolor/90 text-white rounded-full flex items-center justify-center text-xs font-medium shadow-lg shadow-primarycolor/30">
+                {cartItems.length}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -115,88 +124,75 @@ export default function CartPage() {
       <div className="lg:hidden flex flex-col h-[calc(100vh-73px)]">
         {/* Scrollable Cart Items */}
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-0">
+          <div className="space-y-4">
             {cartItems.map((item, index) => (
-              <div key={item.productId}>
-                <div className="py-4">
-                  <div className="flex gap-4">
-                    {/* Product Image */}
-                    <div className="w-16 h-16 flex-shrink-0">
-                      <Image
-                        src={item.product.image_url}
-                        alt={item.product.name}
-                        width={64}
-                        height={64}
-                        className="object-cover rounded-lg w-full h-full"
-                      />
+              <div key={item.productId} className="backdrop-blur-lg bg-white/80 rounded-2xl p-4 shadow-lg shadow-primarycolor/10 border border-white/20">
+                <div className="flex gap-4">
+                  {/* Product Image */}
+                  <div className="w-16 h-16 flex-shrink-0">
+                    <Image
+                      src={item.product.image_url}
+                      alt={item.product.name}
+                      width={64}
+                      height={64}
+                      className="object-cover rounded-xl w-full h-full shadow-md"
+                    />
+                  </div>
+
+                  {/* Product Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium text-primarycolor text-sm line-clamp-2 pr-2">
+                        {item.product.name}
+                      </h3>
+                      <Button
+                        onClick={() => handleRemoveItem(item.productId)}
+                        variant="ghost"
+                        size="xs"
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        <X size={16} />
+                      </Button>
                     </div>
 
-                    {/* Product Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium text-primarycolor text-sm line-clamp-2 pr-2">
-                          {item.product.name}
-                        </h3>
-                        <button
-                          onClick={() => handleRemoveItem(item.productId)}
-                          className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
+                    <div className="flex justify-between items-center">
+                      <p className="font-semibold bg-gradient-to-r from-primarycolor to-primarycolor/80 bg-clip-text text-transparent text-sm">
+                        Ksh. {formatPrice(item.product.price)}
+                      </p>
 
-                      <div className="flex justify-between items-center">
-                        <p className="font-semibold text-primarycolor text-sm">
-                          Ksh. {formatPrice(item.product.price)}
-                        </p>
-
-                        {/* Quantity Controls */}
-                        <div className="flex items-center border border-gray-200 rounded-full">
-                          <button
-                            onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
-                            className="w-8 h-8 flex items-center justify-center text-primarycolor hover:bg-gray-50 rounded-l-full transition-colors"
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="px-3 py-1 text-sm font-medium text-primarycolor min-w-[2rem] text-center">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
-                            className="w-8 h-8 flex items-center justify-center text-primarycolor hover:bg-gray-50 rounded-r-full transition-colors"
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-                      </div>
+                      {/* Premium Quantity Controls */}
+                      <QuantitySelector
+                        value={item.quantity}
+                        onChange={(newQuantity) => handleQuantityChange(item.productId, newQuantity)}
+                        size="sm"
+                        variant="premium"
+                      />
                     </div>
                   </div>
                 </div>
-
-                {/* Dotted Separator - except for last item */}
-                {index < cartItems.length - 1 && (
-                  <div className="border-b border-dotted border-gray-300"></div>
-                )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Fixed Summary at Bottom */}
-        <div className="bg-white border-t border-gray-200 p-4">
+        {/* Premium Fixed Summary at Bottom */}
+        <div className="backdrop-blur-xl bg-white/90 border-t border-white/30 p-4 shadow-lg shadow-primarycolor/10">
           <div className="flex justify-between items-center mb-4">
-            <span className="text-lg font-semibold text-primarycolor">Total:</span>
-            <span className="text-lg font-semibold text-primarycolor">
+            <span className="text-lg font-semibold bg-gradient-to-r from-primarycolor to-primarycolor/80 bg-clip-text text-transparent">Total:</span>
+            <span className="text-lg font-semibold bg-gradient-to-r from-primarycolor to-primarycolor/80 bg-clip-text text-transparent">
               Ksh. {formatPrice(subtotal)}
             </span>
           </div>
 
-          <button
+          <Button
             onClick={handleCheckout}
-            className="w-full bg-primarycolor text-white py-3 rounded-full font-medium hover:bg-primarycolor/90 transition-colors"
+            variant="primary"
+            size="lg"
+            radius="full"
+            className="w-full shadow-lg shadow-primarycolor/30"
           >
             Proceed to Checkout
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -205,15 +201,15 @@ export default function CartPage() {
         <div className="max-w-7xl mx-auto p-4 lg:p-6">
           <div className="lg:grid lg:grid-cols-3 lg:gap-8">
 
-            {/* Cart Items - Desktop: 2 columns */}
+            {/* Premium Cart Items - Desktop: 2 columns */}
             <div className="lg:col-span-2">
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {cartItems.map((item) => (
                   <div
                     key={item.productId}
-                    className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow"
+                    className="backdrop-blur-lg bg-white/80 border border-white/20 rounded-2xl p-6 hover:shadow-xl hover:shadow-primarycolor/10 transition-all duration-300"
                   >
-                    <div className="flex gap-4">
+                    <div className="flex gap-6">
                       {/* Product Image */}
                       <div className="w-20 h-20 flex-shrink-0">
                         <Image
@@ -221,47 +217,38 @@ export default function CartPage() {
                           alt={item.product.name}
                           width={80}
                           height={80}
-                          className="object-cover rounded-lg w-full h-full"
+                          className="object-cover rounded-xl w-full h-full shadow-md"
                         />
                       </div>
 
                       {/* Product Details */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-2">
+                        <div className="flex justify-between items-start mb-3">
                           <h3 className="font-medium text-primarycolor text-base line-clamp-2 pr-2">
                             {item.product.name}
                           </h3>
-                          <button
+                          <Button
                             onClick={() => handleRemoveItem(item.productId)}
-                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:text-red-500"
                           >
-                            <X size={16} />
-                          </button>
+                            <X size={18} />
+                          </Button>
                         </div>
 
                         <div className="flex justify-between items-center">
-                          <p className="font-semibold text-primarycolor text-base">
+                          <p className="font-semibold bg-gradient-to-r from-primarycolor to-primarycolor/80 bg-clip-text text-transparent text-lg">
                             Ksh. {formatPrice(item.product.price)}
                           </p>
 
-                          {/* Quantity Controls */}
-                          <div className="flex items-center border border-gray-200 rounded-full">
-                            <button
-                              onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
-                              className="w-8 h-8 flex items-center justify-center text-primarycolor hover:bg-gray-50 rounded-l-full transition-colors"
-                            >
-                              <Minus size={14} />
-                            </button>
-                            <span className="px-3 py-1 text-sm font-medium text-primarycolor min-w-[2rem] text-center">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
-                              className="w-8 h-8 flex items-center justify-center text-primarycolor hover:bg-gray-50 rounded-r-full transition-colors"
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </div>
+                          {/* Premium Quantity Controls */}
+                          <QuantitySelector
+                            value={item.quantity}
+                            onChange={(newQuantity) => handleQuantityChange(item.productId, newQuantity)}
+                            size="md"
+                            variant="premium"
+                          />
                         </div>
                       </div>
                     </div>
@@ -270,10 +257,10 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* Order Summary - Desktop: Sidebar */}
+            {/* Premium Order Summary - Desktop: Sidebar */}
             <div className="lg:col-span-1">
-              <div className="bg-gray-50 rounded-xl p-6 lg:sticky lg:top-24">
-                <h2 className="text-lg font-semibold text-primarycolor mb-6">
+              <div className="backdrop-blur-lg bg-white/80 border border-white/20 rounded-2xl p-6 lg:sticky lg:top-24 shadow-xl shadow-primarycolor/10">
+                <h2 className="text-lg font-semibold bg-gradient-to-r from-primarycolor to-primarycolor/80 bg-clip-text text-transparent mb-6">
                   Order Summary
                 </h2>
 
@@ -285,22 +272,25 @@ export default function CartPage() {
                     </span>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-4">
+                  <div className="border-t border-gradient-to-r from-transparent via-primarycolor/20 to-transparent pt-4">
                     <div className="flex justify-between text-lg font-semibold">
-                      <span className="text-primarycolor">Total</span>
-                      <span className="text-primarycolor">
+                      <span className="bg-gradient-to-r from-primarycolor to-primarycolor/80 bg-clip-text text-transparent">Total</span>
+                      <span className="bg-gradient-to-r from-primarycolor to-primarycolor/80 bg-clip-text text-transparent">
                         Ksh. {formatPrice(subtotal)}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <button
+                <Button
                   onClick={handleCheckout}
-                  className="w-full mt-6 bg-primarycolor text-white py-3 rounded-full font-medium hover:bg-primarycolor/90 transition-colors"
+                  variant="primary"
+                  size="lg"
+                  radius="full"
+                  className="w-full mt-6 shadow-lg shadow-primarycolor/30"
                 >
                   Proceed to Checkout
-                </button>
+                </Button>
 
                 <p className="text-xs text-gray-500 text-center mt-3">
                   Delivery cost will be calculated at checkout

@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
-import { FiEdit2, FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPlus, FiImage, FiEye, FiEyeOff } from 'react-icons/fi';
 import { toast } from 'sonner';
 import BannerForm from '../components/bannerform';
+import { PremiumCard, Button, GradientText } from '../../../components/ui';
 import Image from 'next/image';
 
 export default function BannersPage() {
@@ -22,24 +23,89 @@ export default function BannersPage() {
   };
 
   if (isLoading) {
-    return <div className="p-6">Loading...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-gray-200 rounded-lg h-64"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Marketing Banners</h1>
-        <button
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <GradientText className="text-2xl lg:text-3xl font-bold mb-2">
+            Marketing Banners
+          </GradientText>
+          <p className="text-primarycolor/70">
+            Manage promotional banners and marketing content for your store
+          </p>
+        </div>
+        <Button
           onClick={() => setSelectedBanner({})}
-          className="flex items-center gap-2 bg-primarycolor text-white px-4 py-2 rounded-lg hover:bg-primarycolor/90"
+          variant="primary"
+          className="flex items-center gap-2"
         >
-          <FiPlus /> Add Banner
-        </button>
+          <FiPlus className="w-4 h-4" />
+          Add Banner
+        </Button>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <PremiumCard className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-primarycolor/70">Total Banners</p>
+              <p className="text-2xl font-bold text-primarycolor">{banners?.length || 0}</p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
+              <FiImage className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </PremiumCard>
+
+        <PremiumCard className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-primarycolor/70">Active Banners</p>
+              <p className="text-2xl font-bold text-green-600">
+                {banners?.filter(b => b.is_active).length || 0}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center">
+              <FiEye className="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+        </PremiumCard>
+
+        <PremiumCard className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-primarycolor/70">Inactive Banners</p>
+              <p className="text-2xl font-bold text-gray-600">
+                {banners?.filter(b => !b.is_active).length || 0}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+              <FiEyeOff className="w-6 h-6 text-gray-600" />
+            </div>
+          </div>
+        </PremiumCard>
+      </div>
+
+      {/* Banners Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {banners?.map((banner) => (
-          <div key={banner.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+          <PremiumCard key={banner.id} className="overflow-hidden hover:shadow-xl transition-all duration-300">
             <div className="relative h-48">
               <Image
                 src={banner.image_url}
@@ -47,28 +113,55 @@ export default function BannersPage() {
                 fill
                 className="object-cover"
               />
+              <div className="absolute top-2 right-2">
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                  banner.is_active
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {banner.is_active ? 'Active' : 'Inactive'}
+                </span>
+              </div>
             </div>
             <div className="p-4">
-              <h3 className="font-semibold text-lg">{banner.title}</h3>
-              <p className="text-gray-600 text-sm">{banner.description}</p>
-              <div className="mt-4 flex justify-end gap-2">
+              <h3 className="font-semibold text-lg text-primarycolor mb-2">{banner.title}</h3>
+              <p className="text-primarycolor/70 text-sm mb-4 line-clamp-2">{banner.description}</p>
+              <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setSelectedBanner(banner)}
-                  className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-full"
+                  className="p-2 text-primarycolor hover:bg-primarycolor/10 rounded-lg transition-colors"
+                  title="Edit banner"
                 >
-                  <FiEdit2 size={18} />
+                  <FiEdit2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDelete(banner.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-full"
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Delete banner"
                 >
-                  <FiTrash2 size={18} />
+                  <FiTrash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
-          </div>
+          </PremiumCard>
         ))}
       </div>
+
+      {banners?.length === 0 && (
+        <PremiumCard className="p-8 text-center">
+          <div className="w-16 h-16 bg-primarycolor/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FiImage className="w-8 h-8 text-primarycolor/60" />
+          </div>
+          <p className="text-primarycolor/70 mb-4">No banners found. Create your first marketing banner to get started.</p>
+          <Button
+            onClick={() => setSelectedBanner({})}
+            variant="primary"
+          >
+            <FiPlus className="w-4 h-4 mr-2" />
+            Create First Banner
+          </Button>
+        </PremiumCard>
+      )}
 
       {selectedBanner && (
         <BannerForm

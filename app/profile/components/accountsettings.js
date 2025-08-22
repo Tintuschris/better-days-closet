@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { supabase } from "../../lib/supabase";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   ChevronDown,
@@ -13,10 +14,30 @@ import {
   Check,
 } from "lucide-react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
+import { Button, Input, FormGroup, Label, ErrorMessage, GlassContainer, PremiumCard, GradientText } from "../../components/ui";
+
+// Simple Toggle component
+const Toggle = ({ checked, onChange }) => (
+  <button
+    type="button"
+    onClick={() => onChange(!checked)}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+      checked ? 'bg-primarycolor' : 'bg-gray-200'
+    }`}
+  >
+    <span
+      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+        checked ? 'translate-x-6' : 'translate-x-1'
+      }`}
+    />
+  </button>
+);
 
 export default function AccountSettings() {
   const { user, userDetails } = useAuth();
+  const router = useRouter();
   const [activeSection, setActiveSection] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
   const [formData, setFormData] = useState({
@@ -117,64 +138,76 @@ export default function AccountSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header - Matching Orders component style */}
-      <div className="sticky top-0 z-10 bg-white p-4 border-b flex items-center">
-        <button onClick={() => router.push('/profile')} className="text-primarycolor">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-xl font-semibold text-primarycolor mx-auto">ACCOUNT SETTINGS</h1>
-        <div className="w-5"></div> {/* Empty div for alignment */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-pink-50/30">
+      {/* Premium Header */}
+      <div className="sticky top-0 backdrop-blur-xl bg-white/80 border-b border-white/20 z-10 shadow-lg shadow-primarycolor/5">
+        <div className="flex items-center justify-between p-4">
+          <button
+            onClick={() => router.push('/profile')}
+            className="text-primarycolor flex items-center justify-center w-10 h-10 rounded-full hover:bg-gradient-to-r hover:from-primarycolor/10 hover:to-secondarycolor/10 transition-all duration-300 backdrop-blur-sm"
+          >
+            <ChevronLeft size={24} />
+          </button>
+
+          <GradientText className="text-lg font-semibold">
+            Account Settings
+          </GradientText>
+
+          <div className="w-10 h-10"></div> {/* Spacer for center alignment */}
+        </div>
       </div>
 
       <div className="p-4">
-        <div className="flex flex-col items-center mb-6">
-          <div className="relative mb-2">
-            <div className="w-20 h-20 rounded-full bg-primarycolor flex items-center justify-center">
-              {profileImage ? (
-                <Image
-                  src={profileImage}
-                  alt="Profile"
-                  width={80}
-                  height={80}
-                  className="rounded-full"
+        {/* Premium Profile Card */}
+        <PremiumCard className="p-6 mb-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="relative mb-4">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primarycolor to-primarycolor/80 flex items-center justify-center shadow-lg shadow-primarycolor/30">
+                {profileImage ? (
+                  <Image
+                    src={profileImage}
+                    alt="Profile"
+                    width={96}
+                    height={96}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <User size={48} className="text-white" />
+                )}
+              </div>
+              <label className="absolute bottom-0 right-0 p-2 bg-white border-2 border-primarycolor/20 rounded-full cursor-pointer hover:bg-primarycolor/5 transition-all duration-200 shadow-lg">
+                <Pencil size={16} className="text-primarycolor" />
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
                 />
-              ) : (
-                <User size={40} className="text-white" />
-              )}
+              </label>
             </div>
-            <label className="absolute bottom-0 right-0 p-2 bg-primarycolor/10 border border-white rounded-full cursor-pointer hover:bg-primarycolor/20 transition-all duration-200">
-              <Pencil size={14} className="text-white" />
-              <input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
-            </label>
+            <GradientText className="text-xl font-bold mb-2">
+              {formData.name}
+            </GradientText>
+            <p className="text-primarycolor/70 text-sm">{formData.email}</p>
           </div>
-          <h2 className="font-medium text-primarycolor">{formData.name}</h2>
-          <p className="text-primarycolor/80">{formData.email}</p>
-        </div>
-
-        <div className="border-t border-secondarycolor mb-6" />
+        </PremiumCard>
 
         <form onSubmit={updateProfile} className="space-y-4">
-          <AnimatePresence>
+          <div className="space-y-4">
             {/* Edit Profile Section */}
-            <div key="profile-section" className="overflow-hidden">
+            <GlassContainer className="overflow-hidden">
               <button
                 type="button"
                 onClick={() => toggleSection("profile")}
-                className={`w-full flex justify-between items-center p-4 rounded-2xl transition-all duration-200 ${
+                className={`w-full flex justify-between items-center p-4 transition-all duration-200 ${
                   activeSection === "profile"
-                    ? "bg-primarycolor"
-                    : "text-primarycolor hover:bg-primarycolor/5"
+                    ? "bg-gradient-to-r from-primarycolor to-primarycolor/90 text-white rounded-t-2xl"
+                    : "text-primarycolor hover:bg-primarycolor/5 rounded-2xl"
                 }`}
               >
                 <span className="font-medium">Edit Profile</span>
                 {activeSection === "profile" ? (
-                  <ChevronUp className="text-secondarycolor" />
+                  <ChevronUp className="text-white" />
                 ) : (
                   <ChevronDown className="text-primarycolor" />
                 )}
@@ -186,53 +219,53 @@ export default function AccountSettings() {
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="overflow-hidden"
+                  className="overflow-hidden bg-white/50 rounded-b-2xl"
                 >
-                  <div className="p-4 space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primarycolor">
-                        Full Name
-                      </label>
-                      <input
+                  <div className="p-6 space-y-4">
+                    <FormGroup>
+                      <Label>Full Name</Label>
+                      <Input
                         type="text"
                         name="name"
                         placeholder="Enter your name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
+                        variant="premium"
+                        radius="lg"
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primarycolor">
-                        Email Address
-                      </label>
-                      <input
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Label>Email Address</Label>
+                      <Input
                         type="email"
                         name="email"
                         value={formData.email}
                         disabled
-                        className="w-full p-3 border-2 border-primarycolor/20 rounded-xl bg-gray-50"
+                        variant="ghost"
+                        radius="lg"
+                        className="bg-gray-50/80"
                       />
-                    </div>
+                    </FormGroup>
                   </div>
                 </motion.div>
               )}
-            </div>
+            </GlassContainer>
 
             {/* Password & Security Section */}
-            <div key="password-section" className="overflow-hidden">
+            <GlassContainer className="overflow-hidden">
               <button
                 type="button"
                 onClick={() => toggleSection("password")}
-                className={`w-full flex justify-between items-center p-4 rounded-2xl transition-all duration-200 ${
+                className={`w-full flex justify-between items-center p-4 transition-all duration-200 ${
                   activeSection === "password"
-                    ? "bg-primarycolor"
-                    : "text-primarycolor hover:bg-primarycolor/5"
+                    ? "bg-gradient-to-r from-primarycolor to-primarycolor/90 text-white rounded-t-2xl"
+                    : "text-primarycolor hover:bg-primarycolor/5 rounded-2xl"
                 }`}
               >
                 <span className="font-medium">Password & Security</span>
                 {activeSection === "password" ? (
-                  <ChevronUp className="text-secondarycolor" />
+                  <ChevronUp className="text-white" />
                 ) : (
                   <ChevronDown className="text-primarycolor" />
                 )}
@@ -243,48 +276,50 @@ export default function AccountSettings() {
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="overflow-hidden"
+                  className="overflow-hidden bg-white/50 rounded-b-2xl"
                 >
-                  <div className="p-4 space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primarycolor">
-                        Current Password
-                      </label>
-                      <input
+                  <div className="p-6 space-y-4">
+                    <FormGroup>
+                      <Label>Current Password</Label>
+                      <Input
                         type="password"
                         name="currentPassword"
                         placeholder="Enter current password"
                         value={formData.currentPassword}
                         onChange={handleInputChange}
-                        className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
+                        variant="premium"
+                        radius="lg"
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primarycolor">
-                        New Password
-                      </label>
-                      <input
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Label>New Password</Label>
+                      <Input
                         type="password"
                         name="newPassword"
                         placeholder="Enter new password"
                         value={formData.newPassword}
                         onChange={handleInputChange}
-                        className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
+                        variant="premium"
+                        radius="lg"
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primarycolor">
-                        Confirm Password
-                      </label>
-                      <input
+                    </FormGroup>
+
+                    <FormGroup>
+                      <Label>Confirm Password</Label>
+                      <Input
                         type="password"
                         name="confirmPassword"
                         placeholder="Confirm new password"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        className="w-full p-3 border-2 border-primarycolor/20 rounded-xl focus:outline-none focus:border-primarycolor/50 transition-all duration-200"
+                        variant="premium"
+                        radius="lg"
                       />
-                    </div>
+                      {!passwordsMatch && formData.confirmPassword && (
+                        <ErrorMessage>Passwords do not match</ErrorMessage>
+                      )}
+                    </FormGroup>
                     {formData.newPassword && (
                       <div className="flex items-center space-x-2 mt-2">
                         <Check
@@ -305,22 +340,22 @@ export default function AccountSettings() {
                   </div>
                 </motion.div>
               )}
-            </div>
+            </GlassContainer>
 
             {/* Notifications & Preferences Section */}
-            <div key="notifications-section" className="overflow-hidden">
+            <GlassContainer className="overflow-hidden">
               <button
                 type="button"
                 onClick={() => toggleSection("notifications")}
-                className={`w-full flex justify-between items-center p-4 rounded-2xl transition-all duration-200 ${
+                className={`w-full flex justify-between items-center p-4 transition-all duration-200 ${
                   activeSection === "notifications"
-                    ? "bg-primarycolor"
-                    : "text-primarycolor hover:bg-primarycolor/5"
+                    ? "bg-gradient-to-r from-primarycolor to-primarycolor/90 text-white rounded-t-2xl"
+                    : "text-primarycolor hover:bg-primarycolor/5 rounded-2xl"
                 }`}
               >
                 <span className="font-medium">Notifications & Preferences</span>
                 {activeSection === "notifications" ? (
-                  <ChevronUp className="text-secondarycolor" />
+                  <ChevronUp className="text-white" />
                 ) : (
                   <ChevronDown className="text-primarycolor" />
                 )}
@@ -331,11 +366,11 @@ export default function AccountSettings() {
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="overflow-hidden"
+                  className="overflow-hidden bg-white/50 rounded-b-2xl"
                 >
-                  <div className="p-4">
+                  <div className="p-6">
                     <div className="flex justify-between items-center">
-                      <span className="text-primarycolor">
+                      <span className="text-primarycolor font-medium">
                         Email Notifications
                       </span>
                       <Toggle
@@ -346,14 +381,22 @@ export default function AccountSettings() {
                   </div>
                 </motion.div>
               )}
-            </div>
-          </AnimatePresence>
-          <button
-            type="submit"
-            className="w-full bg-primarycolor text-white py-3 px-4 rounded-full mt-6 hover:bg-primarycolor/90 transition-all duration-200"
-          >
-            Save Changes
-          </button>
+            </GlassContainer>
+          </div>
+
+          {/* Premium Save Button */}
+          <div className="mt-8">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              radius="full"
+              fullWidth
+              className="shadow-lg shadow-primarycolor/30"
+            >
+              Save Changes
+            </Button>
+          </div>
         </form>
       </div>
     </div>

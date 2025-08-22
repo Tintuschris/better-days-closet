@@ -1,60 +1,110 @@
 "use client";
 import { useAuth } from '../../../hooks/useAuth';
-import { FiBell, FiUser, FiLogOut, FiMenu } from 'react-icons/fi';
+import { FiBell, FiUser, FiLogOut, FiMenu, FiSearch } from 'react-icons/fi';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { GradientText } from '../../../components/ui';
 
-export default function Navbar() {
+export default function Navbar({ onMenuClick }) {
   const { signOut, userDetails } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  // Add notification state if needed
-  // const { unreadCount } = useOrderNotifications();
+  const [showSearch, setShowSearch] = useState(false);
+  const pathname = usePathname();
+
+  // Get page title from pathname
+  const getPageTitle = () => {
+    const pathSegments = pathname.split('/').filter(Boolean);
+    const lastSegment = pathSegments[pathSegments.length - 1];
+
+    if (pathname === '/admin') return 'Dashboard';
+    if (lastSegment === 'products') return 'Products';
+    if (lastSegment === 'categories') return 'Categories';
+    if (lastSegment === 'orders') return 'Orders';
+    if (lastSegment === 'customers') return 'Customers';
+    if (lastSegment === 'delivery-addresses') return 'Delivery';
+    if (lastSegment === 'banners') return 'Marketing';
+    if (lastSegment === 'reports') return 'Reports';
+    if (lastSegment === 'settings') return 'Settings';
+
+    return 'Admin';
+  };
 
   return (
-    <nav className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-screen-2xl mx-auto px-4 md:px-6 py-3 md:py-4">
+    <nav className="sticky top-0 z-20 backdrop-blur-xl bg-white/80 border-b border-white/20 shadow-lg shadow-primarycolor/5">
+      <div className="px-4 lg:px-6 py-3 lg:py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <button 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="mr-3 p-1.5 md:hidden text-gray-700 hover:bg-gray-100 rounded-full"
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onMenuClick}
+              className="lg:hidden p-2 text-primarycolor hover:bg-gradient-to-r hover:from-primarycolor/10 hover:to-secondarycolor/10 rounded-lg transition-all duration-300"
             >
               <FiMenu className="w-5 h-5" />
             </button>
-            <h1 className="text-base md:text-xl font-semibold text-primarycolor truncate">
-              Better Days Closet
-            </h1>
+
+            <div className="flex flex-col">
+              <GradientText className="text-lg lg:text-xl font-bold">
+                {getPageTitle()}
+              </GradientText>
+              <p className="text-xs text-primarycolor/60 hidden sm:block">
+                Better Days Closet Admin
+              </p>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-3 md:gap-5">
-            {/* Notification Bell - visible on all screens */}
-            <button className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full relative text-gray-700">
-              <FiBell className="w-4 h-4 md:w-5 md:h-5" />
-              {/* Add notification badge if needed */}
-              {/* {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )} */}
+
+          <div className="flex items-center gap-2 lg:gap-4">
+            {/* Search Button */}
+            <button
+              onClick={() => setShowSearch(!showSearch)}
+              className="p-2 text-primarycolor hover:bg-gradient-to-r hover:from-primarycolor/10 hover:to-secondarycolor/10 rounded-lg transition-all duration-300"
+              title="Search"
+            >
+              <FiSearch className="w-4 h-4 lg:w-5 lg:h-5" />
             </button>
 
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primarycolor/10 rounded-full flex items-center justify-center text-primarycolor">
+            {/* Notification Bell */}
+            <button className="p-2 hover:bg-gradient-to-r hover:from-primarycolor/10 hover:to-secondarycolor/10 rounded-lg relative text-primarycolor transition-all duration-300">
+              <FiBell className="w-4 h-4 lg:w-5 lg:h-5" />
+              {/* Notification badge placeholder */}
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-2 h-2"></span>
+            </button>
+
+            {/* User Profile */}
+            <div className="flex items-center gap-2 pl-2 border-l border-primarycolor/20">
+              <div className="w-8 h-8 bg-gradient-to-br from-primarycolor to-primarycolor/80 rounded-full flex items-center justify-center text-white shadow-lg shadow-primarycolor/30">
                 <FiUser className="w-4 h-4" />
               </div>
-              <span className="text-sm font-medium text-gray-800 truncate max-w-[80px] md:max-w-[120px]">
-                {userDetails?.name || 'Admin'}
-              </span>
+              <div className="hidden sm:block">
+                <p className="text-sm font-medium text-primarycolor truncate max-w-[100px] lg:max-w-[120px]">
+                  {userDetails?.name || 'Admin'}
+                </p>
+                <p className="text-xs text-primarycolor/60">Administrator</p>
+              </div>
             </div>
-            
-            <button 
+
+            {/* Logout Button */}
+            <button
               onClick={signOut}
-              className="p-1.5 md:p-2 hover:bg-gray-100 text-gray-700 hover:text-red-600 rounded-full transition-colors"
+              className="p-2 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 text-primarycolor hover:text-red-600 rounded-lg transition-all duration-300"
               title="Logout"
             >
-              <FiLogOut className="w-4 h-4 md:w-5 md:h-5" />
+              <FiLogOut className="w-4 h-4 lg:w-5 lg:h-5" />
             </button>
           </div>
         </div>
+
+        {/* Search Bar (expandable) */}
+        {showSearch && (
+          <div className="mt-3 pt-3 border-t border-primarycolor/10">
+            <div className="relative max-w-md">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primarycolor/60 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search products, orders, customers..."
+                className="w-full pl-10 pr-4 py-2 bg-white/60 border border-primarycolor/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primarycolor/20 focus:border-primarycolor text-primarycolor placeholder-primarycolor/60"
+                autoFocus
+              />
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );

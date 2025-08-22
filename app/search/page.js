@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useSupabaseContext } from "../context/supabaseContext";
 import ProductCard from "../components/productcard";
 import {

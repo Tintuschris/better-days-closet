@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation";
 import { useSupabaseContext } from '../context/supabaseContext';
 import { useCart } from '../context/cartContext';
 import { toast } from 'sonner';
+import Button from "@/app/components/ui/Button";
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, viewMode = 'grid' }) {
   const router = useRouter();
   const {
     user,
@@ -118,85 +119,196 @@ export default function ProductCard({ product }) {
     }
   };
 
-  return (
-    <div className="bg-white rounded-xl md:rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group relative">
-      {/* Product Image Container */}
-      <Link href={`/product/${product.id}`} className="block">
-        <div className="relative w-full pb-[100%] bg-gray-50">
-          <Image
-            src={product.image_url}
-            alt={product.name}
-            fill
-            style={{ objectFit: "cover", objectPosition: "center" }}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="rounded-t-xl md:rounded-t-2xl group-hover:scale-105 transition-transform duration-300"
-          />
-
-          {/* Discount Badge */}
-          {discountPercentage > 0 && (
-            <div className="absolute top-2 left-2 md:top-3 md:left-3 bg-red-500 text-white font-semibold text-xs px-2 py-1 rounded-full shadow-sm">
-              -{discountPercentage}%
-            </div>
-          )}
-
-          {/* Wishlist Heart - Top Right */}
-          <button
-            onClick={handleWishlistClick}
-            className="absolute top-2 right-2 md:top-3 md:right-3 w-7 h-7 md:w-8 md:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-all duration-200 z-10"
-          >
-            <Heart
-              className={`w-3 h-3 md:w-4 md:h-4 ${
-                isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600 hover:text-red-500'
-              } transition-colors duration-200`}
-            />
-          </button>
-        </div>
-      </Link>
-
-      {/* Product Info */}
-      <div className="p-3 md:p-4 relative">
+  // Grid View (Default)
+  if (viewMode === 'grid') {
+    return (
+      <div className="bg-white rounded-xl md:rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group relative">
+        {/* Product Image Container */}
         <Link href={`/product/${product.id}`} className="block">
-          <h3 className="text-xs md:text-sm font-medium text-gray-900 mb-2 truncate leading-tight" title={product.name}>
-            {product.name}
-          </h3>
+          <div className="relative w-full pb-[100%] bg-gray-50">
+            <Image
+              src={product.image_url}
+              alt={product.name}
+              fill
+              style={{ objectFit: "cover", objectPosition: "center" }}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="rounded-t-xl md:rounded-t-2xl group-hover:scale-105 transition-transform duration-300"
+            />
 
-          {/* Price Section */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex flex-col min-w-0 flex-1">
-              {discountPercentage > 0 ? (
-                <>
-                  <span className="text-xs text-gray-400 line-through">
-                    Ksh. {product.price}
-                  </span>
-                  <span className="text-sm md:text-base font-bold text-gray-900 truncate">
-                    Ksh. {(product.price * (1 - product.discount / 100)).toFixed(2)}
-                  </span>
-                </>
-              ) : (
-                <span className="text-sm md:text-base font-bold text-gray-900 truncate">
-                  Ksh. {product.price}
-                </span>
-              )}
-            </div>
+            {/* Discount Badge */}
+            {discountPercentage > 0 && (
+              <div className="absolute top-2 left-2 md:top-3 md:left-3 bg-red-500 text-white font-semibold text-xs px-2 py-1 rounded-full shadow-sm">
+                -{discountPercentage}%
+              </div>
+            )}
 
-            {/* Add to Cart Button - Responsive sizing */}
+            {/* Wishlist Heart - Top Right */}
             <button
-              onClick={handleAddToCart}
-              disabled={isAddingToCart}
-              className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm flex-shrink-0 ${
-                isAddingToCart
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-primarycolor hover:bg-primarycolor/90 text-white'
-              }`}
+              onClick={handleWishlistClick}
+              className="absolute top-2 right-2 md:top-3 md:right-3 w-7 h-7 md:w-8 md:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-all duration-200 z-10"
             >
-              {isAddingToCart ? (
-                <div className="w-2 h-2 md:w-3 md:h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Plus className="w-3 h-3 md:w-4 md:h-4" />
-              )}
+              <Heart
+                className={`w-3 h-3 md:w-4 md:h-4 ${
+                  isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600 hover:text-red-500'
+                } transition-colors duration-200`}
+              />
             </button>
           </div>
         </Link>
+
+        {/* Product Info */}
+        <div className="p-3 md:p-4 relative">
+          <Link href={`/product/${product.id}`} className="block">
+            <h3 className="text-xs md:text-sm font-medium text-gray-900 mb-2 truncate leading-tight" title={product.name}>
+              {product.name}
+            </h3>
+
+            {/* Price Section */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-col min-w-0 flex-1">
+                {discountPercentage > 0 ? (
+                  <>
+                    <span className="text-xs text-gray-400 line-through">
+                      Ksh. {product.price}
+                    </span>
+                    <span className="text-sm md:text-base font-bold text-gray-900 truncate">
+                      Ksh. {(product.price * (1 - product.discount / 100)).toFixed(2)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-sm md:text-base font-bold text-gray-900 truncate">
+                    Ksh. {product.price}
+                  </span>
+                )}
+              </div>
+
+              {/* Add to Cart Button - Responsive sizing */}
+              <Button
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+                variant="primary"
+                size="sm"
+                radius="full"
+                className="!w-8 !h-8 md:!w-10 md:!h-10 !p-0 shadow-sm flex-shrink-0 min-w-0"
+                loading={isAddingToCart}
+              >
+                <Plus className="w-4 h-4 md:w-5 md:h-5 text-white" />
+              </Button>
+            </div>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // List View
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group relative max-w-4xl mx-auto">
+      <div className="flex gap-4 p-4">
+        {/* Product Image - Compact for List View */}
+        <Link href={`/product/${product.id}`} className="block flex-shrink-0">
+          <div className="relative w-20 h-20 md:w-32 md:h-32 bg-gray-50 rounded-xl overflow-hidden">
+            <Image
+              src={product.image_url}
+              alt={product.name}
+              fill
+              style={{ objectFit: "cover", objectPosition: "center" }}
+              sizes="(max-width: 768px) 80px, 128px"
+              className="group-hover:scale-105 transition-transform duration-300"
+            />
+
+            {/* Compact Discount Badge */}
+            {discountPercentage > 0 && (
+              <div className="absolute top-1 left-1 bg-red-500 text-white font-semibold text-xs px-1.5 py-0.5 rounded-md shadow-sm">
+                -{discountPercentage}%
+              </div>
+            )}
+          </div>
+        </Link>
+
+        {/* Product Info - Expanded for List View */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between">
+          <div>
+            <Link href={`/product/${product.id}`} className="block">
+              <h3 className="text-sm md:text-lg font-semibold text-gray-900 mb-1 md:mb-2 line-clamp-2 leading-tight">
+                {product.name}
+              </h3>
+              
+              {/* Category Badge */}
+              <div className="mb-2">
+                <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                  {product.category_name}
+                </span>
+              </div>
+
+              {/* Price Section - Horizontal Layout */}
+              <div className="flex items-center gap-3 mb-2">
+                {discountPercentage > 0 ? (
+                  <>
+                    <span className="text-lg md:text-xl font-bold text-gray-900">
+                      Ksh. {(product.price * (1 - product.discount / 100)).toFixed(2)}
+                    </span>
+                    <span className="text-sm text-gray-400 line-through">
+                      Ksh. {product.price}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-lg md:text-xl font-bold text-gray-900">
+                    Ksh. {product.price}
+                  </span>
+                )}
+              </div>
+
+              {/* Stock Status */}
+              <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600">
+                <div className={`w-2 h-2 rounded-full ${product.in_stock ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span>{product.in_stock ? 'In Stock' : 'Out of Stock'}</span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Action Buttons - Bottom Right */}
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center gap-2">
+              {/* Rating Display (if available) */}
+              {product.rating && (
+                <div className="flex items-center gap-1">
+                  <span className="text-yellow-400">★</span>
+                  <span className="text-sm text-gray-600">{product.rating}</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {/* Wishlist Button */}
+              <button
+                onClick={handleWishlistClick}
+                className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-all duration-200"
+              >
+                <Heart
+                  className={`w-5 h-5 ${
+                    isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600 hover:text-red-500'
+                  } transition-colors duration-200`}
+                />
+              </button>
+
+              {/* Add to Cart Button */}
+              <Button
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+                variant="primary"
+                size="md"
+                radius="xl"
+                className="px-4 py-2 md:px-6 md:py-3"
+                loading={isAddingToCart}
+                loadingText={<span className="hidden md:inline">Adding...</span>}
+              >
+                <Plus className="w-4 h-4 text-white" />
+                <span className="hidden md:inline text-white">Add to Cart</span>
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
