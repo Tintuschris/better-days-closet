@@ -102,7 +102,7 @@ function ProductCard({ product, isSelected, onSelect, onEdit, onDelete }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => onEdit(product)}
                 className="p-1.5 text-primarycolor hover:bg-primarycolor/10 rounded-lg transition-colors"

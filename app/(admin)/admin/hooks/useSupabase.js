@@ -466,6 +466,22 @@ const useDeleteBanner = () => {
     return data.publicUrl;
   };
 
+  // Category Attributes Queries
+  const useCategoryAttributes = () => {
+    return useQuery({
+      queryKey: ["admin-category-attributes"],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from("category_attributes")
+          .select("*")
+          .order("category_id", { ascending: true });
+        if (error) throw error;
+        return data;
+      },
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+  };
+
   // Category Attributes Mutations
   const useCreateCategoryAttributes = () => {
     return useMutation({
@@ -480,6 +496,7 @@ const useDeleteBanner = () => {
         return data;
       },
       onSuccess: () => {
+        queryClient.invalidateQueries(['admin-category-attributes']);
         queryClient.invalidateQueries(['admin-categories']);
       }
     });
@@ -487,18 +504,37 @@ const useDeleteBanner = () => {
 
   const useUpdateCategoryAttributes = () => {
     return useMutation({
-      mutationFn: async ({ id, ...attributeData }) => {
-        const { data, error } = await supabase
+      mutationFn: async ({ categoryId, attributes }) => {
+        // First check if category attributes exist
+        const { data: existing } = await supabase
           .from('category_attributes')
-          .update(attributeData)
-          .eq('id', id)
-          .select()
+          .select('id')
+          .eq('category_id', categoryId)
           .single();
 
-        if (error) throw error;
-        return data;
+        if (existing) {
+          // Update existing
+          const { data, error } = await supabase
+            .from('category_attributes')
+            .update(attributes)
+            .eq('category_id', categoryId)
+            .select()
+            .single();
+          if (error) throw error;
+          return data;
+        } else {
+          // Create new
+          const { data, error } = await supabase
+            .from('category_attributes')
+            .insert([{ category_id: categoryId, ...attributes }])
+            .select()
+            .single();
+          if (error) throw error;
+          return data;
+        }
       },
       onSuccess: () => {
+        queryClient.invalidateQueries(['admin-category-attributes']);
         queryClient.invalidateQueries(['admin-categories']);
       }
     });
@@ -527,6 +563,7 @@ const useDeleteBanner = () => {
     useAddBanner,
     useUpdateBanner,
     useDeleteBanner,
+    useCategoryAttributes,
     useCreateCategoryAttributes,
     useUpdateCategoryAttributes
   };

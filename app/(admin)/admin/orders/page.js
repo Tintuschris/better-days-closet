@@ -105,7 +105,7 @@ function OrderCard({ order, isSelected, onSelect, onStatusUpdate, onViewDetails 
               )}
             </div>
 
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => onViewDetails(order)}
                 className="p-1.5 text-primarycolor hover:bg-primarycolor/10 rounded-lg transition-colors"

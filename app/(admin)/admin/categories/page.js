@@ -70,7 +70,7 @@ function CategoryCard({ category, isSelected, onSelect, onEdit, onDelete, onMana
           </div>
         </div>
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => onManageAttributes(category)}
             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

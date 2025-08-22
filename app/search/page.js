@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSupabaseContext } from "../context/supabaseContext";
@@ -13,7 +13,46 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 
-export default function SearchPage() {
+// Loading component for Suspense fallback
+function SearchPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+      <div className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="mb-4 sm:mb-6">
+            <div className="relative">
+              <div className="w-full py-4 pl-6 pr-14 bg-gray-200 border border-gray-200 rounded-2xl animate-pulse"></div>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="px-4 py-2.5 bg-gray-200 border border-gray-200 rounded-xl animate-pulse w-20 h-10"></div>
+              <div className="px-4 py-2.5 bg-gray-200 border border-gray-200 rounded-xl animate-pulse w-32 h-10"></div>
+            </div>
+            <div className="bg-gray-200 rounded animate-pulse w-24 h-6"></div>
+          </div>
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 animate-pulse">
+              <div className="aspect-square bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl mb-4"></div>
+              <div className="space-y-3">
+                <div className="h-4 bg-gray-200 rounded-lg"></div>
+                <div className="h-4 bg-gray-200 rounded-lg w-2/3"></div>
+                <div className="h-5 bg-gray-300 rounded-lg w-1/2"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main search component that uses useSearchParams
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { products, categories } = useSupabaseContext();
@@ -328,5 +367,14 @@ export default function SearchPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<SearchPageSkeleton />}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
