@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fi';
 import { toast } from 'sonner';
 import ProductWithVariantsForm from '../components/ProductWithVariantsForm';
+import BulkProductUpload from '../components/BulkProductUpload';
 import BulkOperations, { BulkSelectCheckbox, productBulkOperations } from '../components/BulkOperations';
 import { useSupabase } from '../hooks/useSupabase';
 import { PremiumCard, Button, GradientText } from '../../../components/ui';
@@ -152,6 +153,7 @@ function ProductManagementContent() {
   const searchParams = useSearchParams();
 
   const [showForm, setShowForm] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -262,6 +264,12 @@ function ProductManagementContent() {
     setEditingProduct(null);
   };
 
+  const handleBulkUploadSuccess = () => {
+    setShowBulkUpload(false);
+    // Refresh products data
+    window.location.reload(); // Simple refresh for now
+  };
+
   if (productsLoading || categoriesLoading) return <LoadingSkeleton />;
 
   return (
@@ -278,6 +286,14 @@ function ProductManagementContent() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowBulkUpload(true)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <FiUpload className="w-4 h-4" />
+            Bulk Upload
+          </Button>
           <Button
             onClick={() => setShowForm(true)}
             variant="primary"
@@ -453,6 +469,18 @@ function ProductManagementContent() {
               }}
               onSuccess={handleFormSuccess}
               categories={categories}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Upload Modal */}
+      {showBulkUpload && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-h-[90vh] overflow-y-auto">
+            <BulkProductUpload
+              onClose={() => setShowBulkUpload(false)}
+              onSuccess={handleBulkUploadSuccess}
             />
           </div>
         </div>

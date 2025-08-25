@@ -738,6 +738,7 @@ const useDeleteBanner = () => {
   };
 
   return {
+    supabase, // Export supabase client for direct access
     useProducts,
     useAddProduct,
     useUpdateProduct,
