@@ -51,7 +51,7 @@ export default function CategoryListing() {
               href={`/categories/${category.name}`}
               className="flex-shrink-0 px-4 py-2 bg-secondarycolor text-primarycolor rounded-full text-sm font-medium hover:bg-primarycolor hover:text-secondarycolor transition-colors whitespace-nowrap"
             >
-              {category.name}
+              {category.name.charAt(0).toUpperCase() + category.name.slice(1).toLowerCase()}
             </Link>
           ))}
         </div>
@@ -66,7 +66,7 @@ export default function CategoryListing() {
               href={`/categories/${category.name}`}
               className="flex-shrink-0 px-6 py-3 lg:px-8 lg:py-4 bg-secondarycolor text-primarycolor rounded-full text-sm lg:text-base font-medium hover:bg-primarycolor hover:text-secondarycolor transition-colors whitespace-nowrap"
             >
-              {category.name}
+              {category.name.charAt(0).toUpperCase() + category.name.slice(1).toLowerCase()}
             </Link>
           ))}
         </div>

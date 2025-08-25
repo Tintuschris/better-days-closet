@@ -64,7 +64,7 @@ function FloatingNavBarContent({ activeIcon, setActiveIcon, isVisible }) {
         </div>
       </Link>
 
-      <Link href={user ? "/profile" : "/auth/login"} prefetch className="flex-1">
+      <Link href="/profile" prefetch className="flex-1">
         <div className="text-center p-2 rounded-xl transition-all duration-200 hover:bg-gray-50 active:scale-95">
           <User className={`h-5 w-5 mx-auto transition-colors duration-200 ${activeIcon === 'profile' ? 'text-secondarycolor' : 'text-primarycolor'}`} />
           <p className={`text-xs mt-1 font-medium transition-colors duration-200 ${activeIcon === 'profile' ? 'text-secondarycolor' : 'text-primarycolor'}`}>Profile</p>

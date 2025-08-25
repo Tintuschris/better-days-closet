@@ -25,10 +25,10 @@ export default function ProductCarousel({ title, products = [], category, isSpec
       {/* Clean header with modern styling */}
       <div className="mb-6">
         <div className="flex justify-between items-center px-1">
-          <h2 className="text-lg md:text-xl font-semibold text-gray-900">{title}</h2>
+          <h2 className="text-lg md:text-xl font-semibold text-primarycolor">{title}</h2>
           <Link
             href={getViewMoreLink()}
-            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors group"
+            className="flex items-center text-sm text-secondarycolor hover:text-primarycolor transition-colors group"
           >
             <span>View More</span>
             <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />

@@ -17,7 +17,6 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
       description: "",
       category_id: "",
       price: "",
-      quantity: "",
       discount: "0",
       image_url: [],
       is_promoted: false,
@@ -56,7 +55,6 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
         description: product.description || "",
         category_id: product.category_id || "",
         price: product.price || "",
-        quantity: product.quantity || "",
         discount: product.discount || "0",
         image_url: Array.isArray(product.image_url) ? product.image_url : (product.image_url ? [product.image_url] : []),
         is_promoted: product.is_promoted || false,
@@ -77,7 +75,6 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
         description: product.description || "",
         category_id: product.category_id || "",
         price: product.price || "",
-        quantity: product.quantity || "",
         discount: product.discount || "0",
         image_url: Array.isArray(product.image_url) ? product.image_url : (product.image_url ? [product.image_url] : []),
         is_promoted: product.is_promoted || false,
@@ -273,7 +270,7 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
                 Pricing & Inventory
               </h4>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <FormGroup>
                   <Label required>Price (KSh)</Label>
                   <div className="relative">
@@ -292,24 +289,15 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
                   </div>
                 </FormGroup>
 
-                <FormGroup>
-                  <Label required>Quantity</Label>
-                  <div className="relative">
-                    <FiPackage className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primarycolor/60 w-4 h-4" />
-                    <Input
-                      type="number"
-                      name="quantity"
-                      value={formData.quantity}
-                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                      placeholder="0"
-                      className="pl-10"
-                      min="0"
-                      required
-                    />
-                  </div>
-                </FormGroup>
+                {/* Inventory Note */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> Inventory quantities are managed through product variants.
+                    After creating this product, you can add variants with specific sizes, colors, and quantities.
+                  </p>
+                </div>
 
-                <div className="col-span-2">
+                <div>
                   <FormGroup>
                     <Label>Discount (%)</Label>
                     <div className="relative">

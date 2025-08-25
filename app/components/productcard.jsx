@@ -60,12 +60,20 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
 
     if (isAddingToCart) return;
 
+    // Check if product has variants - if so, redirect to product page
+    if ((product.variant_count || 0) > 0) {
+      router.push(`/product/${product.id}`);
+      return;
+    }
+
     setIsAddingToCart(true);
 
     try {
+      // Use min_price for products with variants, fallback to price
+      const basePrice = product.min_price || product.price;
       const currentPrice = discountPercentage > 0
-        ? product.price * (1 - discountPercentage / 100)
-        : product.price;
+        ? basePrice * (1 - discountPercentage / 100)
+        : basePrice;
 
       // Create unique identifier for cart item
       const cartItemId = `${product.id}-no-size-no-color`;
@@ -149,7 +157,7 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
             >
               <Heart
                 className={`w-3 h-3 md:w-4 md:h-4 ${
-                  isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600 hover:text-red-500'
+                  isInWishlist ? 'fill-red-500 text-red-500' : 'text-primarycolor/60 hover:text-red-500'
                 } transition-colors duration-200`}
               />
             </button>
@@ -159,38 +167,50 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
         {/* Product Info */}
         <div className="p-3 md:p-4 relative">
           <Link href={`/product/${product.id}`} className="block">
-            <h3 className="text-xs md:text-sm font-medium text-gray-900 mb-2 truncate leading-tight" title={product.name}>
+            <h3 className="text-xs md:text-sm font-medium text-primarycolor mb-2 truncate leading-tight" title={product.name}>
               {product.name}
             </h3>
 
             {/* Price Section */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-col min-w-0 flex-1">
-                {discountPercentage > 0 ? (
-                  <>
-                    <span className="text-xs text-gray-400 line-through">
-                      Ksh. {product.price}
-                    </span>
-                    <span className="text-sm md:text-base font-bold text-gray-900 truncate">
-                      Ksh. {(product.price * (1 - product.discount / 100)).toFixed(2)}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-sm md:text-base font-bold text-gray-900 truncate">
-                    Ksh. {product.price}
-                  </span>
-                )}
+                {(() => {
+                  const basePrice = product.min_price || product.price;
+                  const maxPrice = product.max_price || product.price;
+                  const showRange = basePrice !== maxPrice;
+
+                  if (discountPercentage > 0) {
+                    const discountedPrice = basePrice * (1 - product.discount / 100);
+                    return (
+                      <>
+                        <span className="text-xs text-primarycolor/70 line-through">
+                          Ksh. {showRange ? `${basePrice} - ${maxPrice}` : basePrice}
+                        </span>
+                        <span className="text-sm md:text-base font-bold text-primarycolor truncate">
+                          Ksh. {showRange ? `${discountedPrice.toFixed(0)} - ${(maxPrice * (1 - product.discount / 100)).toFixed(0)}` : discountedPrice.toFixed(0)}
+                        </span>
+                      </>
+                    );
+                  } else {
+                    return (
+                      <span className="text-sm md:text-base font-bold text-primarycolor truncate">
+                        Ksh. {showRange ? `${basePrice} - ${maxPrice}` : basePrice}
+                      </span>
+                    );
+                  }
+                })()}
               </div>
 
               {/* Add to Cart Button - Responsive sizing */}
               <Button
                 onClick={handleAddToCart}
-                disabled={isAddingToCart}
+                disabled={isAddingToCart || (product.total_inventory || 0) === 0}
                 variant="primary"
                 size="sm"
                 radius="full"
                 className="!w-8 !h-8 md:!w-10 md:!h-10 !p-0 shadow-sm flex-shrink-0 min-w-0"
                 loading={isAddingToCart}
+                title={(product.variant_count || 0) > 0 ? "View options" : "Add to cart"}
               >
                 <Plus className="w-4 h-4 md:w-5 md:h-5 text-white" />
               </Button>
@@ -230,39 +250,61 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
         <div className="flex-1 min-w-0 flex flex-col justify-between">
           <div>
             <Link href={`/product/${product.id}`} className="block">
-              <h3 className="text-sm md:text-lg font-semibold text-gray-900 mb-1 md:mb-2 line-clamp-2 leading-tight">
+              <h3 className="text-sm md:text-lg font-semibold text-primarycolor mb-1 md:mb-2 line-clamp-2 leading-tight">
                 {product.name}
               </h3>
-              
+
               {/* Category Badge */}
               <div className="mb-2">
-                <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                  {product.category_name}
+                <span className="inline-block px-2 py-1 bg-primarycolor/10 text-primarycolor/70 text-xs rounded-full">
+                  {product.category_name?.charAt(0).toUpperCase() + product.category_name?.slice(1).toLowerCase()}
                 </span>
               </div>
 
               {/* Price Section - Horizontal Layout */}
               <div className="flex items-center gap-3 mb-2">
-                {discountPercentage > 0 ? (
-                  <>
-                    <span className="text-lg md:text-xl font-bold text-gray-900">
-                      Ksh. {(product.price * (1 - product.discount / 100)).toFixed(2)}
-                    </span>
-                    <span className="text-sm text-gray-400 line-through">
-                      Ksh. {product.price}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-lg md:text-xl font-bold text-gray-900">
-                    Ksh. {product.price}
-                  </span>
-                )}
+                {(() => {
+                  const basePrice = product.min_price || product.price;
+                  const maxPrice = product.max_price || product.price;
+                  const showRange = basePrice !== maxPrice;
+
+                  if (discountPercentage > 0) {
+                    const discountedPrice = basePrice * (1 - product.discount / 100);
+                    return (
+                      <>
+                        <span className="text-lg md:text-xl font-bold text-primarycolor">
+                          Ksh. {showRange ? `${discountedPrice.toFixed(0)} - ${(maxPrice * (1 - product.discount / 100)).toFixed(0)}` : discountedPrice.toFixed(0)}
+                        </span>
+                        <span className="text-sm text-primarycolor/70 line-through">
+                          Ksh. {showRange ? `${basePrice} - ${maxPrice}` : basePrice}
+                        </span>
+                      </>
+                    );
+                  } else {
+                    return (
+                      <span className="text-lg md:text-xl font-bold text-primarycolor">
+                        Ksh. {showRange ? `${basePrice} - ${maxPrice}` : basePrice}
+                      </span>
+                    );
+                  }
+                })()}
               </div>
 
               {/* Stock Status */}
-              <div className="flex items-center gap-2 text-xs md:text-sm text-gray-600">
-                <div className={`w-2 h-2 rounded-full ${product.in_stock ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <span>{product.in_stock ? 'In Stock' : 'Out of Stock'}</span>
+              <div className="flex items-center gap-2 text-xs md:text-sm text-primarycolor/70">
+                {(() => {
+                  const totalStock = product.total_inventory || 0;
+                  const isInStock = totalStock > 0;
+                  return (
+                    <>
+                      <div className={`w-2 h-2 rounded-full ${isInStock ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                      <span>
+                        {isInStock ? `${totalStock} in stock` : 'Out of Stock'}
+                        {(product.variant_count || 0) > 0 && ` • ${product.variant_count} variants`}
+                      </span>
+                    </>
+                  );
+                })()}
               </div>
             </Link>
           </div>
@@ -274,7 +316,7 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
               {product.rating && (
                 <div className="flex items-center gap-1">
                   <span className="text-yellow-400">★</span>
-                  <span className="text-sm text-gray-600">{product.rating}</span>
+                  <span className="text-sm text-primarycolor/70">{product.rating}</span>
                 </div>
               )}
             </div>
@@ -283,11 +325,11 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
               {/* Wishlist Button */}
               <button
                 onClick={handleWishlistClick}
-                className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-all duration-200"
+                className="w-10 h-10 bg-primarycolor/5 hover:bg-primarycolor/10 rounded-full flex items-center justify-center transition-all duration-200"
               >
                 <Heart
                   className={`w-5 h-5 ${
-                    isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600 hover:text-red-500'
+                    isInWishlist ? 'fill-red-500 text-red-500' : 'text-primarycolor/60 hover:text-red-500'
                   } transition-colors duration-200`}
                 />
               </button>

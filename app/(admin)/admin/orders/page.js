@@ -1,5 +1,6 @@
 "use client";
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   FiSearch, FiFilter, FiDownload, FiEye, FiEdit, FiClock,
   FiShoppingBag, FiTruck, FiCheckCircle, FiXCircle, FiCalendar,
@@ -54,8 +55,83 @@ function OrderCard({ order, isSelected, onSelect, onStatusUpdate, onViewDetails 
   const StatusIcon = getStatusIcon(order.status);
 
   return (
-    <PremiumCard className="p-4 hover:shadow-xl transition-all duration-300 group">
-      <div className="flex items-start gap-3">
+    <PremiumCard
+      className="p-3 sm:p-4 hover:shadow-xl transition-all duration-300 group"
+      data-id={order.id}
+      data-highlight={order.id}
+      id={`item-${order.id}`}
+    >
+      {/* Mobile Layout */}
+      <div className="block sm:hidden">
+        <div className="flex items-start gap-2 mb-3">
+          <BulkSelectCheckbox
+            itemId={order.id}
+            isSelected={isSelected}
+            onSelectionChange={onSelect}
+            className="mt-1 flex-shrink-0"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="font-semibold text-primarycolor text-sm">
+                Order #{order.id}
+              </h3>
+              <span className={`px-1.5 py-0.5 text-xs font-medium rounded-full border ${getStatusColor(order.status)}`}>
+                <StatusIcon className="w-3 h-3 inline mr-1" />
+                {order.status}
+              </span>
+            </div>
+
+            <div className="text-sm font-bold text-primarycolor mb-2">
+              KES {parseFloat(order.total_amount || 0).toLocaleString()}
+            </div>
+
+            <div className="text-xs text-primarycolor/70 space-y-1">
+              <div className="flex items-center gap-1">
+                <FiCalendar className="w-3 h-3" />
+                {new Date(order.created_at).toLocaleDateString()}
+              </div>
+              <div className="flex items-center gap-1">
+                <FiUser className="w-3 h-3" />
+                <span className="truncate">{order.user?.name || 'Unknown Customer'}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <FiPackage className="w-3 h-3" />
+                {order.cart_items?.length || 0} items
+              </div>
+              {order.delivery_address && (
+                <div className="flex items-center gap-1">
+                  <FiMapPin className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{order.delivery_address}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-primarycolor/10">
+          <button
+            onClick={() => onViewDetails(order)}
+            className="flex items-center gap-1 px-2 py-1 text-xs text-primarycolor hover:bg-primarycolor/10 rounded-lg transition-colors"
+          >
+            <FiEye className="w-3 h-3" />
+            View Details
+          </button>
+          <select
+            value={order.status}
+            onChange={(e) => onStatusUpdate(order.id, e.target.value)}
+            className="text-xs px-2 py-1 border border-primarycolor/30 rounded text-primarycolor bg-white hover:bg-primarycolor/5 transition-colors"
+          >
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden sm:flex items-start gap-3">
         <BulkSelectCheckbox
           itemId={order.id}
           isSelected={isSelected}
@@ -90,7 +166,7 @@ function OrderCard({ order, isSelected, onSelect, onStatusUpdate, onViewDetails 
                 KES {parseFloat(order.total_amount || 0).toLocaleString()}
               </p>
               <p className="text-xs text-primarycolor/60">
-                {order.order_items?.length || 0} items
+                {order.cart_items?.length || 0} items
               </p>
             </div>
           </div>
@@ -137,11 +213,34 @@ export default function OrderManagement() {
   const { useOrders, useUpdateOrderStatus } = useSupabase();
   const { data: orders, isLoading } = useOrders();
   const updateOrderStatus = useUpdateOrderStatus();
+  const searchParams = useSearchParams();
 
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+
+  // Handle search highlighting from URL params
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight');
+    const shouldScroll = searchParams.get('scroll');
+
+    if (highlightId && shouldScroll) {
+      setTimeout(() => {
+        const element = document.querySelector(`[data-id="${highlightId}"]`);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+          element.classList.add('highlight-search-result');
+          setTimeout(() => {
+            element.classList.remove('highlight-search-result');
+          }, 3000);
+        }
+      }, 500);
+    }
+  }, [searchParams]);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   // Filter orders based on search and filters
@@ -198,7 +297,7 @@ export default function OrderManagement() {
         const csvContent = "data:text/csv;charset=utf-8," +
           "Order ID,Customer,Status,Total,Date,Items\n" +
           selectedOrdersData.map(o =>
-            `${o.id},"${o.user?.name || 'Unknown'}",${o.status},${o.total_amount},"${new Date(o.created_at).toLocaleDateString()}",${o.order_items?.length || 0}`
+            `${o.id},"${o.user?.name || 'Unknown'}",${o.status},${o.total_amount},"${new Date(o.created_at).toLocaleDateString()}",${o.cart_items?.length || 0}`
           ).join("\n");
 
         const encodedUri = encodeURI(csvContent);
@@ -441,11 +540,11 @@ export default function OrderManagement() {
                   </div>
                 )}
 
-                {selectedOrder.order_items && selectedOrder.order_items.length > 0 && (
+                {selectedOrder.cart_items && selectedOrder.cart_items.length > 0 && (
                   <div>
                     <p className="text-sm text-primarycolor/70 mb-2">Order Items</p>
                     <div className="space-y-2">
-                      {selectedOrder.order_items.map((item, index) => (
+                      {selectedOrder.cart_items.map((item, index) => (
                         <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                           <span className="text-primarycolor">{item.product?.name || 'Unknown Product'}</span>
                           <span className="text-primarycolor/70">

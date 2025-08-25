@@ -158,14 +158,14 @@ function HomePageContent() {
         isSpecialCategory={true}
       />
 
-      {categories?.filter(category => 
+      {categories?.filter(category =>
         products.some(product => product.category_id === category.id)
       ).map(category => (
         <ProductCarousel
           key={category.id}
-          title={category.name}
-          products={activeFilters 
-            ? filteredProducts.filter(p => p.category_id === category.id) 
+          title={category.name.charAt(0).toUpperCase() + category.name.slice(1).toLowerCase()}
+          products={activeFilters
+            ? filteredProducts.filter(p => p.category_id === category.id)
             : products?.filter(p => p.category_id === category.id) || []
           }
           category={category.name}

@@ -2,8 +2,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 import { toast } from 'sonner';
-import { FiX, FiUpload } from 'react-icons/fi';
+import { FiX, FiUpload, FiImage, FiFileText, FiToggleLeft, FiToggleRight, FiHash } from 'react-icons/fi';
 import Image from 'next/image';
+import { PremiumCard, Button, Input, FormGroup, Label, GradientText } from '../../../components/ui';
 
 export default function BannerForm({ banner, onClose }) {
   const { useAddBanner, useUpdateBanner, useUploadImage } = useSupabase();
@@ -77,49 +78,56 @@ export default function BannerForm({ banner, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-lg relative">
-        <button
-          onClick={onClose}
-          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 z-10"
-        >
-          <FiX size={20} />
-        </button>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+        <div className="bg-gradient-to-r from-primarycolor to-primarycolor/90 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-white flex items-center gap-3">
+              <FiImage className="w-5 h-5" />
+              {banner?.id ? 'Edit Banner' : 'Add New Banner'}
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-white/80 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
 
-        <div className="max-h-[85vh] overflow-y-auto p-6">
-          <h2 className="text-xl font-semibold mb-6">
-            {banner?.id ? 'Edit Banner' : 'Add New Banner'}
-          </h2>
+        <div className="p-6 max-h-[calc(90vh-80px)] overflow-y-auto">
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Title</label>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-primarycolor mb-2">Title</label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-primarycolor/20 rounded-lg focus:outline-none focus:border-primarycolor focus:ring-2 focus:ring-primarycolor/10 placeholder:text-primarycolor/50"
+                placeholder="Enter banner title"
                 required
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Description</label>
+            <div>
+              <label className="block text-sm font-medium text-primarycolor mb-2">Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-primarycolor/20 rounded-lg focus:outline-none focus:border-primarycolor focus:ring-2 focus:ring-primarycolor/10 placeholder:text-primarycolor/50"
                 rows="3"
+                placeholder="Enter banner description"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Banner Image</label>
+            <div>
+              <label className="block text-sm font-medium text-primarycolor mb-2">Banner Image</label>
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md cursor-pointer"
+                className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-primarycolor/20 border-dashed rounded-lg cursor-pointer hover:border-primarycolor/40 transition-colors"
               >
                 <div className="space-y-1 text-center">
                   {imagePreview ? (
@@ -134,8 +142,8 @@ export default function BannerForm({ banner, onClose }) {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center">
-                      <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
-                      <p className="text-gray-600">Click to upload image</p>
+                      <FiUpload className="mx-auto h-12 w-12 text-primarycolor/40" />
+                      <p className="text-primarycolor/60">Click to upload image</p>
                     </div>
                   )}
                   <input
@@ -149,50 +157,56 @@ export default function BannerForm({ banner, onClose }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center">
                 <input
                   type="checkbox"
                   name="is_active"
                   checked={formData.is_active}
                   onChange={handleChange}
-                  className="h-4 w-4 text-primarycolor"
+                  className="h-4 w-4 text-primarycolor border-primarycolor/20 rounded focus:ring-primarycolor/20"
                 />
-                <label className="ml-2 text-sm text-gray-700">Active</label>
+                <label className="ml-2 text-sm text-primarycolor">Active</label>
               </div>
 
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-700">Display Order:</label>
+              <div>
+                <label className="block text-sm font-medium text-primarycolor mb-2">Display Order</label>
                 <input
                   type="number"
                   name="display_order"
                   value={formData.display_order}
                   onChange={handleChange}
-                  className="w-20 p-1 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-primarycolor/20 rounded-lg focus:outline-none focus:border-primarycolor focus:ring-2 focus:ring-primarycolor/10"
                   min="0"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end space-x-4 mt-6">
-              <button
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-primarycolor/10">
+              <Button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-md"
+                variant="outline"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                className="px-4 py-2 bg-primarycolor text-white rounded-md"
                 disabled={addMutation.isLoading || updateMutation.isLoading}
+                className="flex items-center gap-2"
               >
-                {addMutation.isLoading || updateMutation.isLoading
-                  ? 'Saving...'
-                  : banner?.id
-                  ? 'Update'
-                  : 'Add'}
-              </button>
+                {addMutation.isLoading || updateMutation.isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <FiImage className="w-4 h-4" />
+                    {banner?.id ? 'Update Banner' : 'Add Banner'}
+                  </>
+                )}
+              </Button>
             </div>
           </form>
         </div>

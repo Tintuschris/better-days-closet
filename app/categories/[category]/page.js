@@ -137,14 +137,14 @@ export default function CategoryPage() {
               Home
             </button>
             <ChevronDown className="w-4 h-4 mx-2 rotate-[-90deg] text-gray-400" />
-            <span className="text-primarycolor font-semibold capitalize">{category}</span>
+            <span className="text-primarycolor font-semibold">{category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()}</span>
           </div>
           
           {/* Category Title & Count */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-primarycolor capitalize tracking-tight">
-                {category}
+              <h1 className="text-2xl md:text-3xl font-bold text-primarycolor tracking-tight">
+                {category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()}
               </h1>
               <div className="w-16 h-1 bg-gradient-to-r from-primarycolor to-secondarycolor rounded-full mt-2"></div>
             </div>

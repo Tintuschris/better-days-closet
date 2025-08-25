@@ -162,7 +162,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 className={`flex items-center gap-2.5 px-3 py-2 mb-0.5 rounded-md transition-all duration-200 relative group ${
                   isActive
                     ? 'bg-primarycolor text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    : 'text-primarycolor/70 hover:bg-primarycolor/5 hover:text-primarycolor'
                 }`}
                 onMouseEnter={() => prefetchData(item.prefetchKeys)}
               >
@@ -179,9 +179,9 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         </nav>
 
         {/* Help Section */}
-        <div className="p-3 border-t border-gray-100 flex-shrink-0">
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <p className="text-xs text-gray-600 mb-1">Need help?</p>
+        <div className="p-3 border-t border-primarycolor/10 flex-shrink-0">
+          <div className="bg-primarycolor/5 p-3 rounded-lg">
+            <p className="text-xs text-primarycolor/70 mb-1">Need help?</p>
             <Link href="/admin/help" className="text-primarycolor text-xs font-semibold hover:text-primarycolor/80 transition-colors">
               View Documentation
             </Link>

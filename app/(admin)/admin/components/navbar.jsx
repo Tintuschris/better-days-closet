@@ -1,14 +1,28 @@
 "use client";
 import { useAuth } from '../../../hooks/useAuth';
 import { FiBell, FiUser, FiLogOut, FiMenu, FiSearch } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { GradientText } from '../../../components/ui';
+import AdminGlobalSearch from './AdminGlobalSearch';
 
 export default function Navbar({ onMenuClick }) {
   const { signOut, userDetails } = useAuth();
-  const [showSearch, setShowSearch] = useState(false);
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const pathname = usePathname();
+
+  // Keyboard shortcut for search (Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowGlobalSearch(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Get page title from pathname
   const getPageTitle = () => {
@@ -51,11 +65,11 @@ export default function Navbar({ onMenuClick }) {
           </div>
 
           <div className="flex items-center gap-2 lg:gap-4">
-            {/* Search Button */}
+            {/* Global Search Button */}
             <button
-              onClick={() => setShowSearch(!showSearch)}
+              onClick={() => setShowGlobalSearch(true)}
               className="p-2 text-primarycolor hover:bg-gradient-to-r hover:from-primarycolor/10 hover:to-secondarycolor/10 rounded-lg transition-all duration-300"
-              title="Search"
+              title="Global Search (Ctrl+K)"
             >
               <FiSearch className="w-4 h-4 lg:w-5 lg:h-5" />
             </button>
@@ -91,21 +105,13 @@ export default function Navbar({ onMenuClick }) {
           </div>
         </div>
 
-        {/* Search Bar (expandable) */}
-        {showSearch && (
-          <div className="mt-3 pt-3 border-t border-primarycolor/10">
-            <div className="relative max-w-md">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primarycolor/60 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search products, orders, customers..."
-                className="w-full pl-10 pr-4 py-2 bg-white/60 border border-primarycolor/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primarycolor/20 focus:border-primarycolor text-primarycolor placeholder-primarycolor/60"
-                autoFocus
-              />
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Global Search Modal */}
+      <AdminGlobalSearch
+        isOpen={showGlobalSearch}
+        onClose={() => setShowGlobalSearch(false)}
+      />
     </nav>
   );
 }

@@ -122,3 +122,26 @@ body {
 @keyframes slideIn {
   to { transform: translateX(0); }
 }
+
+/* Search result highlighting */
+.highlight-search-result {
+  animation: highlightPulse 3s ease-in-out;
+  border: 2px solid var(--primarycolor) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 20px rgba(70, 0, 102, 0.3) !important;
+}
+
+@keyframes highlightPulse {
+  0% {
+    background-color: rgba(70, 0, 102, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    background-color: rgba(70, 0, 102, 0.2);
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: transparent;
+    transform: scale(1);
+  }
+}

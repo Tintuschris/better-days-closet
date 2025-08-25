@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 import { toast } from 'sonner';
-import { FiX } from 'react-icons/fi';
+import { FiX, FiMapPin, FiTruck, FiDollarSign, FiFileText } from 'react-icons/fi';
+import { PremiumCard, Button, Input, FormGroup, Label, GradientText } from '../../../components/ui';
 
 const DELIVERY_OPTIONS = [
   'Nairobi Delivery',
@@ -144,91 +145,99 @@ export default function DeliveryAddressesForm({ address, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-lg relative">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <PremiumCard className="w-full max-w-lg relative max-h-[90vh] overflow-hidden">
         <button
           onClick={onClose}
-          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 z-10"
+          className="absolute right-4 top-4 text-primarycolor/60 hover:text-primarycolor z-10 p-2 rounded-lg hover:bg-primarycolor/10 transition-colors"
         >
           <FiX size={20} />
         </button>
 
         <div className="max-h-[85vh] overflow-y-auto p-6">
-          <h2 className="text-xl font-semibold mb-6 pr-8">
+          <GradientText className="text-xl font-bold mb-6 pr-8 flex items-center gap-3">
+            <FiMapPin className="w-5 h-5" />
             {address ? 'Edit Delivery Address' : 'Add New Delivery Address'}
-          </h2>
+          </GradientText>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <FormGroup>
+              <Label required>
+                <FiTruck className="w-4 h-4 mr-2" />
                 Option Name
-              </label>
-              <select
-                name="option_name"
-                value={formData.option_name}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
-                required
-              >
-                <option value="">Select Delivery Option</option>
-                {DELIVERY_OPTIONS.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </div>
+              </Label>
+              <div className="relative">
+                <select
+                  name="option_name"
+                  value={formData.option_name}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-primarycolor/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primarycolor/20 focus:border-primarycolor text-primarycolor bg-white/60"
+                  required
+                >
+                  <option value="">Select Delivery Option</option>
+                  {DELIVERY_OPTIONS.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+            </FormGroup>
 
             {renderOptionSpecificFields()}
 
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Cost
-              </label>
-              <input
-                type="number"
-                name="cost"
-                value={formData.cost}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
-                required
-              />
-            </div>
+            <FormGroup>
+              <Label required>
+                <FiDollarSign className="w-4 h-4 mr-2" />
+                Cost (KSh)
+              </Label>
+              <div className="relative">
+                <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primarycolor/60 w-4 h-4" />
+                <Input
+                  type="number"
+                  name="cost"
+                  value={formData.cost}
+                  onChange={handleChange}
+                  placeholder="0"
+                  className="pl-10"
+                  min="0"
+                  required
+                />
+              </div>
+            </FormGroup>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+            <FormGroup>
+              <Label>
+                <FiFileText className="w-4 h-4 mr-2" />
                 Description
-              </label>
+              </Label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-primarycolor focus:border-primarycolor"
+                className="w-full p-3 border border-primarycolor/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primarycolor/20 focus:border-primarycolor text-primarycolor bg-white/60 placeholder-primarycolor/60"
                 rows="3"
+                placeholder="Optional description for this delivery option..."
               />
-            </div>
+            </FormGroup>
 
-            <div className="flex justify-end space-x-4 mt-6">
-              <button
+            <div className="flex justify-end space-x-4 pt-6 border-t border-primarycolor/10">
+              <Button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                variant="outline"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                className="px-4 py-2 bg-primarycolor text-white rounded-md hover:bg-primarycolor/90"
-                disabled={addMutation.isLoading || updateMutation.isLoading}
+                loading={addMutation.isLoading || updateMutation.isLoading}
+                loadingText="Saving..."
               >
-                {addMutation.isLoading || updateMutation.isLoading
-                  ? 'Saving...'
-                  : address
-                  ? 'Update'
-                  : 'Add'}
-              </button>
+                {address ? 'Update Address' : 'Add Address'}
+              </Button>
             </div>
           </form>
         </div>
-      </div>
+      </PremiumCard>
     </div>
   );
 }

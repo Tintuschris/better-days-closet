@@ -1,11 +1,12 @@
 "use client";
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   FiPlus, FiSearch, FiFilter, FiDownload, FiUpload, FiPackage,
   FiEdit, FiTrash2, FiEye, FiStar, FiAlertCircle
 } from 'react-icons/fi';
 import { toast } from 'sonner';
-import ProductForm from '../components/productform';
+import ProductWithVariantsForm from '../components/ProductWithVariantsForm';
 import BulkOperations, { BulkSelectCheckbox, productBulkOperations } from '../components/BulkOperations';
 import { useSupabase } from '../hooks/useSupabase';
 import { PremiumCard, Button, GradientText } from '../../../components/ui';
@@ -26,12 +27,22 @@ function LoadingSkeleton() {
 }
 
 function ProductCard({ product, isSelected, onSelect, onEdit, onDelete }) {
+  // Use min_price for display, fallback to price for backward compatibility
+  const basePrice = product.min_price || product.price;
+  const maxPrice = product.max_price || product.price;
   const discountedPrice = product.discount > 0
-    ? product.price * (1 - product.discount / 100)
-    : product.price;
+    ? basePrice * (1 - product.discount / 100)
+    : basePrice;
+
+  const showPriceRange = basePrice !== maxPrice;
 
   return (
-    <PremiumCard className="p-4 hover:shadow-xl transition-all duration-300 group">
+    <PremiumCard
+      className="p-4 hover:shadow-xl transition-all duration-300 group"
+      data-id={product.id}
+      data-highlight={product.id}
+      id={`item-${product.id}`}
+    >
       <div className="flex items-start gap-3">
         <BulkSelectCheckbox
           itemId={product.id}
@@ -77,12 +88,14 @@ function ProductCard({ product, isSelected, onSelect, onEdit, onDelete }) {
 
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-lg font-bold text-primarycolor">
-                  KES {discountedPrice.toLocaleString()}
+                  KES {showPriceRange
+                    ? `${discountedPrice.toLocaleString()} - ${maxPrice.toLocaleString()}`
+                    : discountedPrice.toLocaleString()}
                 </span>
                 {product.discount > 0 && (
                   <>
                     <span className="text-sm text-primarycolor/60 line-through">
-                      KES {product.price.toLocaleString()}
+                      KES {basePrice.toLocaleString()}
                     </span>
                     <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
                       -{product.discount}%
@@ -93,12 +106,18 @@ function ProductCard({ product, isSelected, onSelect, onEdit, onDelete }) {
 
               <div className="flex items-center gap-4 mt-2 text-xs text-primarycolor/60">
                 <span className={`flex items-center gap-1 ${
-                  product.quantity < 10 ? 'text-red-600' : 'text-green-600'
+                  (product.total_inventory || 0) < 10 ? 'text-red-600' : 'text-green-600'
                 }`}>
                   <FiPackage className="w-3 h-3" />
-                  {product.quantity} in stock
-                  {product.quantity < 10 && <FiAlertCircle className="w-3 h-3" />}
+                  {product.total_inventory || 0} in stock
+                  {(product.total_inventory || 0) < 10 && <FiAlertCircle className="w-3 h-3" />}
                 </span>
+                {(product.variant_count || 0) > 0 && (
+                  <span className="flex items-center gap-1 text-blue-600">
+                    <FiStar className="w-3 h-3" />
+                    {product.variant_count} variants
+                  </span>
+                )}
               </div>
             </div>
 
@@ -130,6 +149,7 @@ export default function ProductManagement() {
   const { data: products, isLoading: productsLoading } = useProducts();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
   const deleteProduct = useDeleteProduct();
+  const searchParams = useSearchParams();
 
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -137,6 +157,28 @@ export default function ProductManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStock, setFilterStock] = useState('all');
+
+  // Handle search highlighting from URL params
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight');
+    const shouldScroll = searchParams.get('scroll');
+
+    if (highlightId && shouldScroll) {
+      setTimeout(() => {
+        const element = document.querySelector(`[data-id="${highlightId}"]`);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+          element.classList.add('highlight-search-result');
+          setTimeout(() => {
+            element.classList.remove('highlight-search-result');
+          }, 3000);
+        }
+      }, 500);
+    }
+  }, [searchParams]);
 
   // Filter products based on search and filters
   const filteredProducts = useMemo(() => {
@@ -149,9 +191,9 @@ export default function ProductManagement() {
       const matchesCategory = filterCategory === 'all' || product.category_id === filterCategory;
 
       const matchesStock = filterStock === 'all' ||
-                          (filterStock === 'low' && product.quantity < 10) ||
-                          (filterStock === 'out' && product.quantity === 0) ||
-                          (filterStock === 'in' && product.quantity > 0);
+                          (filterStock === 'low' && (product.total_inventory || 0) < 10) ||
+                          (filterStock === 'out' && (product.total_inventory || 0) === 0) ||
+                          (filterStock === 'in' && (product.total_inventory || 0) > 0);
 
       return matchesSearch && matchesCategory && matchesStock;
     });
@@ -163,8 +205,8 @@ export default function ProductManagement() {
 
     return {
       total: products.length,
-      lowStock: products.filter(p => p.quantity < 10 && p.quantity > 0).length,
-      outOfStock: products.filter(p => p.quantity === 0).length,
+      lowStock: products.filter(p => (p.total_inventory || 0) < 10 && (p.total_inventory || 0) > 0).length,
+      outOfStock: products.filter(p => (p.total_inventory || 0) === 0).length,
       promoted: products.filter(p => p.is_promoted).length
     };
   }, [products]);
@@ -403,7 +445,7 @@ export default function ProductManagement() {
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <ProductForm
+            <ProductWithVariantsForm
               product={editingProduct}
               onClose={() => {
                 setShowForm(false);

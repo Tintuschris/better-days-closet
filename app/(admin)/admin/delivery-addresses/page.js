@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useSupabase } from '../hooks/useSupabase';
 import DeliveryAddressesForm from '../components/deliveryaddressform';
 import { FiEdit2, FiTrash2, FiPlus, FiMapPin, FiDollarSign, FiTruck } from 'react-icons/fi';
@@ -11,9 +12,32 @@ export default function DeliveryAddressesPage() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const { useDeliveryAddresses, useDeleteDeliveryAddress } = useSupabase();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const searchParams = useSearchParams();
 
   const { data: addresses, isLoading } = useDeliveryAddresses();
   const deleteAddressMutation = useDeleteDeliveryAddress();
+
+  // Handle search highlighting from URL params
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight');
+    const shouldScroll = searchParams.get('scroll');
+
+    if (highlightId && shouldScroll) {
+      setTimeout(() => {
+        const element = document.querySelector(`[data-id="${highlightId}"]`);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+          element.classList.add('highlight-search-result');
+          setTimeout(() => {
+            element.classList.remove('highlight-search-result');
+          }, 3000);
+        }
+      }, 500);
+    }
+  }, [searchParams]);
 
   const handleDelete = async (id) => {
     try {
@@ -110,6 +134,9 @@ export default function DeliveryAddressesPage() {
           <PremiumCard
             key={address.id}
             className="p-6 hover:shadow-xl transition-all duration-300"
+            data-id={address.id}
+            data-highlight={address.id}
+            id={`item-${address.id}`}
           >
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">

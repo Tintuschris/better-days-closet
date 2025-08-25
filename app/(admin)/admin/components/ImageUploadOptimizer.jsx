@@ -166,8 +166,13 @@ const ImageUploadOptimizer = ({
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-semibold text-primarycolor">Optimization Settings</h4>
             <button
-              onClick={() => setShowSettings(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowSettings(false);
+              }}
               className="text-primarycolor/60 hover:text-primarycolor"
+              type="button"
             >
               <FiX className="w-4 h-4" />
             </button>
@@ -272,8 +277,13 @@ const ImageUploadOptimizer = ({
             </Button>
             
             <button
-              onClick={() => setShowSettings(!showSettings)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowSettings(!showSettings);
+              }}
               className="flex items-center gap-2 px-3 py-2 text-primarycolor/70 hover:text-primarycolor transition-colors"
+              type="button"
             >
               <FiSettings className="w-4 h-4" />
               Settings

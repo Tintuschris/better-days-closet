@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useSupabase } from '../hooks/useSupabase';
 import { FiEdit2, FiTrash2, FiPlus, FiImage, FiEye, FiEyeOff } from 'react-icons/fi';
 import { toast } from 'sonner';
@@ -12,6 +13,29 @@ export default function BannersPage() {
   const { useBanners, useDeleteBanner } = useSupabase();
   const { data: banners, isLoading } = useBanners();
   const deleteBannerMutation = useDeleteBanner();
+  const searchParams = useSearchParams();
+
+  // Handle search highlighting from URL params
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight');
+    const shouldScroll = searchParams.get('scroll');
+
+    if (highlightId && shouldScroll) {
+      setTimeout(() => {
+        const element = document.querySelector(`[data-id="${highlightId}"]`);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+          element.classList.add('highlight-search-result');
+          setTimeout(() => {
+            element.classList.remove('highlight-search-result');
+          }, 3000);
+        }
+      }, 500);
+    }
+  }, [searchParams]);
 
   const handleDelete = async (id) => {
     try {
@@ -105,7 +129,13 @@ export default function BannersPage() {
       {/* Banners Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {banners?.map((banner) => (
-          <PremiumCard key={banner.id} className="overflow-hidden hover:shadow-xl transition-all duration-300">
+          <PremiumCard
+            key={banner.id}
+            className="overflow-hidden hover:shadow-xl transition-all duration-300"
+            data-id={banner.id}
+            data-highlight={banner.id}
+            id={`item-${banner.id}`}
+          >
             <div className="relative h-48">
               <Image
                 src={banner.image_url}

@@ -204,9 +204,10 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
 
           {/* Marquee Banner */}
           <div className="overflow-hidden flex-1 relative">
-            <div className="whitespace-nowrap animate-marquee">
-              🌟 Free shipping on orders over Ksh. 5,000! Shop now and enjoy
-              exclusive deals on our latest arrivals! 🌟
+            <div className="whitespace-nowrap animate-marquee flex items-center gap-2">
+              <New className="w-4 h-4 text-secondarycolor" />
+              <span>New arrivals weekly! Discover the latest fashion trends and exclusive collections at Better Days Closet</span>
+              <Popular className="w-4 h-4 text-secondarycolor" />
             </div>
           </div>
         </div>
@@ -575,7 +576,7 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
                   prefetch
                 >
                   <IconComponent className="w-5 h-5 text-primarycolor mr-3 group-hover:text-secondarycolor transition-colors" />
-                  <span className="text-primarycolor font-medium group-hover:text-secondarycolor transition-colors capitalize">{category.name}</span>
+                  <span className="text-primarycolor font-medium group-hover:text-secondarycolor transition-colors">{category.name.charAt(0).toUpperCase() + category.name.slice(1).toLowerCase()}</span>
                   <ArrowRight className="w-4 h-4 text-gray-400 ml-auto group-hover:text-secondarycolor transition-colors" />
                 </Link>
               );
@@ -625,7 +626,12 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
                   onFocus={() => setShowSuggestions(true)}
                   onClick={(e) => e.stopPropagation()}
                   className="w-full py-4 pl-5 pr-12 bg-white border-2 border-primarycolor/20 rounded-2xl focus:outline-none focus:border-primarycolor focus:ring-4 focus:ring-primarycolor/10 transition-all duration-200 text-gray-900 placeholder-gray-500 text-base font-medium shadow-sm"
-                  autoFocus
+                  ref={(input) => {
+                    // Only auto-focus when user intentionally opens search
+                    if (input && showSuggestions && searchTerm === '') {
+                      setTimeout(() => input.focus(), 100);
+                    }
+                  }}
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {isLoading ? (

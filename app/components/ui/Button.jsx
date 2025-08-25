@@ -25,33 +25,33 @@ const variants = {
     bg-gradient-to-r from-primarycolor to-primarycolor/90 text-white
     hover:from-primarycolor/90 hover:to-primarycolor 
     focus:ring-2 focus:ring-primarycolor/20
-    disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500
+    disabled:from-primarycolor/20 disabled:to-primarycolor/20 disabled:text-primarycolor/40
     shadow-lg shadow-primarycolor/20 hover:shadow-xl hover:shadow-primarycolor/30
   `,
   secondary: `
     border-2 border-primarycolor text-primarycolor bg-white
     hover:bg-primarycolor hover:text-white
     focus:ring-2 focus:ring-primarycolor/20
-    disabled:border-gray-300 disabled:text-gray-400 disabled:bg-gray-50
+    disabled:border-primarycolor/20 disabled:text-primarycolor/40 disabled:bg-primarycolor/5
   `,
   outline: `
     border border-primarycolor/30 text-primarycolor bg-transparent
     hover:bg-primarycolor/5 hover:border-primarycolor
     focus:ring-2 focus:ring-primarycolor/20
-    disabled:border-gray-200 disabled:text-gray-400
+    disabled:border-primarycolor/20 disabled:text-primarycolor/40
   `,
   ghost: `
     text-primarycolor bg-transparent
     hover:bg-primarycolor/10 hover:text-primarycolor
     focus:ring-2 focus:ring-primarycolor/20
-    disabled:text-gray-400
+    disabled:text-primarycolor/40
     [&>*]:text-primarycolor hover:[&>*]:text-primarycolor
   `,
   danger: `
     bg-gradient-to-r from-red-500 to-red-600 text-white
     hover:from-red-600 hover:to-red-700
     focus:ring-2 focus:ring-red-500/20
-    disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500
+    disabled:from-primarycolor/20 disabled:to-primarycolor/20 disabled:text-primarycolor/40
     shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/30
   `,
 };

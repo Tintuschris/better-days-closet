@@ -20,14 +20,14 @@ const variants = {
   default: `
     bg-white/80 border-2 border-primarycolor/30 text-primarycolor
     focus:border-primarycolor focus:bg-white focus:ring-2 focus:ring-primarycolor/20
-    disabled:bg-gray-50 disabled:border-gray-200 disabled:text-gray-400
+    disabled:bg-primarycolor/5 disabled:border-primarycolor/20 disabled:text-primarycolor/40
     placeholder:text-primarycolor/60
   `,
   ghost: `
-    bg-gray-50 border-2 border-gray-200 text-primarycolor
+    bg-primarycolor/5 border-2 border-primarycolor/20 text-primarycolor
     focus:border-primarycolor focus:bg-white focus:ring-2 focus:ring-primarycolor/20
-    disabled:bg-gray-50 disabled:border-gray-200 disabled:text-gray-400
-    placeholder:text-gray-500
+    disabled:bg-primarycolor/5 disabled:border-primarycolor/20 disabled:text-primarycolor/40
+    placeholder:text-primarycolor/50
   `,
   premium: `
     backdrop-blur-lg bg-white/60 border border-white/30 text-primarycolor

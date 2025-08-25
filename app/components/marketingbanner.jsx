@@ -30,10 +30,10 @@ export default function MarketingBanner({ isDesktop, isMobile, reducedHeight }) 
   };
 
   // Determine height class based on props
-  const heightClass = reducedHeight 
-    ? "h-[280px]" 
-    : isMobile 
-      ? "h-40" 
+  const heightClass = reducedHeight
+    ? "h-[280px]"
+    : isMobile
+      ? "h-56 sm:h-64" // Increased mobile height for better balance
       : "h-[400px] lg:h-[500px]";
 
   return (

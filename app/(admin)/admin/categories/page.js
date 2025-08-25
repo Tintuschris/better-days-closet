@@ -1,5 +1,6 @@
 "use client";
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   FiPlus, FiSearch, FiFilter, FiDownload, FiUpload, FiList,
   FiEdit, FiTrash2, FiEye, FiPackage, FiGrid, FiMove, FiSettings
@@ -31,7 +32,12 @@ function LoadingSkeleton() {
 
 function CategoryCard({ category, isSelected, onSelect, onEdit, onDelete, onManageAttributes }) {
   return (
-    <PremiumCard className="p-4 hover:shadow-xl transition-all duration-300 group">
+    <PremiumCard
+      className="p-4 hover:shadow-xl transition-all duration-300 group"
+      data-id={category.id}
+      data-highlight={category.id}
+      id={`item-${category.id}`}
+    >
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3 flex-1">
           <BulkSelectCheckbox
@@ -101,6 +107,7 @@ export default function CategoryManagement() {
   const { useCategories, useDeleteCategory } = useSupabase();
   const { data: categories, isLoading } = useCategories();
   const deleteCategory = useDeleteCategory();
+  const searchParams = useSearchParams();
 
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -109,6 +116,28 @@ export default function CategoryManagement() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [showAttributesManager, setShowAttributesManager] = useState(false);
   const [selectedCategoryForAttributes, setSelectedCategoryForAttributes] = useState(null);
+
+  // Handle search highlighting from URL params
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight');
+    const shouldScroll = searchParams.get('scroll');
+
+    if (highlightId && shouldScroll) {
+      setTimeout(() => {
+        const element = document.querySelector(`[data-id="${highlightId}"]`);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+          element.classList.add('highlight-search-result');
+          setTimeout(() => {
+            element.classList.remove('highlight-search-result');
+          }, 3000);
+        }
+      }, 500);
+    }
+  }, [searchParams]);
 
   // Filter categories based on search
   const filteredCategories = useMemo(() => {
