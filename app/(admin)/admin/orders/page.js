@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   FiSearch, FiFilter, FiDownload, FiEye, FiEdit, FiClock,
@@ -209,7 +209,7 @@ function OrderCard({ order, isSelected, onSelect, onStatusUpdate, onViewDetails 
   );
 }
 
-export default function OrderManagement() {
+function OrderManagementContent() {
   const { useOrders, useUpdateOrderStatus } = useSupabase();
   const { data: orders, isLoading } = useOrders();
   const updateOrderStatus = useUpdateOrderStatus();
@@ -561,5 +561,13 @@ export default function OrderManagement() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function OrderManagement() {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <OrderManagementContent />
+    </Suspense>
   );
 }

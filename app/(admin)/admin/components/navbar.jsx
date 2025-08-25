@@ -1,7 +1,7 @@
 "use client";
 import { useAuth } from '../../../hooks/useAuth';
 import { FiBell, FiUser, FiLogOut, FiMenu, FiSearch } from 'react-icons/fi';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { GradientText } from '../../../components/ui';
 import AdminGlobalSearch from './AdminGlobalSearch';
@@ -108,10 +108,12 @@ export default function Navbar({ onMenuClick }) {
       </div>
 
       {/* Global Search Modal */}
-      <AdminGlobalSearch
-        isOpen={showGlobalSearch}
-        onClose={() => setShowGlobalSearch(false)}
-      />
+      <Suspense fallback={null}>
+        <AdminGlobalSearch
+          isOpen={showGlobalSearch}
+          onClose={() => setShowGlobalSearch(false)}
+        />
+      </Suspense>
     </nav>
   );
 }

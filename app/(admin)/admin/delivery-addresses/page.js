@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSupabase } from '../hooks/useSupabase';
 import DeliveryAddressesForm from '../components/deliveryaddressform';
@@ -8,7 +8,7 @@ import { FiEdit2, FiTrash2, FiPlus, FiMapPin, FiDollarSign, FiTruck } from 'reac
 import { toast } from 'sonner';
 import { PremiumCard, Button, GradientText } from '../../../components/ui';
 
-export default function DeliveryAddressesPage() {
+function DeliveryAddressesContent() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const { useDeliveryAddresses, useDeleteDeliveryAddress } = useSupabase();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -227,5 +227,24 @@ export default function DeliveryAddressesPage() {
 )}
 
     </div>
+  );
+}
+
+export default function DeliveryAddressesPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-gray-200 rounded-lg h-48"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    }>
+      <DeliveryAddressesContent />
+    </Suspense>
   );
 }

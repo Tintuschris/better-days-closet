@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   FiPlus, FiSearch, FiFilter, FiDownload, FiUpload, FiPackage,
@@ -144,7 +144,7 @@ function ProductCard({ product, isSelected, onSelect, onEdit, onDelete }) {
   );
 }
 
-export default function ProductManagement() {
+function ProductManagementContent() {
   const { useProducts, useCategories, useDeleteProduct } = useSupabase();
   const { data: products, isLoading: productsLoading } = useProducts();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
@@ -458,5 +458,24 @@ export default function ProductManagement() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProductManagement() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-gray-200 rounded-lg h-64"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    }>
+      <ProductManagementContent />
+    </Suspense>
   );
 }

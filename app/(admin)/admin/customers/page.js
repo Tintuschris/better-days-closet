@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSupabase } from '../hooks/useSupabase';
 import { FiSearch, FiFilter, FiDownload, FiUser, FiMail, FiPhone, FiCalendar, FiEdit, FiUnlock, FiLock, FiGift, FiX, FiSave, FiTrash2, FiEye } from 'react-icons/fi';
@@ -572,7 +572,7 @@ function CustomerEditModal({ customer, isOpen, onClose, onSave }) {
   );
 }
 
-export default function CustomerManagement() {
+function CustomerManagementContent() {
   const { useCustomers, useUpdateCustomer, useBlockCustomer } = useSupabase();
   const { data: customers, isLoading } = useCustomers();
   const updateCustomer = useUpdateCustomer();
@@ -850,5 +850,13 @@ export default function CustomerManagement() {
         onSave={handleSaveCustomer}
       />
     </div>
+  );
+}
+
+export default function CustomerManagement() {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <CustomerManagementContent />
+    </Suspense>
   );
 }

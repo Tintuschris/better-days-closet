@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSupabase } from '../hooks/useSupabase';
 import { FiEdit2, FiTrash2, FiPlus, FiImage, FiEye, FiEyeOff } from 'react-icons/fi';
@@ -8,7 +8,7 @@ import BannerForm from '../components/bannerform';
 import { PremiumCard, Button, GradientText } from '../../../components/ui';
 import Image from 'next/image';
 
-export default function BannersPage() {
+function BannersContent() {
   const [selectedBanner, setSelectedBanner] = useState(null);
   const { useBanners, useDeleteBanner } = useSupabase();
   const { data: banners, isLoading } = useBanners();
@@ -200,5 +200,24 @@ export default function BannersPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function BannersPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-gray-200 rounded-lg h-64"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    }>
+      <BannersContent />
+    </Suspense>
   );
 }

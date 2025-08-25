@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useSupabase } from '../hooks/useSupabase';
@@ -9,7 +9,7 @@ import {
 } from 'react-icons/fi';
 import { PremiumCard, Button, GradientText } from '../../../components/ui';
 
-export default function AdminSettingsPage() {
+function AdminSettingsContent() {
   const searchParams = useSearchParams();
   const { useAdminSettings, useUpdateAdminSetting } = useSupabase();
   const { data: settingsData, isLoading: settingsLoading } = useAdminSettings();
@@ -391,5 +391,24 @@ export default function AdminSettingsPage() {
         </div>
       </SettingCard>
     </div>
+  );
+}
+
+export default function AdminSettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="grid gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-gray-200 rounded-lg h-32"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    }>
+      <AdminSettingsContent />
+    </Suspense>
   );
 }
