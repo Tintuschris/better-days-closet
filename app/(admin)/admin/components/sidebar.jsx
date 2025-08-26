@@ -135,16 +135,18 @@ export default function Sidebar({ isOpen, setIsOpen }) {
       >
         {/* Logo Section */}
         <div className="p-4 flex-shrink-0 border-b border-gray-100">
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <div className="w-8 h-8 bg-gradient-to-br from-primarycolor to-primarycolor/80 rounded-lg flex items-center justify-center shadow-lg shadow-primarycolor/30">
-              <span className="text-white font-bold text-sm">BC</span>
-            </div>
-            <div className="flex flex-col leading-none">
-              <h1 className="text-base font-bold text-primarycolor tracking-tight">Better Days</h1>
-              <p className="text-xs text-secondarycolor font-semibold tracking-wide">CLOSET</p>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-10 rounded-lg flex items-center justify-center">
+              <Image
+                src="/Mobile-Logo.svg"
+                alt="Better Days Closet"
+                width={72}
+                height={60}
+                className="transition-transform duration-200 hover:scale-105"
+              />
             </div>
           </div>
-          <p className="text-xs text-primarycolor/60 ml-10">Admin Dashboard</p>
+          <p className="text-xs text-primarycolor/60 ml-1">Admin Dashboard</p>
         </div>
 
         {/* Navigation */}

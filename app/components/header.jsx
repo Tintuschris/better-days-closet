@@ -244,10 +244,10 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
           <div className="flex-1 flex justify-center">
             <Link href="/" prefetch>
               <Image
-                src="/logo.png"
+                src="/Mobile-Logo.svg"
                 alt="Better Days Closet"
-                width={36}
-                height={36}
+                width={110}
+                height={90}
                 priority
                 className="transition-transform duration-200 hover:scale-105"
               />
@@ -285,10 +285,10 @@ function HeaderContent({ activeIcon, setActiveIcon }) {
           <div className="flex items-center space-x-6">
             <Link href="/" prefetch className="flex-shrink-0">
               <Image
-                src="/logo.png"
+                src="/Desktop-Logo.svg"
                 alt="Better Days Closet"
-                width={44}
-                height={44}
+                width={140}
+                height={60}
                 priority
                 className="transition-transform duration-200 hover:scale-105"
               />

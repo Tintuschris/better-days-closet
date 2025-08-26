@@ -128,7 +128,7 @@ export async function GET(request) {
       <div id="loading-ui" class="min-h-screen flex items-center justify-center hidden">
         <div class="text-center">
           <div class="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-2xl flex items-center justify-center">
-            <img src="/logo.png" alt="Better Days Closet" width="48" height="48" class="rounded-xl" />
+            <img src="/Mobile-Logo.svg" alt="Better Days Closet" width="90" height="75" class="transition-all duration-200 hover:scale-105" />
           </div>
           <div class="flex items-center justify-center mb-4">
             <div class="spinner mr-3"></div>

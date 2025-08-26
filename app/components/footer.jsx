@@ -14,6 +14,7 @@ import {
   FaTwitter
 } from 'react-icons/fa';
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   const { categories } = useSupabaseContext();
@@ -72,10 +73,15 @@ export default function Footer() {
           {/* Brand & Contact Info */}
           <div className="lg:col-span-1">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-2">
-                <span className="text-white">Better Days</span>
-                <span className="text-secondarycolor"> Closet</span>
-              </h2>
+              <div className="flex items-center mb-4">
+                <Image
+                  src="/Footer-Logo.svg"
+                  alt="Better Days Closet"
+                  width={100}
+                  height={85}
+                  className="transition-transform duration-200 hover:scale-105"
+                />
+              </div>
               <p className="text-white/80 text-sm leading-relaxed">
                 Your premier destination for quality fashion. Discover the latest trends and timeless classics.
               </p>

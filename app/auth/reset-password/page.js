@@ -134,13 +134,13 @@ export default function ResetPasswordPage() {
         
         <div className="max-w-md text-white text-center relative z-10">
           <div className="mb-8 relative">
-            <div className="w-20 h-20 mx-auto mb-6 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+            <div className="w-32 h-28 mx-auto mb-6 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm p-4">
               <Image 
-                src="/logo.png" 
+                src="/Desktop-Logo.svg" 
                 alt="Better Days Closet" 
-                width={60} 
-                height={60}
-                className="rounded-xl" 
+                width={120} 
+                height={50}
+                className="transition-transform duration-200 hover:scale-105" 
                 priority
               />
             </div>
@@ -173,13 +173,13 @@ export default function ResetPasswordPage() {
           
           {/* Mobile logo with enhanced styling */}
           <div className="md:hidden text-center mb-10">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primarycolor/5 to-secondarycolor/5 rounded-2xl flex items-center justify-center">
+            <div className="w-24 h-20 mx-auto mb-4 bg-gradient-to-br from-primarycolor/5 to-secondarycolor/5 rounded-2xl flex items-center justify-center p-3">
               <Image 
-                src="/logo.png" 
+                src="/Mobile-Logo.svg" 
                 alt="Better Days Closet" 
-                width={48} 
-                height={48}
-                className="rounded-xl" 
+                width={90} 
+                height={75}
+                className="transition-transform duration-200 hover:scale-105" 
                 priority
               />
             </div>
