@@ -77,9 +77,9 @@ export default function Footer() {
                 <Image
                   src="/Footer-Logo.svg"
                   alt="Better Days Closet"
-                  width={100}
-                  height={85}
-                  className="transition-transform duration-200 hover:scale-105"
+                  width={120}
+                  height={100}
+                  className="transition-transform duration-200 hover:scale-105 w-24 h-20 lg:w-20 lg:h-16 object-contain"
                 />
               </div>
               <p className="text-white/80 text-sm leading-relaxed">
@@ -92,9 +92,7 @@ export default function Footer() {
               <div className="flex items-start gap-3">
                 <MapPinIcon className="w-5 h-5 text-secondarycolor mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium">Shop F61, Left Wing</p>
-                  <p className="text-sm text-white/80">First Floor, RNG Towers</p>
-                  <p className="text-sm text-white/80">Ronald Ngala Street</p>
+                  <p className="text-sm font-medium">Shop F61 - First Floor, RNG Paza</p>
                 </div>
               </div>
 
