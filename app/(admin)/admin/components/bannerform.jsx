@@ -7,10 +7,10 @@ import Image from 'next/image';
 import { PremiumCard, Button, Input, FormGroup, Label, GradientText } from '../../../components/ui';
 
 export default function BannerForm({ banner, onClose }) {
-  const { useAddBanner, useUpdateBanner, useUploadImage } = useSupabase();
+  const { useAddBanner, useUpdateBanner, useUploadBannerImage } = useSupabase();
   const addMutation = useAddBanner();
   const updateMutation = useUpdateBanner();
-  const uploadMutation = useUploadImage();
+  const uploadMutation = useUploadBannerImage();
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({

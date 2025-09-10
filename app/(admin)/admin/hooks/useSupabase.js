@@ -283,14 +283,14 @@ export const useSupabase = () => {
       }
     });
   };
-  // Image Upload with Progress
-  const useUploadImage = () => {
+  // Generic Image Upload Hook
+  const useUploadImage = (bucket) => {
     return useMutation({
       mutationFn: async (imageFile) => {
         const fileName = `${uuidv4()}-${imageFile.name}`;
 
         const { data, error } = await supabase.storage
-          .from("product_images")
+          .from(bucket)
           .upload(fileName, imageFile, {
             cacheControl: "3600",
             upsert: false,
@@ -300,12 +300,18 @@ export const useSupabase = () => {
 
         const {
           data: { publicUrl },
-        } = supabase.storage.from("product_images").getPublicUrl(fileName);
+        } = supabase.storage.from(bucket).getPublicUrl(fileName);
 
         return publicUrl;
       },
     });
   };
+
+  // Specialized Image Upload Hooks
+  const useUploadProductImage = () => useUploadImage("product-images");
+  const useUploadBannerImage = () => useUploadImage("marketing-banners");
+  const useUploadCategoryImage = () => useUploadImage("category-images");
+  const useUploadProfileImage = () => useUploadImage("user-avatars");
 
   // Sales Data Query
   const useSalesData = () => {

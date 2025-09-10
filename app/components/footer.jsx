@@ -92,7 +92,7 @@ export default function Footer() {
               <div className="flex items-start gap-3">
                 <MapPinIcon className="w-5 h-5 text-secondarycolor mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium">Shop F61 - First Floor, RNG Paza</p>
+                  <p className="text-sm font-medium">Shop F61 - First Floor, RNG Plaza</p>
                 </div>
               </div>
 
@@ -114,7 +114,6 @@ export default function Footer() {
                 <ClockIcon className="w-5 h-5 text-secondarycolor flex-shrink-0" />
                 <div className="text-sm">
                   <p>Mon - Sat: 9:00 AM - 8:00 PM</p>
-                  <p className="text-white/80">Sunday: 10:00 AM - 6:00 PM</p>
                 </div>
               </div>
             </div>

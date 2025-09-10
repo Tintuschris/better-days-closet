@@ -2,17 +2,21 @@
 import { useState, useEffect } from 'react';
 import { useSupabase } from '../hooks/useSupabase';
 import { toast } from 'sonner';
-import { FiList, FiSave, FiX, FiRotateCcw, FiPlus, FiTrash2, FiTag } from 'react-icons/fi';
+import { FiList, FiSave, FiX, FiRotateCcw, FiPlus, FiTrash2, FiTag, FiImage } from 'react-icons/fi';
+import ImageUploadOptimizer from './ImageUploadOptimizer';
 import { PremiumCard, Button, Input, FormGroup, Label, GradientText } from '../../../components/ui';
 
 export default function CategoryForm({ category, onClose, onSuccess }) {
-  const { useAddCategory, useUpdateCategory } = useSupabase();
+  const { useAddCategory, useUpdateCategory, useUploadCategoryImage } = useSupabase();
   const addCategory = useAddCategory();
   const updateCategory = useUpdateCategory();
+  const uploadMutation = useUploadCategoryImage();
 
   const [formData, setFormData] = useState({
     name: '',
-    description: ''
+    description: '',
+    image_url: '',
+    icon_url: ''
   });
 
   const [attributeData, setAttributeData] = useState({
@@ -30,7 +34,9 @@ export default function CategoryForm({ category, onClose, onSuccess }) {
     if (category) {
       setFormData({
         name: category.name || '',
-        description: category.description || ''
+        description: category.description || '',
+        image_url: category.image_url || '',
+        icon_url: category.icon_url || ''
       });
 
       // Load category attributes if they exist
@@ -93,7 +99,12 @@ export default function CategoryForm({ category, onClose, onSuccess }) {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', description: '' });
+    setFormData({
+      name: '',
+      description: '',
+      image_url: '',
+      icon_url: ''
+    });
     setAttributeData({
       has_sizes: false,
       has_colors: false,
@@ -198,6 +209,60 @@ export default function CategoryForm({ category, onClose, onSuccess }) {
                   className="w-full px-4 py-3 border-2 border-primarycolor/30 rounded-xl focus:border-primarycolor focus:outline-none transition-colors resize-none text-primarycolor"
                 />
               </FormGroup>
+            </div>
+          </div>
+
+          {/* Category Images Section */}
+          <div className="bg-gray-50 rounded-lg p-4 space-y-6">
+            <h4 className="text-sm font-medium text-primarycolor mb-4 flex items-center gap-2">
+              <FiImage className="w-4 h-4" />
+              Category Images
+            </h4>
+
+            {/* Main Category Image */}
+            <div>
+              <Label>Category Image</Label>
+              <ImageUploadOptimizer
+                onImagesUploaded={(urls) => setFormData(prev => ({ ...prev, image_url: urls[0] }))}
+                maxImages={1}
+                existingImages={formData.image_url ? [{
+                  id: 'main',
+                  url: formData.image_url,
+                  originalName: 'Category Image'
+                }] : []}
+                uploadFunction={uploadMutation.mutateAsync}
+                acceptedFormats={['image/jpeg', 'image/png', 'image/webp']}
+                maxFileSize={2 * 1024 * 1024} // 2MB
+                optimizationSettings={{
+                  maxWidth: 800,
+                  maxHeight: 800,
+                  quality: 0.8,
+                  format: 'webp'
+                }}
+              />
+            </div>
+
+            {/* Category Icon */}
+            <div>
+              <Label>Category Icon</Label>
+              <ImageUploadOptimizer
+                onImagesUploaded={(urls) => setFormData(prev => ({ ...prev, icon_url: urls[0] }))}
+                maxImages={1}
+                existingImages={formData.icon_url ? [{
+                  id: 'icon',
+                  url: formData.icon_url,
+                  originalName: 'Category Icon'
+                }] : []}
+                uploadFunction={uploadMutation.mutateAsync}
+                acceptedFormats={['image/png', 'image/svg+xml']}
+                maxFileSize={512 * 1024} // 512KB
+                optimizationSettings={{
+                  maxWidth: 128,
+                  maxHeight: 128,
+                  quality: 1,
+                  format: 'png'
+                }}
+              />
             </div>
           </div>
 
