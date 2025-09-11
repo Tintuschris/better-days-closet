@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn, user, isLoading } = useAuth();
+  const { signIn, user, userDetails, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -60,9 +60,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user && !isLoading) {
-      router.push('/');
+      if (userDetails?.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
     }
-  }, [user, isLoading, router]);
+  }, [user, userDetails?.role, isLoading, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

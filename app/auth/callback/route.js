@@ -89,7 +89,23 @@ export async function GET(request) {
         // Email change confirmation
         return NextResponse.redirect(`${origin}/profile?email_updated=true`)
       } else {
-        // Default - magic link or other auth
+        // Default - magic link or other auth. Decide redirect by role.
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.id) {
+            const { data: userRow } = await supabase
+              .from('users')
+              .select('role')
+              .eq('id', user.id)
+              .single();
+
+            if (userRow?.role === 'admin') {
+              return NextResponse.redirect(`${origin}/admin`)
+            }
+          }
+        } catch (e) {
+          console.warn('Callback role check failed; falling back to default redirect', e)
+        }
         return NextResponse.redirect(`${origin}${next}`)
       }
     } catch (error) {
