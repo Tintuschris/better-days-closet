@@ -603,7 +603,7 @@ const useDeleteBanner = () => {
     };
     const derivedExt = mimeToExt[file.type] || (file.name.includes('.') ? file.name.split('.').pop() : 'bin');
     const fileName = `${uuidv4()}.${derivedExt}`;
-    const filePath = `products/${fileName}`;
+    const filePath = fileName; // Upload directly to bucket root, no subfolder
 
     const { error: uploadError } = await supabase.storage
       .from('product-images')
