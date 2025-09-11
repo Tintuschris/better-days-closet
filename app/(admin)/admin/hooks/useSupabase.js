@@ -595,13 +595,23 @@ const useDeleteBanner = () => {
 
   // Upload product image function
   const uploadProductImage = async (file) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
+    // Derive extension from MIME type to match the optimized output (e.g., webp)
+    const mimeToExt = {
+      'image/webp': 'webp',
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+    };
+    const derivedExt = mimeToExt[file.type] || (file.name.includes('.') ? file.name.split('.').pop() : 'bin');
+    const fileName = `${uuidv4()}.${derivedExt}`;
     const filePath = `products/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('product-images')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || undefined,
+      });
 
     if (uploadError) {
       throw uploadError;
