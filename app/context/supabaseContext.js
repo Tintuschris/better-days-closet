@@ -13,12 +13,12 @@ export const SupabaseProvider = ({ children }) => {
   const [deliveryAddress, setDeliveryAddress] = useState(null);
   const [deliveryCost, setDeliveryCost] = useState(null);
 
-  // Products Query - using products_with_variants view for better performance
+  // Products Query - using products_with_variants_and_promotion view for better data
   const { data: products } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('products_with_variants')
+        .from('products_with_variants_and_promotion')
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;

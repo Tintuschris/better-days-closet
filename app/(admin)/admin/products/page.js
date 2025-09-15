@@ -53,9 +53,9 @@ function ProductCard({ product, isSelected, onSelect, onEdit, onDelete }) {
         />
 
         <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-          {product.image_url && Array.isArray(product.image_url) && product.image_url[0] ? (
+          {Array.isArray(product.images) && product.images[0] ? (
             <Image
-              src={product.image_url[0]}
+              src={product.images[0]}
               alt={product.name}
               width={64}
               height={64}
@@ -69,10 +69,17 @@ function ProductCard({ product, isSelected, onSelect, onEdit, onDelete }) {
               height={64}
               className="w-full h-full object-cover"
             />
+          ) : product.image_url && Array.isArray(product.image_url) && product.image_url[0] ? (
+            // Legacy support if image_url was an array-like
+            <Image
+              src={product.image_url[0]}
+              alt={product.name}
+              width={64}
+              height={64}
+              className="w-full h-full object-cover"
+            />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <FiPackage className="w-6 h-6 text-primarycolor/40" />
-            </div>
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
           )}
         </div>
 

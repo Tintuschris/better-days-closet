@@ -66,8 +66,10 @@ export default function ProductPage() {
     const currentStock = getVariantStock(selectedSize, selectedColor);
     const currentImage = getVariantImage(selectedSize, selectedColor);
 
-    // Product images - use variant image if available, otherwise product image
-    const productImages = [currentImage, product?.image_url].filter(Boolean);
+    // Product images
+    // Prefer images array from view, but include variant image and primary image fallback
+    const baseImages = Array.isArray(product?.images) ? product.images : [];
+    const productImages = Array.from(new Set([currentImage, ...baseImages, product?.image_url].filter(Boolean)));
 
     // Set default selections when variants load
     useEffect(() => {

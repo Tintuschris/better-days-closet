@@ -191,7 +191,8 @@ export class BulkProcessor {
       category_id: product.category_id,
       price: product.base_price, // This will be updated based on variants
       discount: product.discount,
-      image_url: resolvedImageUrls,
+      // Store a single primary image URL as text (DB column is text)
+      image_url: resolvedImageUrls.length > 0 ? resolvedImageUrls[0] : null,
       // Promotion fields if they exist
       ...(product.promotion_type && {
         is_promoted: true,
@@ -209,6 +210,21 @@ export class BulkProcessor {
       .single();
 
     if (productError) throw productError;
+
+    // Persist all product images to product_images table (supports multi-image gallery)
+    if (resolvedImageUrls.length > 0) {
+      const imageRows = resolvedImageUrls.map((url, idx) => ({
+        product_id: createdProduct.id,
+        url,
+        sort_order: idx
+      }));
+      const { error: imagesError } = await this.supabase
+        .from('product_images')
+        .insert(imageRows);
+      if (imagesError) {
+        this.results.warnings.push({ type: 'product_images_insert_failed', filename: createdProduct.name, message: imagesError.message });
+      }
+    }
 
     // Create variants
     await this.createProductVariants(createdProduct.id, product.variants, imageUrlMap);

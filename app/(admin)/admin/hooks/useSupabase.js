@@ -11,7 +11,7 @@ export const useSupabase = () => {
       queryKey: ["admin-products"],
       queryFn: async () => {
         const { data, error } = await supabase
-          .from("products_with_variants")
+          .from("products_with_variants_and_promotion")
           .select("*")
           .order("created_at", { ascending: false });
         if (error) throw error;
@@ -29,7 +29,18 @@ export const useSupabase = () => {
       queryFn: async () => {
         const { data, error } = await supabase
           .from("products")
-          .select("*, categories(name)")
+          .select(`
+            *,
+            categories (
+              name,
+              category_attributes (
+                has_sizes,
+                has_colors,
+                available_sizes,
+                available_colors
+              )
+            )
+          `)
           .eq("id", productId)
           .single();
         if (error) throw error;
