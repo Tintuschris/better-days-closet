@@ -283,26 +283,25 @@ export const useSupabase = () => {
       }
     });
   };
-  // Generic Image Upload Hook
+  // Generic Image Upload Hook (server-side via API)
   const useUploadImage = (bucket) => {
     return useMutation({
       mutationFn: async (imageFile) => {
-        const fileName = `${uuidv4()}-${imageFile.name}`;
+        const form = new FormData();
+        form.append('bucket', bucket);
+        form.append('file', imageFile);
 
-        const { data, error } = await supabase.storage
-          .from(bucket)
-          .upload(fileName, imageFile, {
-            cacheControl: "3600",
-            upsert: false,
-          });
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: form,
+        });
 
-        if (error) throw error;
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from(bucket).getPublicUrl(fileName);
-
-        return publicUrl;
+        const json = await res.json();
+        if (!res.ok) {
+          const message = json?.error || 'Upload failed';
+          throw new Error(message);
+        }
+        return json.publicUrl;
       },
     });
   };
@@ -593,35 +592,23 @@ const useDeleteBanner = () => {
     });
   };
 
-  // Upload product image function
+  // Upload product image function (server-side via API)
   const uploadProductImage = async (file) => {
-    // Derive extension from MIME type to match the optimized output (e.g., webp)
-    const mimeToExt = {
-      'image/webp': 'webp',
-      'image/jpeg': 'jpg',
-      'image/png': 'png',
-    };
-    const derivedExt = mimeToExt[file.type] || (file.name.includes('.') ? file.name.split('.').pop() : 'bin');
-    const fileName = `${uuidv4()}.${derivedExt}`;
-    const filePath = fileName; // Upload directly to bucket root, no subfolder
+    const form = new FormData();
+    form.append('bucket', 'product-images');
+    form.append('file', file);
 
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: file.type || undefined,
-      });
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: form,
+    });
 
-    if (uploadError) {
-      throw uploadError;
+    const json = await res.json();
+    if (!res.ok) {
+      const message = json?.error || 'Upload failed';
+      throw new Error(message);
     }
-
-    const { data } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(filePath);
-
-    return data.publicUrl;
+    return json.publicUrl;
   };
 
   // Category Attributes Queries
