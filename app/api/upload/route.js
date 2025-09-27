@@ -7,7 +7,11 @@ export const runtime = 'nodejs'
 export async function POST(request) {
   try {
     const formData = await request.formData()
-    const bucket = formData.get('bucket') || 'product-images'
+    // Defensive fallback: treat missing/empty/"undefined" as not provided
+    const rawBucket = formData.get('bucket')
+    const bucket = (!rawBucket || String(rawBucket).trim() === '' || String(rawBucket) === 'undefined')
+      ? 'product-images'
+      : String(rawBucket)
     const file = formData.get('file')
 
     if (!file || typeof file === 'string') {

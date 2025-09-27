@@ -67,6 +67,7 @@ const Button = forwardRef(({
   className = '',
   onClick,
   type = 'button',
+  loadingText, // prevent forwarding to DOM
   ...props 
 }, ref) => {
   const isDisabled = disabled || loading;
@@ -97,7 +98,7 @@ const Button = forwardRef(({
       {loading && (
         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
       )}
-      {children}
+      {loading && loadingText ? loadingText : children}
     </button>
   );
 });

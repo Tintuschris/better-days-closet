@@ -13,16 +13,30 @@ export const SupabaseProvider = ({ children }) => {
   const [deliveryAddress, setDeliveryAddress] = useState(null);
   const [deliveryCost, setDeliveryCost] = useState(null);
 
-  // Products Query - using products_with_variants_and_promotion view for better data
+  // Products Query: get aggregated fields from view, then merge image_url from products table (source of truth)
   const { data: products } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1) Get aggregated fields from the view (variant counts, prices, inventory)
+      const { data: viewRows, error: viewError } = await supabase
         .from('products_with_variants_and_promotion')
         .select('*')
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
+      if (viewError) throw viewError;
+
+      // 2) Fetch image_url from products for these IDs to ensure main image is always present
+      const ids = (viewRows || []).map(r => r.id);
+      if (ids.length === 0) return viewRows;
+      const { data: productRows, error: productsError } = await supabase
+        .from('products')
+        .select('id, image_url')
+        .in('id', ids);
+      if (productsError) throw productsError;
+      const imageById = Object.fromEntries((productRows || []).map(r => [r.id, r.image_url]));
+
+      // 3) Merge image_url into the view rows (no fallbacks to product_images; this uses products.image_url only)
+      const merged = (viewRows || []).map(r => ({ ...r, image_url: imageById[r.id] ?? r.image_url }));
+      return merged;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

@@ -27,12 +27,13 @@ export default function ProductWithVariantsForm({ product, onClose, onSuccess, c
     setCreatedProduct(newProduct);
     setCurrentStep(2);
     setShowVariants(true);
-    toast.success("Product created! Now add variants to manage inventory.");
+    // Defer toast to next tick to avoid setState-in-render warnings from Toaster
+    setTimeout(() => toast.success("Product created! Now add variants to manage inventory."), 0);
   };
 
   const handleProductUpdated = (updatedProduct) => {
     setCreatedProduct(updatedProduct);
-    toast.success("Product updated successfully!");
+    setTimeout(() => toast.success("Product updated successfully!"), 0);
   };
 
   const handleVariantSuccess = () => {

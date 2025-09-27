@@ -15,7 +15,8 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
     user,
     wishlistItems,
     addToWishlist,
-    deleteFromWishlist
+    deleteFromWishlist,
+    supabase
   } = useSupabaseContext();
 
   const { cartItems, updateCart } = useCart();
@@ -34,6 +35,7 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
       setDiscountPercentage(product.discount);
     }
   }, [wishlistItems, product.id, product.discount]);
+
 
   const handleWishlistClick = async (e) => {
     e.preventDefault();
@@ -135,7 +137,7 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
         <Link href={`/product/${product.id}`} className="block">
           <div className="relative w-full pb-[100%] bg-gray-50">
             <Image
-              src={product.image_url}
+              src={product.image_url || '/placeholder.png'}
               alt={product.name}
               fill
               style={{ objectFit: "cover", objectPosition: "center" }}
@@ -229,7 +231,7 @@ export default function ProductCard({ product, viewMode = 'grid' }) {
         <Link href={`/product/${product.id}`} className="block flex-shrink-0">
           <div className="relative w-20 h-20 md:w-32 md:h-32 bg-gray-50 rounded-xl overflow-hidden">
             <Image
-              src={product.image_url}
+              src={product.image_url || '/placeholder.png'}
               alt={product.name}
               fill
               style={{ objectFit: "cover", objectPosition: "center" }}

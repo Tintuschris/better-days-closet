@@ -17,8 +17,8 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
       description: "",
       category_id: "",
       price: "",
+      quantity: 0,
       discount: "0",
-      image_url: [],
       is_promoted: false,
       promotion_start_date: "",
       promotion_end_date: "",
@@ -27,12 +27,12 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
     []
   );
 
-  const [imageFiles, setImageFiles] = useState([]);
   const { useAddProduct, useUpdateProduct, useCategories, uploadProductImage } = useSupabase();
   const addProduct = useAddProduct();
   const updateProduct = useUpdateProduct();
   const { data: categoriesData } = useCategories();
   const [useOptimizedUpload, setUseOptimizedUpload] = useState(true);
+  const isSubmittingRef = useRef(false);
 
   // Helper function to format date for datetime-local input
   const formatDateForInput = useCallback((dateString) => {
@@ -55,8 +55,8 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
         description: product.description || "",
         category_id: product.category_id || "",
         price: product.price || "",
+        quantity: product.quantity || 0,
         discount: product.discount || "0",
-        image_url: Array.isArray(product.image_url) ? product.image_url : (product.image_url ? [product.image_url] : []),
         is_promoted: product.is_promoted || false,
         promotion_start_date: formatDateForInput(product.promotion_start_date),
         promotion_end_date: formatDateForInput(product.promotion_end_date),
@@ -76,7 +76,6 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
         category_id: product.category_id || "",
         price: product.price || "",
         discount: product.discount || "0",
-        image_url: Array.isArray(product.image_url) ? product.image_url : (product.image_url ? [product.image_url] : []),
         is_promoted: product.is_promoted || false,
         promotion_start_date: formatDateForInput(product.promotion_start_date),
         promotion_end_date: formatDateForInput(product.promotion_end_date),
@@ -87,61 +86,49 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
     }
   }, [product, initialFormState, formatDateForInput]);
 
-  const handleImageDelete = async (indexToDelete) => {
-    const updatedImages = formData.image_url.filter(
-      (_, index) => index !== indexToDelete
-    );
-    setFormData((prev) => ({
-      ...prev,
-      image_url: updatedImages,
-    }));
-  };
-
-  // Track uploaded images for potential cleanup
-  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
-
-  // Handle optimized image upload
-  const handleImagesUploaded = (urls) => {
-    setFormData(prev => ({
-      ...prev,
-      image_url: [...(Array.isArray(prev.image_url) ? prev.image_url : []), ...urls]
-    }));
-    // Track new uploads for potential cleanup
-    setUploadedImageUrls(prev => [...prev, ...urls]);
-  };
+  // Step 1 no longer manages images; handled in Step 2 (Variants & Gallery)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Debug: confirm handler runs
+    // eslint-disable-next-line no-console
+    console.debug('ProductForm.handleSubmit called', { formData });
+
+    // Prevent duplicate submissions
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
+    // Show immediate feedback that submission started (defer to next tick to avoid setState-in-render issues)
+  setTimeout(() => toast.info('Saving product...'), 0);
+
     // Basic validation
     if (!formData.name.trim()) {
-      toast.error('Product name is required');
+      setTimeout(() => toast.error('Product name is required'), 0);
+      isSubmittingRef.current = false;
       return;
     }
 
     if (!formData.price || parseFloat(formData.price) <= 0) {
-      toast.error('Valid price is required');
+      setTimeout(() => toast.error('Valid price is required'), 0);
+      isSubmittingRef.current = false;
       return;
     }
 
     if (!formData.category_id) {
-      toast.error('Please select a category');
+      setTimeout(() => toast.error('Please select a category'), 0);
+      isSubmittingRef.current = false;
       return;
     }
 
     try {
-      // Validate that at least one image is uploaded
-      if (!formData.image_url || formData.image_url.length === 0) {
-        toast.error('Please upload at least one product image');
-        return;
-      }
-
       const selectedCategory = categoriesData?.find(cat => cat.id === formData.category_id);
 
       // Convert empty strings to null for timestamp fields
       const productData = {
         ...formData,
-        image_url: formData.image_url,
+        // No images in Step 1; primary image can be set later from gallery
+        image_url: null,
         category_name: selectedCategory?.name,
         promotion_start_date: formData.promotion_start_date || null,
         promotion_end_date: formData.promotion_end_date || null,
@@ -153,30 +140,52 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
       };
 
       if (product) {
-        await updateProduct.mutateAsync({ id: product.id, product: productData });
-        toast.success('Product updated successfully');
+  await updateProduct.mutateAsync({ id: product.id, product: productData });
+  setTimeout(() => toast.success('Product updated successfully'), 0);
+        // Call success callback with updated product
+        if (onSuccess) {
+          onSuccess({ ...product, ...productData });
+        }
       } else {
-        await addProduct.mutateAsync(productData);
-        toast.success('Product created successfully');
+        // Debug: log before calling mutation
+        // eslint-disable-next-line no-console
+        console.debug('Calling addProduct.mutateAsync with', productData);
+  const createdProduct = await addProduct.mutateAsync(productData);
+        // Debug: log the response
+        // eslint-disable-next-line no-console
+        console.debug('addProduct.mutateAsync returned', createdProduct);
+
+        if (!createdProduct) {
+          // If mutation returned no data, log and show an explicit error
+          // eslint-disable-next-line no-console
+          console.error('addProduct.mutateAsync returned empty value', { addProduct });
+          setTimeout(() => toast.error('Failed to create product: no response from server'), 0);
+        } else {
+          // Defer toast to next tick to avoid potential setState-in-render in Toaster
+          setTimeout(() => toast.success('Product created successfully'), 0);
+          // Call success callback with created product
+          if (onSuccess) {
+            onSuccess(createdProduct);
+          }
+        }
       }
 
-      // Clear form and uploaded images tracking
+      // Clear form
       setFormData(initialFormState);
-      setUploadedImageUrls([]);
-
-      // Call success callback to close form
-      if (onSuccess) {
-        onSuccess();
-      }
 
     } catch (error) {
-      toast.error(`Failed to save product: ${error.message}`);
+      // Log full error for debugging
+      // eslint-disable-next-line no-console
+      console.error('ProductForm.handleSubmit error', error, { addProduct });
+      // Defer toast to next tick to avoid setState-in-render issues inside Toaster
+      setTimeout(() => toast.error(`Failed to save product: ${error?.message || String(error)}`), 0);
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
   const resetForm = () => {
     setFormData(initialFormState);
-    setUploadedImageUrls([]);
   };
   
   return (
@@ -321,24 +330,12 @@ export default function ProductForm({ product, onClose, onSuccess, categories })
           </div>
         </div>
 
-        {/* Image Upload Section */}
+        {/* Images are now managed in Step 2 (Variants & Gallery) */}
         <div className="col-span-1 lg:col-span-2 mt-6">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-primarycolor mb-4 flex items-center gap-2">
-              <FiImage className="w-4 h-4" />
-              Product Images
-            </h4>
-
-            <ImageUploadOptimizer
-              onImagesUploaded={handleImagesUploaded}
-              maxImages={10}
-              existingImages={Array.isArray(formData.image_url) ? formData.image_url.map((url, index) => ({
-                id: index,
-                url,
-                originalName: `image-${index + 1}`
-              })) : []}
-              uploadFunction={uploadProductImage}
-            />
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              Product images and gallery are managed in Step 2. You can add a gallery, set the primary image, and upload variant-specific images after creating the product.
+            </p>
           </div>
         </div>
 

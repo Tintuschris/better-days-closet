@@ -66,6 +66,41 @@ export default function ProductPage() {
     const currentStock = getVariantStock(selectedSize, selectedColor);
     const currentImage = getVariantImage(selectedSize, selectedColor);
 
+    // Helpers to enable cross-selection between size and color
+    const sizeHasStock = (size) => {
+        const s = typeof size === 'string' ? size.trim().toLowerCase() : size;
+        return variants?.some(v => (typeof v.size === 'string' ? v.size.trim().toLowerCase() : v.size) === s && (v.quantity ?? 0) > 0);
+    };
+    const colorHasStock = (color) => {
+        const c = typeof color === 'string' ? color.trim().toLowerCase() : color;
+        return variants?.some(v => (typeof v.color === 'string' ? v.color.trim().toLowerCase() : v.color) === c && (v.quantity ?? 0) > 0);
+    };
+    const getFirstColorForSize = (size) => {
+        const s = typeof size === 'string' ? size.trim().toLowerCase() : size;
+        const found = variants?.find(v => (typeof v.size === 'string' ? v.size.trim().toLowerCase() : v.size) === s && (v.quantity ?? 0) > 0);
+        return found?.color || null;
+    };
+    const getFirstSizeForColor = (color) => {
+        const c = typeof color === 'string' ? color.trim().toLowerCase() : color;
+        const found = variants?.find(v => (typeof v.color === 'string' ? v.color.trim().toLowerCase() : v.color) === c && (v.quantity ?? 0) > 0);
+        return found?.size || null;
+    };
+
+    // Debug: log variant data and available options for troubleshooting visibility
+    useEffect(() => {
+        try {
+            console.log('[ProductPage] Debug variants for product', {
+                productId: params.id,
+                product,
+                variants,
+                availableSizes,
+                availableColors,
+                hasSizes,
+                hasColors,
+            });
+        } catch {}
+    }, [params.id, product, variants, availableSizes, availableColors, hasSizes, hasColors]);
+
     // Product images
     // Prefer images array from view, but include variant image and primary image fallback
     const baseImages = Array.isArray(product?.images) ? product.images : [];
@@ -73,13 +108,21 @@ export default function ProductPage() {
 
     // Set default selections when variants load
     useEffect(() => {
-        if (hasSizes && availableSizes.length > 0 && !selectedSize) {
-            setSelectedSize(availableSizes[0]);
+        // Prefer a real variant if one exists
+        if (variants && variants.length > 0 && (!selectedSize || !selectedColor)) {
+            const first = variants[0];
+            if (!selectedSize && first.size) setSelectedSize(first.size);
+            if (!selectedColor && first.color) setSelectedColor(first.color);
+        } else {
+            // Fall back to category defaults if no variants yet
+            if (hasSizes && availableSizes.length > 0 && !selectedSize) {
+                setSelectedSize(availableSizes[0]);
+            }
+            if (hasColors && availableColors.length > 0 && !selectedColor) {
+                setSelectedColor(availableColors[0]);
+            }
         }
-        if (hasColors && availableColors.length > 0 && !selectedColor) {
-            setSelectedColor(availableColors[0]);
-        }
-    }, [availableSizes, availableColors, hasSizes, hasColors, selectedSize, selectedColor]);
+    }, [variants, availableSizes, availableColors, hasSizes, hasColors, selectedSize, selectedColor]);
 
     useEffect(() => {
         if (wishlistItems) {
@@ -398,12 +441,26 @@ export default function ProductPage() {
                                 <div className="flex flex-wrap gap-1.5">
                                     {availableSizes.map((size) => {
                                         const isSelected = selectedSize === size;
-                                        const isOutOfStock = getVariantStock(size, selectedColor) === 0;
+                                        // Enable size if ANY variant with this size has stock, regardless of current color
+                                        const isOutOfStock = !sizeHasStock(size);
 
                                         return (
                                             <button
                                                 key={size}
-                                                onClick={() => !isOutOfStock && setSelectedSize(size)}
+                                                onClick={() => {
+                                                    if (isOutOfStock) return;
+                                                    // If current color doesn't exist for this size, auto-pick first available color for that size
+                                                    const existsWithCurrent = variants?.some(v => (
+                                                        (v.size?.toLowerCase?.() === size.toLowerCase()) &&
+                                                        (!selectedColor || v.color?.toLowerCase?.() === selectedColor.toLowerCase()) &&
+                                                        (v.quantity ?? 0) > 0
+                                                    ));
+                                                    if (!existsWithCurrent) {
+                                                        const color = getFirstColorForSize(size);
+                                                        if (color) setSelectedColor(color);
+                                                    }
+                                                    setSelectedSize(size);
+                                                }}
                                                 disabled={isOutOfStock}
                                                 className={`
                           relative h-8 min-w-[32px] px-2 rounded-lg border font-medium text-xs
@@ -442,7 +499,8 @@ export default function ProductPage() {
                                 <div className="flex flex-wrap gap-2">
                                     {availableColors.map((color) => {
                                         const isSelected = selectedColor === color;
-                                        const isOutOfStock = getVariantStock(selectedSize, color) === 0;
+                                        // Enable color if ANY variant with this color has stock, regardless of current size
+                                        const isOutOfStock = !colorHasStock(color);
 
                                         // Color mapping for visual representation
                                         const getColorStyle = (colorName) => {
@@ -472,7 +530,20 @@ export default function ProductPage() {
                                         return (
                                             <button
                                                 key={color}
-                                                onClick={() => !isOutOfStock && setSelectedColor(color)}
+                                                onClick={() => {
+                                                    if (isOutOfStock) return;
+                                                    // If current size doesn't exist for this color, auto-pick first available size for that color
+                                                    const existsWithCurrent = variants?.some(v => (
+                                                        (v.color?.toLowerCase?.() === color.toLowerCase()) &&
+                                                        (!selectedSize || v.size?.toLowerCase?.() === selectedSize.toLowerCase()) &&
+                                                        (v.quantity ?? 0) > 0
+                                                    ));
+                                                    if (!existsWithCurrent) {
+                                                        const size = getFirstSizeForColor(color);
+                                                        if (size) setSelectedSize(size);
+                                                    }
+                                                    setSelectedColor(color);
+                                                }}
                                                 disabled={isOutOfStock}
                                                 className={`
                           relative group h-7 w-7 rounded-full border-2 transition-all duration-150 flex items-center justify-center

@@ -10,12 +10,55 @@ export const useSupabase = () => {
     return useQuery({
       queryKey: ["admin-products"],
       queryFn: async () => {
-        const { data, error } = await supabase
-          .from("products_with_variants_and_promotion")
+        // 1) Fetch base products (source of truth for image_url and details)
+        const { data: productsData, error: productsError } = await supabase
+          .from("products")
           .select("*")
           .order("created_at", { ascending: false });
-        if (error) throw error;
-        return data;
+        if (productsError) throw productsError;
+
+        const products = productsData || [];
+        if (products.length === 0) return products;
+
+        // 2) Fetch variant rows for these products to aggregate inventory and counts
+        const productIds = products.map(p => p.id);
+        const { data: variantsData, error: variantsError } = await supabase
+          .from('product_variants')
+          .select('product_id, quantity, price');
+        if (variantsError) throw variantsError;
+
+        // 3) Reduce to totals by product
+        const totalsByProduct = new Map();
+        for (const v of (variantsData || [])) {
+          if (!productIds.includes(v.product_id)) continue;
+          const t = totalsByProduct.get(v.product_id) || { total_inventory: 0, variant_count: 0, min_price: null, max_price: null };
+          const qty = Number(v.quantity) || 0;
+          const price = Number(v.price);
+          t.total_inventory += qty;
+          t.variant_count += 1;
+          if (!isNaN(price)) {
+            t.min_price = t.min_price == null ? price : Math.min(t.min_price, price);
+            t.max_price = t.max_price == null ? price : Math.max(t.max_price, price);
+          }
+          totalsByProduct.set(v.product_id, t);
+        }
+
+        // 4) Merge aggregated fields into products
+        const merged = products.map(p => {
+          const t = totalsByProduct.get(p.id) || { total_inventory: 0, variant_count: 0, min_price: null, max_price: null };
+          return {
+            ...p,
+            // Maintain existing price, but expose variant aggregates for UI that needs them
+            total_inventory: t.total_inventory,
+            variant_count: t.variant_count,
+            min_price: t.min_price ?? p.price,
+            max_price: t.max_price ?? p.price,
+            // Backward compatibility: some admin components read `quantity`
+            quantity: typeof p.quantity === 'number' ? p.quantity : t.total_inventory,
+          };
+        });
+
+        return merged;
       },
       staleTime: 1000 * 60 * 5, // 5 minutes
       cacheTime: 1000 * 60 * 30, // 30 minutes
@@ -81,11 +124,21 @@ export const useSupabase = () => {
           .insert([productData])
           .select()
           .single();
+        // Debug log mutation response for easier diagnosis
+        if (error) {
+          console.error('useAddProduct mutation error', error, { productData });
+        } else {
+          console.debug('useAddProduct mutation success', data);
+        }
         if (error) throw error;
         return data;
       },
       onSuccess: () => {
         queryClient.invalidateQueries(["admin-products"]);
+      },
+      onError: (error, variables, context) => {
+        // Ensure a clear log when mutation fails (helps with RLS/permission issues)
+        console.error('useAddProduct onError', { error, variables, context });
       },
     });
   };
@@ -770,6 +823,7 @@ const useDeleteBanner = () => {
     useDeleteDeliveryAddress,
     useUploadImage,
     uploadProductImage,
+    useUploadProductImage,
     useSalesData,
     useBanners,
     useAddBanner,

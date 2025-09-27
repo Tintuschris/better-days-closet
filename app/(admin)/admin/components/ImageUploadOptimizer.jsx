@@ -25,61 +25,85 @@ const ImageUploadOptimizer = ({
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState(optimizationSettings);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const [inflight, setInflight] = useState([]); // {id, name, progress, status: 'pending'|'optimizing'|'uploading'|'done'|'error', url}
 
   // Compress and optimize image
   const optimizeImage = useCallback((file, customSettings = settings) => {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const img = new window.Image();
 
-      img.onload = () => {
-        // Calculate new dimensions
-        let { width, height } = img;
-        const maxWidth = customSettings.maxWidth;
-        const maxHeight = customSettings.maxHeight;
-
-        if (width > height) {
-          if (width > maxWidth) {
-            height = (height * maxWidth) / width;
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = (width * maxHeight) / height;
-            height = maxHeight;
-          }
+      // Try createImageBitmap with EXIF orientation handling (best-effort)
+      let bitmap = null;
+      try {
+        if ('createImageBitmap' in window) {
+          bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
         }
+      } catch (e) {
+        bitmap = null;
+      }
 
-        canvas.width = width;
-        canvas.height = height;
-
-        // Draw and compress
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        canvas.toBlob(
-          (blob) => {
-            const optimizedFile = new File([blob], file.name, {
-              type: `image/${customSettings.format}`,
-              lastModified: Date.now(),
-            });
-            resolve(optimizedFile);
-          },
-          `image/${customSettings.format}`,
-          customSettings.quality
-        );
+      const drawSource = async () => {
+        return new Promise((res) => {
+          if (bitmap) {
+            res({ width: bitmap.width, height: bitmap.height, draw: () => ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height) });
+            return;
+          }
+          const img = new window.Image();
+          img.onload = () => res({ width: img.width, height: img.height, draw: () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height) });
+          img.src = URL.createObjectURL(file);
+        });
       };
 
-      img.src = URL.createObjectURL(file);
+      const src = await drawSource();
+
+      // Calculate new dimensions with limits
+      let { width, height } = src;
+      const maxWidth = customSettings.maxWidth;
+      const maxHeight = customSettings.maxHeight;
+
+      if (width > height) {
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      src.draw();
+
+      canvas.toBlob(
+        (blob) => {
+          const optimizedFile = new File([blob], file.name, {
+            type: `image/${customSettings.format}`,
+            lastModified: Date.now(),
+          });
+          resolve(optimizedFile);
+        },
+        `image/${customSettings.format}`,
+        customSettings.quality
+      );
     });
   }, [settings]);
 
   // Handle file selection
   const handleFiles = useCallback(async (files) => {
     const fileArray = Array.from(files);
-    
+
     // Validate files
     const validFiles = fileArray.filter(file => {
+      const isHeic = /\.heic$|\.heif$/i.test(file.name) || /heic|heif/i.test(file.type || '');
+      if (isHeic) {
+        toast.error(`${file.name} is HEIC/HEIF and not supported by the browser. Please set iPhone camera to Most Compatible (JPEG) or use PNG/JPEG/WebP.`);
+        return false;
+      }
       if (!acceptedFormats.includes(file.type)) {
         toast.error(`${file.name} is not a supported format`);
         return false;
@@ -98,36 +122,49 @@ const ImageUploadOptimizer = ({
 
     setUploading(true);
 
-    try {
-      const optimizedFiles = await Promise.all(
-        validFiles.map(file => optimizeImage(file))
-      );
+    // Add inflight entries
+    const inflightItems = validFiles.map(f => ({ id: `${Date.now()}-${Math.random()}`, name: f.name, progress: 0, status: 'pending', url: null }));
+    setInflight(prev => [...prev, ...inflightItems]);
 
-      // Upload optimized files
-      const uploadPromises = optimizedFiles.map(async (file) => {
-        const url = await uploadFunction(file);
-        return {
+    const concurrency = 2; // mobile-friendly limit
+    let index = 0;
+    const results = [];
+
+    const runNext = async () => {
+      if (index >= validFiles.length) return null;
+      const file = validFiles[index];
+      const itemId = inflightItems[index].id;
+      index++;
+      try {
+        setInflight(prev => prev.map(it => it.id === itemId ? { ...it, status: 'optimizing', progress: 10 } : it));
+        const optimized = await optimizeImage(file);
+        setInflight(prev => prev.map(it => it.id === itemId ? { ...it, status: 'uploading', progress: 60 } : it));
+        const url = await uploadFunction(optimized);
+        const uploaded = {
           id: Date.now() + Math.random(),
           url,
-          originalName: file.name,
-          size: file.size,
+          originalName: optimized.name,
+          size: optimized.size,
           optimized: true
         };
-      });
+        results.push(uploaded);
+        setInflight(prev => prev.map(it => it.id === itemId ? { ...it, status: 'done', progress: 100, url } : it));
+      } catch (e) {
+        console.error('Upload error:', e);
+        setInflight(prev => prev.map(it => it.id === itemId ? { ...it, status: 'error' } : it));
+      }
+      return runNext();
+    };
 
-      const uploadedImages = await Promise.all(uploadPromises);
-      const newImages = [...images, ...uploadedImages];
-      
-      setImages(newImages);
-      onImagesUploaded(newImages.map(img => img.url));
-      
-      toast.success(`${uploadedImages.length} image(s) uploaded and optimized`);
-    } catch (error) {
-      toast.error('Failed to upload images');
-      console.error('Upload error:', error);
-    } finally {
-      setUploading(false);
-    }
+    const workers = Array.from({ length: Math.min(concurrency, validFiles.length) }, () => runNext());
+    await Promise.all(workers);
+
+    const uploadedImages = results;
+    const newImages = [...images, ...uploadedImages];
+    setImages(newImages);
+    onImagesUploaded(newImages.map(img => img.url));
+    toast.success(`${uploadedImages.length} image(s) uploaded and optimized`);
+    setUploading(false);
   }, [images, maxImages, acceptedFormats, maxFileSize, optimizeImage, uploadFunction, onImagesUploaded]);
 
   // Handle drag and drop
@@ -270,7 +307,7 @@ const ImageUploadOptimizer = ({
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               variant="primary"
-              size="sm"
+              size="md"
             >
               <FiImage className="w-4 h-4 mr-2" />
               Select Images
@@ -282,12 +319,21 @@ const ImageUploadOptimizer = ({
                 e.stopPropagation();
                 setShowSettings(!showSettings);
               }}
-              className="flex items-center gap-2 px-3 py-2 text-primarycolor/70 hover:text-primarycolor transition-colors"
+              className="flex items-center gap-2 px-4 py-3 text-primarycolor/70 hover:text-primarycolor transition-colors"
               type="button"
             >
               <FiSettings className="w-4 h-4" />
               Settings
             </button>
+            <Button
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={uploading}
+              variant="secondary"
+              size="md"
+            >
+              <FiImage className="w-4 h-4 mr-2" />
+              Take Photo
+            </Button>
           </div>
           
           <p className="text-xs text-primarycolor/60 mt-4">
@@ -300,6 +346,15 @@ const ImageUploadOptimizer = ({
           type="file"
           multiple
           accept={acceptedFormats.join(',')}
+          onChange={(e) => handleFiles(e.target.files)}
+          className="hidden"
+        />
+        {/* Camera capture for mobile */}
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
           onChange={(e) => handleFiles(e.target.files)}
           className="hidden"
         />
@@ -318,7 +373,22 @@ const ImageUploadOptimizer = ({
                     fill
                     className="object-cover rounded-lg"
                   />
-                  
+                  {/* Per-file progress overlay if matching inflight */}
+                  {inflight.some(it => it.url === image.url && it.status !== 'done') && (
+                    <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-xs">
+                      <FiLoader className="w-5 h-5 animate-spin mb-1" />
+                      <span>Uploading…</span>
+                    </div>
+                  )}
+                  {/* If there is an inflight item without url yet (newly added), show generic overlay on latest card */}
+                  {index === images.length - 1 && uploading && inflight.some(it => it.status !== 'done') && (
+                    <div className="absolute inset-0 bg-black/20 flex items-end">
+                      <div className="w-full h-1 bg-white/30">
+                        <div className="h-1 bg-white/80" style={{ width: `${Math.round((inflight.filter(it => it.status === 'done').length / (inflight.length || 1)) * 100)}%` }} />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Optimized Badge */}
                   {image.optimized && (
                     <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
@@ -326,7 +396,7 @@ const ImageUploadOptimizer = ({
                       Optimized
                     </div>
                   )}
-                  
+                 
                   {/* Remove Button */}
                   <button
                     onClick={() => removeImage(index)}

@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from './components/sidebar';
 import Navbar from './components/navbar';
-import { Toaster } from 'sonner';
 
 export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -40,17 +39,6 @@ export default function AdminLayout({ children }) {
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           {children}
         </main>
-        <Toaster
-          theme="light"
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: 'var(--primarycolor)',
-              color: 'white',
-              borderRadius: '12px',
-            },
-          }}
-        />
       </div>
     </div>
   );

@@ -27,40 +27,48 @@ export const useProductVariants = (productId) => {
 
   const availableSizes = useMemo(() => {
     if (!categoryConfig?.has_sizes) return [];
-    
-    // Get unique sizes from variants
+
     const variantSizes = variants
       .filter(v => v.size)
       .map(v => v.size);
-    
-    // If category has predefined sizes, use those, otherwise use variant sizes
-    if (categoryConfig.available_sizes?.length > 0) {
-      return categoryConfig.available_sizes;
-    }
-    
-    return [...new Set(variantSizes)];
+
+    const configured = Array.isArray(categoryConfig.available_sizes)
+      ? categoryConfig.available_sizes
+      : [];
+
+    // Merge configured list with actual variant sizes to ensure any newly created
+    // variant size that isn't in the predefined list still shows up as selectable.
+    const set = new Set(configured);
+    for (const s of variantSizes) set.add(s);
+    return Array.from(set);
   }, [variants, categoryConfig]);
 
   const availableColors = useMemo(() => {
     if (!categoryConfig?.has_colors) return [];
-    
-    // Get unique colors from variants
+
     const variantColors = variants
       .filter(v => v.color)
       .map(v => v.color);
-    
-    // If category has predefined colors, use those, otherwise use variant colors
-    if (categoryConfig.available_colors?.length > 0) {
-      return categoryConfig.available_colors;
-    }
-    
-    return [...new Set(variantColors)];
+
+    const configured = Array.isArray(categoryConfig.available_colors)
+      ? categoryConfig.available_colors
+      : [];
+
+    // Merge configured list with actual variant colors so newly added colors appear.
+    const set = new Set(configured);
+    for (const c of variantColors) set.add(c);
+    return Array.from(set);
   }, [variants, categoryConfig]);
 
   const getVariantByOptions = (size = null, color = null) => {
+    const norm = (v) => (typeof v === 'string' ? v.trim().toLowerCase() : v);
+    const s = norm(size);
+    const c = norm(color);
     return variants.find(variant => {
-      const sizeMatch = !size || variant.size === size;
-      const colorMatch = !color || variant.color === color;
+      const vs = norm(variant.size);
+      const vc = norm(variant.color);
+      const sizeMatch = !s || vs === s;
+      const colorMatch = !c || vc === c;
       return sizeMatch && colorMatch;
     });
   };
@@ -81,8 +89,12 @@ export const useProductVariants = (productId) => {
   };
 
   const hasVariants = variants.length > 0;
-  const hasSizes = categoryConfig?.has_sizes && availableSizes.length > 0;
-  const hasColors = categoryConfig?.has_colors && availableColors.length > 0;
+  // Be resilient: if category config says no sizes/colors but variants actually have them,
+  // still expose the options so users can select the newly added variants.
+  const inferredSizes = variants.some(v => !!v.size);
+  const inferredColors = variants.some(v => !!v.color);
+  const hasSizes = (categoryConfig?.has_sizes || inferredSizes) && availableSizes.length > 0;
+  const hasColors = (categoryConfig?.has_colors || inferredColors) && availableColors.length > 0;
 
   return {
     product: productData,
