@@ -162,15 +162,33 @@ export const useSupabase = () => {
   const useDeleteProduct = () => {
     return useMutation({
       mutationFn: async (id) => {
-        const { data, error } = await supabase
-          .from("products")
+        // Attempt a safe manual cascade delete to avoid FK errors
+        // 1) Delete product_variants
+        const { error: variantsErr } = await supabase
+          .from('product_variants')
           .delete()
-          .eq("id", id);
-        if (error) throw error;
+          .eq('product_id', id);
+        if (variantsErr) throw variantsErr;
+
+        // 2) Delete product_images
+        const { error: imagesErr } = await supabase
+          .from('product_images')
+          .delete()
+          .eq('product_id', id);
+        if (imagesErr) throw imagesErr;
+
+        // 3) Delete the product itself
+        const { data, error: productErr } = await supabase
+          .from('products')
+          .delete()
+          .eq('id', id);
+        if (productErr) throw productErr;
         return data;
       },
-      onSuccess: () => {
+      onSuccess: (_data, id) => {
+        // Refresh admin lists and any product-specific caches
         queryClient.invalidateQueries(["admin-products"]);
+        queryClient.invalidateQueries(["admin-product-variants", id]);
       },
     });
   };

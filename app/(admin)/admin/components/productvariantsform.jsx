@@ -28,6 +28,9 @@ export default function ProductVariantsForm({ productId, product }) {
   const [dragIndex, setDragIndex] = useState(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [confirmDeleteVariantId, setConfirmDeleteVariantId] = useState(null);
+  const [confirmVariantText, setConfirmVariantText] = useState('');
+  const [confirmVariantInput, setConfirmVariantInput] = useState('');
 
   const [showForm, setShowForm] = useState(false);
   const [editingVariant, setEditingVariant] = useState(null);
@@ -364,17 +367,26 @@ export default function ProductVariantsForm({ productId, product }) {
   };
 
   const handleDelete = async (variantId) => {
-    if (window.confirm('Are you sure you want to delete this variant?')) {
-      try {
-        await deleteMutation.mutateAsync(variantId);
-        toast.success('Variant deleted successfully');
-        queryClient.invalidateQueries({ queryKey: ['admin-product-variants', productId] });
-        // Invalidate global variants list used by the public product page hook
-        queryClient.invalidateQueries({ queryKey: ['product_variants'] });
-        queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      } catch (error) {
-        toast.error('Failed to delete variant');
-      }
+    const v = variants?.find(x => x.id === variantId);
+    const label = [v?.size, v?.color].filter(Boolean).join(' / ') || 'Default Variant';
+    setConfirmVariantText(label);
+    setConfirmVariantInput('');
+    setConfirmDeleteVariantId(variantId);
+  };
+
+  const confirmDeleteVariant = async () => {
+    if (!confirmDeleteVariantId) return;
+    try {
+      await deleteMutation.mutateAsync(confirmDeleteVariantId);
+      toast.success('Variant deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-product-variants', productId] });
+      // Invalidate global variants list used by the public product page hook
+      queryClient.invalidateQueries({ queryKey: ['product_variants'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+    } catch (error) {
+      toast.error('Failed to delete variant');
+    } finally {
+      setConfirmDeleteVariantId(null);
     }
   };
 
@@ -409,6 +421,21 @@ export default function ProductVariantsForm({ productId, product }) {
 
   return (
     <div className="space-y-6">
+      {/* Confirm Delete Variant Modal */}
+      {confirmDeleteVariantId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-5 space-y-4">
+            <h3 className="text-base font-semibold text-primarycolor">Delete Variant</h3>
+            <p className="text-sm text-primarycolor/80">Are you sure you want to delete <span className="font-semibold">{confirmVariantText}</span>?</p>
+            <div className="text-xs text-primarycolor/70">Type the exact text to confirm:</div>
+            <input value={confirmVariantInput} onChange={(e) => setConfirmVariantInput(e.target.value)} placeholder={confirmVariantText} className="w-full px-3 py-2 border border-gray-200 rounded" />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setConfirmDeleteVariantId(null)} className="px-3 py-2 border rounded">Cancel</button>
+              <button onClick={confirmDeleteVariant} className="px-3 py-2 bg-red-600 text-white rounded disabled:opacity-50" disabled={deleteMutation.isLoading || (confirmVariantText && confirmVariantInput !== confirmVariantText)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-primarycolor">Product Variants</h3>
         <button

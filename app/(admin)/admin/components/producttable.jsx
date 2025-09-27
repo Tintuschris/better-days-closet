@@ -10,14 +10,51 @@ export default function ProductTable() {
   const { data: products, isLoading } = useProducts();
   const deleteMutation = useDeleteProduct();
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [confirmDeleteName, setConfirmDeleteName] = useState('');
+  const [confirmInput, setConfirmInput] = useState('');
+  const [pendingTimer, setPendingTimer] = useState(null);
 
   const handleDelete = async (id) => {
-    try {
-      await deleteMutation.mutateAsync(id);
-      toast.success('Product deleted successfully');
-    } catch (error) {
-      toast.error('Failed to delete product');
-    }
+    setConfirmDeleteId(id);
+    const prod = products?.find(p => p.id === id);
+    setConfirmDeleteName(prod?.name || '');
+    setConfirmInput('');
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    // Delay actual deletion to allow Undo
+    setConfirmDeleteId(null);
+    const id = confirmDeleteId;
+    const undoRef = { cancelled: false };
+    const timer = setTimeout(async () => {
+      if (undoRef.cancelled) return;
+      try {
+        await deleteMutation.mutateAsync(id);
+        toast.success('Product deleted successfully');
+      } catch (error) {
+        toast.error('Failed to delete product');
+      } finally {
+        setPendingTimer(null);
+      }
+    }, 6000);
+    setPendingTimer(timer);
+    toast(
+      `Deleting in 6s…`,
+      {
+        description: 'You can undo this action.',
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            undoRef.cancelled = true;
+            if (timer) clearTimeout(timer);
+            setPendingTimer(null);
+            toast.success('Deletion cancelled');
+          }
+        }
+      }
+    );
   };
 
   if (isLoading) {
@@ -32,6 +69,26 @@ export default function ProductTable() {
 
   return (
     <div className="mt-8 bg-white rounded-lg shadow overflow-hidden">
+      {/* Confirm Delete Modal */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-5 space-y-4">
+            <h3 className="text-base font-semibold text-primarycolor">Delete Product</h3>
+            <p className="text-sm text-primarycolor/80">Are you sure you want to delete <span className="font-semibold">{confirmDeleteName || 'this product'}</span> and all its variants and images?</p>
+            <div className="text-xs text-primarycolor/70">Type the product name to confirm:</div>
+            <input
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder={confirmDeleteName}
+              className="w-full px-3 py-2 border border-gray-200 rounded"
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-2 border rounded">Cancel</button>
+              <button onClick={confirmDelete} className="px-3 py-2 bg-red-600 text-white rounded disabled:opacity-50" disabled={deleteMutation.isLoading || (confirmDeleteName && confirmInput !== confirmDeleteName)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
