@@ -26,7 +26,10 @@ const ImageUploadOptimizer = ({
   const [settings, setSettings] = useState(optimizationSettings);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
-  const [inflight, setInflight] = useState([]); // {id, name, progress, status: 'pending'|'optimizing'|'uploading'|'done'|'error', url}
+  const [inflight, setInflight] = useState([]); // {id, name, progress, status, url, file}
+  const [enableCrop, setEnableCrop] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [cropState, setCropState] = useState({ url: null, image: null, scale: 1, offsetX: 0, offsetY: 0, resolve: null, reject: null, filename: '' });
 
   // Compress and optimize image
   const optimizeImage = useCallback((file, customSettings = settings) => {
@@ -123,7 +126,7 @@ const ImageUploadOptimizer = ({
     setUploading(true);
 
     // Add inflight entries
-    const inflightItems = validFiles.map(f => ({ id: `${Date.now()}-${Math.random()}`, name: f.name, progress: 0, status: 'pending', url: null }));
+    const inflightItems = validFiles.map(f => ({ id: `${Date.now()}-${Math.random()}`, name: f.name, progress: 0, status: 'pending', url: null, file: f }));
     setInflight(prev => [...prev, ...inflightItems]);
 
     const concurrency = 2; // mobile-friendly limit
@@ -136,8 +139,13 @@ const ImageUploadOptimizer = ({
       const itemId = inflightItems[index].id;
       index++;
       try {
+        // Optional crop step
+        let toProcess = file;
+        if (enableCrop) {
+          toProcess = await requestCrop(file);
+        }
         setInflight(prev => prev.map(it => it.id === itemId ? { ...it, status: 'optimizing', progress: 10 } : it));
-        const optimized = await optimizeImage(file);
+        const optimized = await optimizeImage(toProcess);
         setInflight(prev => prev.map(it => it.id === itemId ? { ...it, status: 'uploading', progress: 60 } : it));
         const url = await uploadFunction(optimized);
         const uploaded = {
@@ -166,6 +174,95 @@ const ImageUploadOptimizer = ({
     toast.success(`${uploadedImages.length} image(s) uploaded and optimized`);
     setUploading(false);
   }, [images, maxImages, acceptedFormats, maxFileSize, optimizeImage, uploadFunction, onImagesUploaded]);
+
+  // Crop modal flow
+  const requestCrop = useCallback((file) => {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const image = new window.Image();
+      image.onload = () => {
+        setCropState({ url, image, scale: 1, offsetX: 0, offsetY: 0, resolve, reject, filename: file.name });
+        setShowCropper(true);
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      };
+      image.src = url;
+    });
+  }, []);
+
+  const applyCrop = useCallback(() => {
+    const { image, scale, offsetX, offsetY, resolve, url, filename } = cropState;
+    if (!image || !resolve) return;
+    try {
+      const viewport = 1024; // square crop
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = viewport; canvas.height = viewport;
+      // Compute scaled image dimensions
+      const scaledW = image.width * scale;
+      const scaledH = image.height * scale;
+      // Center baseline, then apply offsets
+      const baseX = (viewport - scaledW) / 2 + offsetX;
+      const baseY = (viewport - scaledH) / 2 + offsetY;
+      ctx.drawImage(image, baseX, baseY, scaledW, scaledH);
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          resolve(new File([image], filename));
+        } else {
+          const cropped = new File([blob], filename, { type: 'image/jpeg', lastModified: Date.now() });
+          resolve(cropped);
+        }
+        URL.revokeObjectURL(url);
+        setShowCropper(false);
+        setCropState({ url: null, image: null, scale: 1, offsetX: 0, offsetY: 0, resolve: null, reject: null, filename: '' });
+      }, 'image/jpeg', 0.92);
+    } catch (e) {
+      console.error('Crop failed', e);
+      resolve(new File([image], cropState.filename));
+      setShowCropper(false);
+    }
+  }, [cropState]);
+
+  const cancelCrop = useCallback(() => {
+    const { resolve, url } = cropState;
+    if (resolve) resolve();
+    if (url) URL.revokeObjectURL(url);
+    setShowCropper(false);
+    setCropState({ url: null, image: null, scale: 1, offsetX: 0, offsetY: 0, resolve: null, reject: null, filename: '' });
+  }, [cropState]);
+
+  // Retry a failed item
+  const retryUpload = useCallback(async (itemId) => {
+    const item = inflight.find(i => i.id === itemId);
+    if (!item || !item.file) return;
+    try {
+      setInflight(prev => prev.map(it => it.id === itemId ? { ...it, status: 'optimizing', progress: 10 } : it));
+      let toProcess = item.file;
+      if (enableCrop) {
+        toProcess = await requestCrop(item.file);
+      }
+      const optimized = await optimizeImage(toProcess);
+      setInflight(prev => prev.map(it => it.id === itemId ? { ...it, status: 'uploading', progress: 60 } : it));
+      const url = await uploadFunction(optimized);
+      setInflight(prev => prev.map(it => it.id === itemId ? { ...it, status: 'done', progress: 100, url } : it));
+      const uploaded = {
+        id: Date.now() + Math.random(),
+        url,
+        originalName: optimized.name,
+        size: optimized.size,
+        optimized: true
+      };
+      setImages(prev => [...prev, uploaded]);
+      onImagesUploaded([...images, uploaded].map(img => img.url));
+      toast.success('Upload retried successfully');
+    } catch (e) {
+      console.error('Retry failed', e);
+      setInflight(prev => prev.map(it => it.id === itemId ? { ...it, status: 'error' } : it));
+      toast.error('Retry failed');
+    }
+  }, [inflight, enableCrop, requestCrop, optimizeImage, uploadFunction, onImagesUploaded, images]);
 
   // Handle drag and drop
   const handleDrag = useCallback((e) => {
@@ -273,6 +370,60 @@ const ImageUploadOptimizer = ({
         </PremiumCard>
       )}
 
+      {/* Failed uploads list with Retry */}
+      {inflight.some(it => it.status === 'error') && (
+        <div className="mt-4 space-y-2">
+          <h4 className="text-sm font-semibold text-red-600">Failed uploads</h4>
+          <div className="space-y-1">
+            {inflight.filter(it => it.status === 'error').map(it => (
+              <div key={it.id} className="flex items-center justify-between text-sm bg-red-50 border border-red-200 rounded px-3 py-2">
+                <span className="truncate">{it.name}</span>
+                <button onClick={() => retryUpload(it.id)} className="px-2 py-1 bg-red-600 text-white rounded">Retry</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Cropper Modal */}
+      {showCropper && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-sm p-4 space-y-3">
+            <h3 className="text-md font-semibold text-primarycolor">Crop Image</h3>
+            <div className="w-full h-72 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+              {/* Viewport 300x300 square */}
+              <div className="relative w-72 h-72 overflow-hidden bg-black">
+                {cropState.url && (
+                  <img
+                    src={cropState.url}
+                    alt="Crop"
+                    className="select-none pointer-events-none"
+                    style={{
+                      position: 'absolute',
+                      left: '50%', top: '50%',
+                      transform: `translate(-50%, -50%) translate(${cropState.offsetX}px, ${cropState.offsetY}px) scale(${cropState.scale})`,
+                      transformOrigin: 'center center'
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs text-primarycolor/70">Zoom</label>
+              <input type="range" min="1" max="3" step="0.01" value={cropState.scale} onChange={(e) => setCropState(s => ({ ...s, scale: parseFloat(e.target.value) }))} />
+              <label className="text-xs text-primarycolor/70">Horizontal</label>
+              <input type="range" min="-200" max="200" step="1" value={cropState.offsetX} onChange={(e) => setCropState(s => ({ ...s, offsetX: parseInt(e.target.value) }))} />
+              <label className="text-xs text-primarycolor/70">Vertical</label>
+              <input type="range" min="-200" max="200" step="1" value={cropState.offsetY} onChange={(e) => setCropState(s => ({ ...s, offsetY: parseInt(e.target.value) }))} />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={cancelCrop} className="px-3 py-2 border rounded">Cancel</button>
+              <button onClick={applyCrop} className="px-3 py-2 bg-primarycolor text-white rounded">Apply</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Upload Area */}
       <PremiumCard 
         className={`relative border-2 border-dashed transition-all duration-300 ${
@@ -302,7 +453,7 @@ const ImageUploadOptimizer = ({
             Drag and drop images here, or click to select files
           </p>
           
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
@@ -334,6 +485,10 @@ const ImageUploadOptimizer = ({
               <FiImage className="w-4 h-4 mr-2" />
               Take Photo
             </Button>
+            <label className="flex items-center gap-2 text-sm text-primarycolor/80 select-none">
+              <input type="checkbox" checked={enableCrop} onChange={(e) => setEnableCrop(e.target.checked)} />
+              Crop before upload
+            </label>
           </div>
           
           <p className="text-xs text-primarycolor/60 mt-4">
@@ -374,10 +529,19 @@ const ImageUploadOptimizer = ({
                     className="object-cover rounded-lg"
                   />
                   {/* Per-file progress overlay if matching inflight */}
-                  {inflight.some(it => it.url === image.url && it.status !== 'done') && (
+                  {inflight.some(it => it.url === image.url && it.status !== 'done' && it.status !== 'error') && (
                     <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-xs">
                       <FiLoader className="w-5 h-5 animate-spin mb-1" />
                       <span>Uploading…</span>
+                    </div>
+                  )}
+                  {inflight.some(it => it.url === image.url && it.status === 'error') && (
+                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white text-xs gap-2">
+                      <span>Upload failed</span>
+                      <button onClick={() => {
+                        const failed = inflight.find(it => it.url === image.url && it.status === 'error');
+                        if (failed) retryUpload(failed.id);
+                      }} className="px-3 py-1 bg-white text-primarycolor rounded">Retry</button>
                     </div>
                   )}
                   {/* If there is an inflight item without url yet (newly added), show generic overlay on latest card */}
