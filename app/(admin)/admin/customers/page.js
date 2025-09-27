@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useSupabase } from '../hooks/useSupabase';
 import { FiSearch, FiFilter, FiDownload, FiUser, FiMail, FiPhone, FiCalendar, FiEdit, FiUnlock, FiLock, FiGift, FiX, FiSave, FiTrash2, FiEye } from 'react-icons/fi';
 import { PremiumCard, GradientText, Button } from '../../../components/ui';
+import ConfirmModal from '../../../components/ui/ConfirmModal';
 import { toast } from 'sonner';
 
 function LoadingSkeleton() {
@@ -585,6 +586,13 @@ function CustomerManagementContent() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [confirmBlockOpen, setConfirmBlockOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [pendingBlockAction, setPendingBlockAction] = useState('block');
+  const [confirmDeleteName, setConfirmDeleteName] = useState('');
+  const [confirmDeleteInput, setConfirmDeleteInput] = useState('');
+  const [addPointsOpen, setAddPointsOpen] = useState(false);
+  const [pointsInput, setPointsInput] = useState('0');
 
   // Handle search highlighting from URL params
   useEffect(() => {
@@ -632,33 +640,16 @@ function CustomerManagementContent() {
   const handleBlockCustomer = (customer) => {
     const isBlocked = customer.is_blocked || customer.status === 'blocked';
     const action = isBlocked ? 'unblock' : 'block';
-
-    // Create a confirmation modal instead of alert
-    if (window.confirm(`Are you sure you want to ${action} ${customer.name}?`)) {
-      blockCustomer.mutateAsync({
-        id: customer.id,
-        blocked: !isBlocked
-      }).then(() => {
-        toast.success(`Customer ${action}ed successfully`);
-      }).catch(() => {
-        toast.error(`Failed to ${action} customer`);
-      });
-    }
+    setSelectedCustomer(customer);
+    setPendingBlockAction(action);
+    setConfirmBlockOpen(true);
   };
 
   const handleDeleteCustomer = async (customer) => {
-    if (window.confirm(`Are you sure you want to permanently delete ${customer.name}? This action cannot be undone.`)) {
-      try {
-        // In a real app, you might want to soft delete instead
-        await updateCustomer.mutateAsync({
-          id: customer.id,
-          updates: { status: 'deleted', admin_notes: `Deleted on ${new Date().toISOString()}` }
-        });
-        toast.success('Customer deleted successfully');
-      } catch (error) {
-        toast.error('Failed to delete customer');
-      }
-    }
+    setSelectedCustomer(customer);
+    setConfirmDeleteName(customer?.name || '');
+    setConfirmDeleteInput('');
+    setConfirmDeleteOpen(true);
   };
 
   const handleViewCustomerDetails = (customer) => {
@@ -667,18 +658,9 @@ function CustomerManagementContent() {
   };
 
   const handleAddLoyaltyPoints = (customer) => {
-    const points = window.prompt(`Add loyalty points for ${customer.name}:`, '0');
-    if (points && !isNaN(points)) {
-      const newPoints = (customer.loyalty_points || 0) + parseInt(points);
-      updateCustomer.mutateAsync({
-        id: customer.id,
-        updates: { loyalty_points: newPoints }
-      }).then(() => {
-        toast.success(`Added ${points} loyalty points`);
-      }).catch(() => {
-        toast.error('Failed to add loyalty points');
-      });
-    }
+    setSelectedCustomer(customer);
+    setPointsInput('0');
+    setAddPointsOpen(true);
   };
 
   // Filter customers based on search and status
@@ -704,6 +686,62 @@ function CustomerManagementContent() {
 
   return (
     <div className="space-y-6">
+      <ConfirmModal
+        open={confirmBlockOpen && !!selectedCustomer}
+        title={`${pendingBlockAction === 'block' ? 'Block' : 'Unblock'} Customer`}
+        description={`Are you sure you want to ${pendingBlockAction} ${selectedCustomer?.name || ''}?`}
+        onCancel={() => setConfirmBlockOpen(false)}
+        onConfirm={() => {
+          blockCustomer.mutateAsync({ id: selectedCustomer.id, blocked: pendingBlockAction === 'block' })
+            .then(() => toast.success(`Customer ${pendingBlockAction}ed successfully`))
+            .catch(() => toast.error(`Failed to ${pendingBlockAction} customer`))
+            .finally(() => setConfirmBlockOpen(false));
+        }}
+        confirmLabel={pendingBlockAction === 'block' ? 'Block' : 'Unblock'}
+        variant="danger"
+      />
+
+      <ConfirmModal
+        open={confirmDeleteOpen && !!selectedCustomer}
+        title="Delete Customer"
+        description={`Are you sure you want to permanently delete ${confirmDeleteName}? This action cannot be undone.`}
+        typeToConfirmText={confirmDeleteName}
+        confirmInput={confirmDeleteInput}
+        onConfirmInputChange={setConfirmDeleteInput}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={async () => {
+          try {
+            await updateCustomer.mutateAsync({ id: selectedCustomer.id, updates: { status: 'deleted', admin_notes: `Deleted on ${new Date().toISOString()}` } });
+            toast.success('Customer deleted successfully');
+          } catch (error) {
+            toast.error('Failed to delete customer');
+          } finally {
+            setConfirmDeleteOpen(false);
+          }
+        }}
+        confirmLabel="Delete"
+        variant="danger"
+      />
+
+      <ConfirmModal
+        open={addPointsOpen && !!selectedCustomer}
+        title="Add Loyalty Points"
+        description={`Enter points to add for ${selectedCustomer?.name || ''}:`}
+        onCancel={() => setAddPointsOpen(false)}
+        onConfirm={() => {
+          const num = parseInt(pointsInput);
+          if (isNaN(num)) { toast.error('Please enter a valid number'); return; }
+          const newPoints = (selectedCustomer.loyalty_points || 0) + num;
+          updateCustomer.mutateAsync({ id: selectedCustomer.id, updates: { loyalty_points: newPoints } })
+            .then(() => toast.success(`Added ${num} loyalty points`))
+            .catch(() => toast.error('Failed to add loyalty points'))
+            .finally(() => setAddPointsOpen(false));
+        }}
+        confirmLabel="Add Points"
+        variant="primary"
+      >
+        <input type="number" value={pointsInput} onChange={(e) => setPointsInput(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded" />
+      </ConfirmModal>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

@@ -11,6 +11,7 @@ import BulkProductUpload from '../components/BulkProductUpload';
 import BulkOperations, { BulkSelectCheckbox, productBulkOperations } from '../components/BulkOperations';
 import { useSupabase } from '../hooks/useSupabase';
 import { PremiumCard, Button, GradientText } from '../../../components/ui';
+import ConfirmModal from '../../../components/ui/ConfirmModal';
 import Image from 'next/image';
 
 function LoadingSkeleton() {
@@ -166,6 +167,10 @@ function ProductManagementContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStock, setFilterStock] = useState('all');
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [confirmDeleteName, setConfirmDeleteName] = useState('');
+  const [confirmInput, setConfirmInput] = useState('');
+  const [pendingTimer, setPendingTimer] = useState(null);
 
   // Handle search highlighting from URL params
   useEffect(() => {
@@ -256,14 +261,45 @@ function ProductManagementContent() {
   };
 
   const handleDelete = async (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+    const prod = products?.find(p => p.id === productId);
+    setConfirmDeleteId(productId);
+    setConfirmDeleteName(prod?.name || '');
+    setConfirmInput('');
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    // Close modal first
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
+    const undoRef = { cancelled: false };
+    const timer = setTimeout(async () => {
+      if (undoRef.cancelled) return;
       try {
-        await deleteProduct.mutateAsync(productId);
+        await deleteProduct.mutateAsync(id);
         toast.success('Product deleted successfully');
       } catch (error) {
         toast.error('Failed to delete product');
+      } finally {
+        setPendingTimer(null);
       }
-    }
+    }, 6000);
+    setPendingTimer(timer);
+    toast(
+      `Deleting in 6s…`,
+      {
+        description: 'You can undo this action.',
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            undoRef.cancelled = true;
+            if (timer) clearTimeout(timer);
+            setPendingTimer(null);
+            toast.success('Deletion cancelled');
+          }
+        }
+      }
+    );
   };
 
   const handleFormSuccess = () => {

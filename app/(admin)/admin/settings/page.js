@@ -8,6 +8,7 @@ import {
   FiSave, FiRefreshCw, FiEye, FiEyeOff, FiCheck, FiX 
 } from 'react-icons/fi';
 import { PremiumCard, Button, GradientText } from '../../../components/ui';
+import ConfirmModal from '../../../components/ui/ConfirmModal';
 
 function AdminSettingsContent() {
   const searchParams = useSearchParams();
@@ -19,6 +20,7 @@ function AdminSettingsContent() {
   const [showPasswords, setShowPasswords] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
 
   useEffect(() => {
     // Load settings from Supabase
@@ -91,8 +93,11 @@ function AdminSettingsContent() {
   };
 
   const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset all settings to default values?')) {
-      const defaultSettings = {
+    setConfirmResetOpen(true);
+  };
+
+  const confirmReset = () => {
+    const defaultSettings = {
         siteName: 'Better Days Closet',
         siteDescription: 'Premium fashion and lifestyle store',
         siteUrl: 'https://www.betterdayscloset.com',
@@ -116,10 +121,10 @@ function AdminSettingsContent() {
         enableAnalytics: true,
         maintenanceMode: false,
       };
-      setSettings(defaultSettings);
-      setHasChanges(true);
-      toast.info('Settings reset to default values');
-    }
+    setSettings(defaultSettings);
+    setHasChanges(true);
+    setConfirmResetOpen(false);
+    toast.info('Settings reset to default values');
   };
 
   const SettingCard = ({ title, icon: Icon, children, id }) => (
@@ -179,6 +184,16 @@ function AdminSettingsContent() {
 
   return (
     <div className="space-y-6">
+      {/* Confirm Reset Modal */}
+      <ConfirmModal
+        open={confirmResetOpen}
+        title="Reset Settings"
+        description="Are you sure you want to reset all settings to their default values?"
+        onCancel={() => setConfirmResetOpen(false)}
+        onConfirm={confirmReset}
+        confirmLabel="Reset"
+        variant="danger"
+      />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

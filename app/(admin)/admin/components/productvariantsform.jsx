@@ -7,6 +7,7 @@ import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX, FiUpload, FiMenu, FiStar } from
 import Image from 'next/image';
 import ImageUploadOptimizer from './ImageUploadOptimizer';
 import { supabase } from '../../../lib/supabase';
+import ConfirmModal from '../../../components/ui/ConfirmModal';
 
 export default function ProductVariantsForm({ productId, product }) {
   const { 
@@ -31,6 +32,7 @@ export default function ProductVariantsForm({ productId, product }) {
   const [confirmDeleteVariantId, setConfirmDeleteVariantId] = useState(null);
   const [confirmVariantText, setConfirmVariantText] = useState('');
   const [confirmVariantInput, setConfirmVariantInput] = useState('');
+  const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editingVariant, setEditingVariant] = useState(null);
@@ -174,7 +176,10 @@ export default function ProductVariantsForm({ productId, product }) {
 
   const bulkDeleteSelected = async () => {
     if (selectedIds.size === 0) return;
-    if (!window.confirm(`Delete ${selectedIds.size} selected image(s)?`)) return;
+    setConfirmBulkDeleteOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
     try {
       const ids = Array.from(selectedIds);
       const { error } = await supabase.from('product_images').delete().in('id', ids);
@@ -187,6 +192,8 @@ export default function ProductVariantsForm({ productId, product }) {
       refreshAfterGalleryChange();
     } catch (err) {
       toast.error('Failed to delete selected images');
+    } finally {
+      setConfirmBulkDeleteOpen(false);
     }
   };
 
@@ -421,21 +428,28 @@ export default function ProductVariantsForm({ productId, product }) {
 
   return (
     <div className="space-y-6">
-      {/* Confirm Delete Variant Modal */}
-      {confirmDeleteVariantId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-5 space-y-4">
-            <h3 className="text-base font-semibold text-primarycolor">Delete Variant</h3>
-            <p className="text-sm text-primarycolor/80">Are you sure you want to delete <span className="font-semibold">{confirmVariantText}</span>?</p>
-            <div className="text-xs text-primarycolor/70">Type the exact text to confirm:</div>
-            <input value={confirmVariantInput} onChange={(e) => setConfirmVariantInput(e.target.value)} placeholder={confirmVariantText} className="w-full px-3 py-2 border border-gray-200 rounded" />
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setConfirmDeleteVariantId(null)} className="px-3 py-2 border rounded">Cancel</button>
-              <button onClick={confirmDeleteVariant} className="px-3 py-2 bg-red-600 text-white rounded disabled:opacity-50" disabled={deleteMutation.isLoading || (confirmVariantText && confirmVariantInput !== confirmVariantText)}>Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={confirmBulkDeleteOpen}
+        title="Delete Selected Images"
+        description={`Are you sure you want to delete ${selectedIds.size} selected image(s) from the gallery?`}
+        onCancel={() => setConfirmBulkDeleteOpen(false)}
+        onConfirm={confirmBulkDelete}
+        confirmLabel="Delete"
+        variant="danger"
+      />
+      <ConfirmModal
+        open={!!confirmDeleteVariantId}
+        title="Delete Variant"
+        description={`Are you sure you want to delete ${confirmVariantText}?`}
+        typeToConfirmText={confirmVariantText}
+        confirmInput={confirmVariantInput}
+        onConfirmInputChange={setConfirmVariantInput}
+        onCancel={() => setConfirmDeleteVariantId(null)}
+        onConfirm={confirmDeleteVariant}
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={deleteMutation.isLoading}
+      />
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-primarycolor">Product Variants</h3>
         <button
